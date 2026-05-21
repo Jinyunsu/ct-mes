@@ -79,9 +79,21 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PUT') {
-      const { id, status } = req.body;
+      const { id, customer, item, code, qty, deadline, productCode, spec, remark, status } = req.body;
       if (!id) return res.status(400).json({ error: 'id 필요' });
-      await sql`UPDATE orders SET status = ${status||'active'} WHERE id = ${id}`;
+      await sql`
+        UPDATE orders SET
+          customer = ${customer||''},
+          item = ${item||''},
+          code = ${code||''},
+          qty = ${qty||0},
+          deadline = ${deadline||null},
+          product_code = ${productCode||''},
+          spec = ${spec||''},
+          remark = ${remark||''},
+          status = ${status||'active'}
+        WHERE id = ${id}
+      `;
       return res.json(await getAll());
     }
 
