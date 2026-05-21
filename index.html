@@ -425,6 +425,8 @@ tr:hover td{background:#fafafa}
       <button onclick="closeOrderModal()" style="background:none;border:none;font-size:20px;color:#aaa;cursor:pointer;padding:0 4px">✕</button>
     </div>
     <div class="form-grid">
+      <div class="fg"><label>수주번호 *</label><input id="of-id" placeholder="예) PO-2026-001"></div>
+      <div class="fg"><label>수주일자</label><input id="of-date" type="date"></div>
       <div class="fg"><label>고객사 *</label><input id="of-customer" placeholder="예) 현대자동차"></div>
       <div class="fg"><label>납기일 *</label><input id="of-deadline" type="date"></div>
       <div class="fg"><label>품목명 *</label><input id="of-item" placeholder="예) 브라켓 A형"></div>
@@ -599,6 +601,8 @@ function dday(dateStr){ if(!dateStr) return null; const diff = Math.ceil((new Da
 
 /* ══ 수주관리 ══ */
 window.openOrderModal = function() {
+  document.getElementById('of-id').value='';
+  document.getElementById('of-date').value=todayISO();
   document.getElementById('of-customer').value='';
   document.getElementById('of-deadline').value='';
   document.getElementById('of-item').value='';
@@ -608,32 +612,44 @@ window.openOrderModal = function() {
   document.getElementById('of-spec').value='';
   document.getElementById('of-remark').value='';
   document.getElementById('order-modal').classList.add('open');
-  setTimeout(()=>document.getElementById('of-customer').focus(), 150);
+  setTimeout(()=>document.getElementById('of-id').focus(), 150);
 };
 window.closeOrderModal = function() { document.getElementById('order-modal').classList.remove('open'); };
 
 window.submitOrder = async function() {
+  const orderId = document.getElementById('of-id').value.trim();
   const customer = document.getElementById('of-customer').value.trim();
   const deadline = document.getElementById('of-deadline').value;
   const item = document.getElementById('of-item').value.trim();
   const qty = Number(document.getElementById('of-qty').value)||0;
+  if(!orderId){ showToast('수주번호를 입력하세요'); return; }
   if(!customer){ showToast('고객사를 입력하세요'); return; }
   if(!deadline){ showToast('납기일을 선택하세요'); return; }
   if(!item){ showToast('품목명을 입력하세요'); return; }
   if(qty<=0){ showToast('수주수량을 입력하세요'); return; }
   const data = {
+    id: orderId,
     customer, deadline, item,
     code: document.getElementById('of-code').value.trim(),
     qty,
     productCode: document.getElementById('of-pcode').value.trim(),
     spec: document.getElementById('of-spec').value.trim(),
     remark: document.getElementById('of-remark').value.trim(),
+    orderDate: document.getElementById('of-date').value,
     status: 'active',
     createdAt: new Date().toISOString()
   };
   const res = await API.post('/api/orders', data);
-  if(res){ cachedOrders = res; closeOrderModal(); renderOrderCards(); renderOrdersTable(); renderOrderKPIs(); showToast(`[${customer}] 수주 등록됨`); }
-  else showToast('등록 실패 - /api/orders 확인 필요');
+  if(res && !res.error){
+    cachedOrders = res;
+    closeOrderModal();
+    renderOrderCards();
+    renderOrdersTable();
+    renderOrderKPIs();
+    showToast(`[${orderId}] ${customer} 수주 등록됨`);
+  } else {
+    showToast('등록 실패: ' + (res?.error || '/api/orders 확인 필요'));
+  }
 };
 
 function renderOrdersTable() {
