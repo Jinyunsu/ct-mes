@@ -467,7 +467,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>작업일자</th><th>작업코드</th><th>제품코드</th><th>스펙</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th></th></tr></thead>
+            <thead><tr><th>작업일자</th><th>작업코드</th><th>제품코드</th><th>스펙</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
             <tbody id="plan-tbl"><tr><td colspan="13" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
           </table>
         </div>
@@ -803,6 +803,37 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   </div>
 </div>
 
+<!-- 생산계획 수정 모달 -->
+<div class="modal-overlay" id="plan-edit-modal">
+  <div class="modal">
+    <div class="modal-title">생산계획 수정 <button class="modal-close" onclick="closeModal('plan-edit-modal')"><i class="ti ti-x"></i></button></div>
+    <div style="background:#f0f6ff;border:1px solid #dbeafe;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#1d4ed8">
+      <i class="ti ti-info-circle"></i> 수정 중: <strong id="edit-plan-id-label"></strong>
+    </div>
+    <div class="form-grid">
+      <div><label class="label">작업코드</label><input id="ef-code" class="input" placeholder="예) B26-0172"></div>
+      <div><label class="label">작업일자 *</label><input id="ef-date" class="input" type="date"></div>
+      <div><label class="label">제품코드</label><input id="ef-pcode" class="input" placeholder="예) P-2024-001"></div>
+      <div><label class="label">계획수량 (EA) *</label><input id="ef-qty" class="input" type="number" placeholder="0" min="1"></div>
+      <div class="full"><label class="label">스펙</label><input id="ef-spec" class="input" placeholder="예) 200x300x50mm, SUS304"></div>
+      <div><label class="label">고객사</label><input id="ef-customer" class="input" placeholder="예) 현대자동차"></div>
+      <div><label class="label">상태</label>
+        <select id="ef-status" class="input">
+          <option value="planned">예정</option>
+          <option value="running">진행중</option>
+          <option value="done">완료</option>
+          <option value="failed">미달성</option>
+        </select>
+      </div>
+      <div><label class="label">비고</label><input id="ef-remark" class="input" placeholder="특이사항"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closeModal('plan-edit-modal')">취소</button>
+      <button class="btn btn-primary" onclick="submitEditPlan()"><i class="ti ti-check"></i> 저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- 수주 등록 모달 -->
 <div class="modal-overlay" id="order-modal">
   <div class="modal">
@@ -1122,7 +1153,19 @@ window.submitPlan=async function(){
   if(!date){showToast('작업일자 선택');return;}
   if(qty<=0){showToast('계획수량 입력');return;}
   const res=await API.post('/api/plans',{code,date,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim(),spec:document.getElementById('pf-spec').value.trim(),customer:document.getElementById('pf-customer').value.trim(),remark:document.getElementById('pf-remark').value.trim()});
-  if(res){cachedPlans=res;closeModal('plan-modal');renderPlanTable();renderCalendar();showToast(`[${code}] 등록됨`);}
+  if(res){
+    cachedPlans=res;
+    closeModal('plan-modal');
+    renderPlanTable();
+    renderCalendar();
+    renderOrKPIs();
+    if(typeof curPlanTab!=='undefined'){
+      if(curPlanTab==='daily')renderOrDayPlans();
+      else if(curPlanTab==='monthly')renderOrMonthPlans();
+      else if(curPlanTab==='all')renderOrAllPlans();
+    }
+    showToast(`[${code}] 등록됨`);
+  }
 };
 
 function renderPlanTable(filterFn){
@@ -1170,7 +1213,10 @@ function renderPlanTable(filterFn){
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${wHrs}</td>
       <td><span class="badge ${sc[p.status]||'badge-gray'}">${sm[p.status]||'예정'}</span></td>
       <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
-      <td><button class="btn btn-secondary btn-sm" onclick="deletePlan('${p.id||p.code}')"><i class="ti ti-trash"></i></button></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" style="margin-right:4px" onclick="openEditPlanModal('${esc(p.id||p.code)}')"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-secondary btn-sm" style="color:#dc2626" onclick="deletePlan('${esc(p.id||p.code)}')"><i class="ti ti-trash"></i></button>
+      </td>
     </tr>`;
   }).join('');
   // 요약 KPI 업데이트
@@ -1654,6 +1700,64 @@ function renderAllLinked(){
   if(dailyDate)renderDailyReport(dailyDate);
 }
 
+
+/* ══ 생산계획 수정 ══ */
+let editingPlanId = null;
+
+window.openEditPlanModal = function(id) {
+  const p = cachedPlans[id] || Object.values(cachedPlans).find(x => x.id === id || x.code === id);
+  if(!p) { showToast('계획 정보를 찾을 수 없습니다'); return; }
+  editingPlanId = p.id || id;
+  document.getElementById('edit-plan-id-label').textContent = p.code + ' / ' + (p.date||'');
+  document.getElementById('ef-code').value = p.code||'';
+  document.getElementById('ef-date').value = p.date||'';
+  document.getElementById('ef-pcode').value = p.productCode||'';
+  document.getElementById('ef-qty').value = p.planQty||'';
+  document.getElementById('ef-spec').value = p.spec||'';
+  document.getElementById('ef-customer').value = p.customer||'';
+  document.getElementById('ef-status').value = p.status||'planned';
+  document.getElementById('ef-remark').value = p.remark||'';
+  openModal('plan-edit-modal');
+  setTimeout(() => document.getElementById('ef-date').focus(), 150);
+};
+
+window.submitEditPlan = async function() {
+  if(!editingPlanId) { showToast('계획 ID 없음'); return; }
+  const date = document.getElementById('ef-date').value;
+  const qty = Number(document.getElementById('ef-qty').value)||0;
+  if(!date) { showToast('작업일자를 선택하세요'); return; }
+  if(qty <= 0) { showToast('계획수량을 입력하세요'); return; }
+  const p = cachedPlans[editingPlanId] || Object.values(cachedPlans).find(x => x.id === editingPlanId);
+  const data = {
+    ...p,
+    id: editingPlanId,
+    code: document.getElementById('ef-code').value.trim(),
+    date,
+    planQty: qty,
+    productCode: document.getElementById('ef-pcode').value.trim(),
+    spec: document.getElementById('ef-spec').value.trim(),
+    customer: document.getElementById('ef-customer').value.trim(),
+    status: document.getElementById('ef-status').value,
+    remark: document.getElementById('ef-remark').value.trim(),
+  };
+  const res = await API.put('/api/plans', data);
+  if(res && !res.error) {
+    cachedPlans = res;
+    closeModal('plan-edit-modal');
+    editingPlanId = null;
+    renderPlanTable();
+    renderCalendar();
+    renderOrKPIs();
+    if(typeof curPlanTab !== 'undefined') {
+      if(curPlanTab === 'daily') renderOrDayPlans();
+      else if(curPlanTab === 'monthly') renderOrMonthPlans();
+      else if(curPlanTab === 'all') renderOrAllPlans();
+    }
+    showToast('수정 완료');
+  } else {
+    showToast('수정 실패: ' + (res?.error || '오류'));
+  }
+};
 function showToast(msg){
   let t=document.getElementById('g-toast');
   if(!t){t=document.createElement('div');t.id='g-toast';t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--bg4);color:var(--text);border:1px solid var(--border2);padding:10px 20px;border-radius:30px;font-size:12px;font-weight:700;opacity:0;transition:all .25s;pointer-events:none;z-index:1000;white-space:nowrap;max-width:90vw;text-align:center';document.body.appendChild(t);}
