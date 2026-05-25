@@ -8,8 +8,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.10.0/lib/msal-browser.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#1e2235}
-body{display:flex;background:#f0f2f8}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#1a1917}
+body{display:flex;background:#f4f5f7}
 .sidebar{width:240px;height:100vh;background:#111827;display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:50;transition:transform .25s ease}
 .sb-logo{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
 .sb-logo-mark{display:flex;align-items:center;gap:10px;margin-bottom:4px}
@@ -47,16 +47,16 @@ body{display:flex;background:#f0f2f8}
 .sb-logout{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border:none;background:rgba(255,255,255,.05);color:rgba(255,255,255,.4);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all .15s}
 .sb-logout:hover{background:rgba(255,100,100,.15);color:#f87171}
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:49}
-.menu-toggle{display:none;align-items:center;justify-content:center;width:36px;height:36px;background:none;border:none;cursor:pointer;color:#4a5578;font-size:20px;flex-shrink:0}
+.menu-toggle{display:none;align-items:center;justify-content:center;width:36px;height:36px;background:none;border:none;cursor:pointer;color:#1a1917;font-size:20px;flex-shrink:0}
 .main-wrap{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
-.topbar{background:#fff;border-bottom:1px solid #dde3f0;box-shadow:0 1px 4px rgba(0,0,0,.05);padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;flex-shrink:0}
+.topbar{background:#fff;border-bottom:1px solid #e8e8e8;padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;flex-shrink:0}
 .tb-left{display:flex;align-items:center;gap:10px}
 .tb-titles{display:flex;flex-direction:column;gap:1px}
-.tb-title{font-size:15px;font-weight:700;color:#1e2235}
+.tb-title{font-size:15px;font-weight:700;color:#1a1917}
 .tb-breadcrumb{font-size:11px;color:#bbb}
 .tb-right{display:flex;align-items:center;gap:10px}
-.tb-clock{font-size:13px;font-weight:700;color:#4a5578;font-variant-numeric:tabular-nums}
-.content{flex:1;padding:28px;background:#f0f2f8}
+.tb-clock{font-size:13px;font-weight:700;color:#555;font-variant-numeric:tabular-nums}
+.content{flex:1;padding:28px}
 .page{display:none}
 .page.active{display:block}
 @media(max-width:768px){
@@ -72,14 +72,14 @@ body{display:flex;background:#f0f2f8}
   th,td{padding:8px 10px}
 }
 .page-header{margin-bottom:24px}
-.page-title{font-size:20px;font-weight:800;color:#1e2235;margin-bottom:4px}
-.page-desc{font-size:13px;color:#6b7a99}
-.card{background:#fff;border:1px solid #dde3f0;box-shadow:0 1px 3px rgba(0,0,0,.04);border-radius:12px;padding:20px}
-.card-title{font-size:13px;font-weight:700;color:#1e2235;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.page-title{font-size:20px;font-weight:800;color:#1a1917;margin-bottom:4px}
+.page-desc{font-size:13px;color:#888}
+.card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:20px}
+.card-title{font-size:13px;font-weight:700;color:#1a1917;margin-bottom:14px;display:flex;align-items:center;gap:6px}
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
-.metric{background:#fff;border:1px solid #dde3f0;border-radius:10px;padding:16px}
+.metric{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:16px}
 .metric-label{font-size:11px;color:#888;font-weight:600;letter-spacing:.05em;margin-bottom:6px}
-.metric-value{font-size:24px;font-weight:800;color:#1e2235;line-height:1}
+.metric-value{font-size:24px;font-weight:800;color:#1a1917;line-height:1}
 .metric-sub{font-size:11px;color:#aaa;margin-top:4px}
 .metric.blue .metric-value{color:#2563eb}
 .metric.green .metric-value{color:#16a34a}
@@ -92,33 +92,33 @@ body{display:flex;background:#f0f2f8}
 .badge-red{background:#fee2e2;color:#dc2626}
 .badge-gray{background:#f3f4f6;color:#6b7280}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{font-size:11px;font-weight:700;color:#888;padding:9px 12px;border-bottom:1px solid #f0f0f0;text-align:left;background:#f8f9fc;letter-spacing:.05em;text-transform:uppercase}
-td{padding:11px 12px;border-bottom:1px solid #eaeef8;vertical-align:middle;color:#1e2235}
+th{font-size:11px;font-weight:700;color:#888;padding:9px 12px;border-bottom:1px solid #f0f0f0;text-align:left;background:#fafafa;letter-spacing:.05em;text-transform:uppercase}
+td{padding:11px 12px;border-bottom:1px solid #f8f8f8;vertical-align:middle;color:#1a1917}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:#f0f4ff}
-.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid #dde3f0}
+tr:hover td{background:#fafafa}
+.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid #e8e8e8}
 .prog-bar{height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;min-width:60px}
 .prog-fill{height:100%;border-radius:3px;background:#2563eb}
 .prog-fill.green{background:#16a34a}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:900px){.grid-2{grid-template-columns:1fr}}
-.btn-sm{padding:6px 12px;border:1px solid #dde3f0;background:#fff;color:#4a5578;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
-.btn-sm:hover{background:#f0f4ff;border-color:#b8c5e8}
+.btn-sm{padding:6px 12px;border:1px solid #e0e0e0;background:#fff;color:#555;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+.btn-sm:hover{background:#f5f5f5}
 .btn-sm.primary{background:#2563eb;border-color:#2563eb;color:#fff}
 .btn-sm.primary:hover{background:#1d4ed8}
 .chip-live{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#16a34a;font-weight:600}
 /* 작업자 카드 */
-.name-sel-card{background:#fff;border:2px solid #dde3f0;border-radius:14px;padding:20px 12px 16px;text-align:center;cursor:pointer;transition:all .18s}
+.name-sel-card{background:#fff;border:2px solid #e8e8e8;border-radius:14px;padding:20px 12px 16px;text-align:center;cursor:pointer;transition:all .18s}
 .name-sel-card:hover{border-color:#2563eb;transform:translateY(-2px);box-shadow:0 6px 20px rgba(37,99,235,.1)}
 .name-sel-card.running{border-color:#16a34a}
 .name-sel-card.running::before{content:'';display:block;height:3px;background:#16a34a;border-radius:2px 2px 0 0;margin:-20px -12px 16px}
 .name-sel-card.paused{border-color:#d97706}
 .name-sel-card.paused::before{content:'';display:block;height:3px;background:#d97706;border-radius:2px 2px 0 0;margin:-20px -12px 16px}
 .nsc-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;margin:0 auto 10px}
-.nsc-name{font-size:14px;font-weight:700;color:#1e2235;margin-bottom:4px}
+.nsc-name{font-size:14px;font-weight:700;color:#1a1917;margin-bottom:4px}
 .nsc-status{font-size:11px;font-weight:600}
 /* 작업 카드 */
-.job-card{background:#fff;border:1.5px solid #dde3f0;border-radius:14px;overflow:hidden;transition:border-color .2s}
+.job-card{background:#fff;border:1.5px solid #e8e8e8;border-radius:14px;overflow:hidden;transition:border-color .2s}
 .job-card.running{border-color:#16a34a}
 .job-card.paused{border-color:#d97706}
 .job-card-head{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none}
@@ -128,7 +128,7 @@ tr:hover td{background:#f0f4ff}
 .dot-pause{background:#d97706}
 .dot-done{background:#9ca3af}
 @keyframes jdot{0%,100%{opacity:1}50%{opacity:.3}}
-.job-code{font-size:16px;font-weight:700;color:#1e2235;flex:1}
+.job-code{font-size:16px;font-weight:700;color:#1a1917;flex:1}
 .job-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;flex-shrink:0}
 .jb-idle{background:#f3f4f6;color:#9ca3af}
 .jb-run{background:#dcfce7;color:#15803d}
@@ -145,20 +145,20 @@ tr:hover td{background:#f0f4ff}
 .jbtn-start{background:#dcfce7;color:#15803d}.jbtn-start:hover:not(:disabled){background:#bbf7d0}
 .jbtn-pause{background:#fef3c7;color:#b45309}.jbtn-pause:hover:not(:disabled){background:#fde68a}
 .jbtn-end{background:#fee2e2;color:#dc2626}.jbtn-end:hover:not(:disabled){background:#fecaca}
-.log-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f4f6fb;border-radius:9px;margin-bottom:6px}
+.log-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f8f9fa;border-radius:9px;margin-bottom:6px}
 .log-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
 .li-start{background:#dcfce7;color:#15803d}
 .li-pause{background:#fef3c7;color:#b45309}
 .li-end{background:#fee2e2;color:#dc2626}
-.log-code{font-size:13px;font-weight:700;color:#1e2235}
+.log-code{font-size:13px;font-weight:700;color:#1a1917}
 .log-action{font-size:11px;margin-top:1px}
 .log-time{font-size:12px;font-weight:700;color:#2563eb;margin-left:auto;text-align:right;flex-shrink:0}
 .log-date-txt{font-size:10px;color:#bbb}
 /* 수량 모달 */
 .qty-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:200;padding:24px}
 .qty-overlay.open{display:flex}
-.qty-box{background:#fff;border-radius:20px;padding:28px 24px;box-shadow:0 20px 60px rgba(0,0,0,.15);width:100%;max-width:320px;text-align:center}
-.qty-box h2{font-size:17px;font-weight:800;margin-bottom:4px;color:#1e2235}
+.qty-box{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:320px;text-align:center}
+.qty-box h2{font-size:17px;font-weight:800;margin-bottom:4px;color:#1a1917}
 .qty-box p{font-size:13px;color:#888;margin-bottom:18px}
 .qty-inp{width:100%;background:#f5f5f5;border:2px solid #e5e5e5;border-radius:12px;padding:14px;font-size:28px;font-weight:800;font-family:inherit;outline:none;margin-bottom:6px;text-align:center;transition:border-color .2s}
 .qty-inp:focus{border-color:#ef4444}
@@ -169,11 +169,11 @@ tr:hover td{background:#f0f4ff}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:200;padding:24px}
 .modal-overlay.open{display:flex}
 .modal-box{background:#fff;border-radius:16px;padding:28px 24px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
-.modal-title{font-size:17px;font-weight:800;color:#1e2235;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:17px;font-weight:800;color:#1a1917;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
 .form-grid .full{grid-column:1/-1}
 .fg label{display:block;font-size:11px;font-weight:700;color:#888;letter-spacing:.08em;margin-bottom:6px}
-.fg input,.fg select{width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:9px;font-size:13px;font-family:inherit;outline:none;transition:border-color .2s;background:#fafafa;color:#1e2235}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:9px;font-size:13px;font-family:inherit;outline:none;transition:border-color .2s;background:#fafafa;color:#1a1917}
 .fg input:focus,.fg select:focus{border-color:#2563eb;background:#fff}
 .modal-btns{display:flex;gap:8px;justify-content:flex-end}
 /* 수주 드래그 카드 */
@@ -182,7 +182,7 @@ tr:hover td{background:#f0f4ff}
 .order-drag-card.dragging{opacity:.5;cursor:grabbing}
 .order-drag-card.urgent{border-left:3px solid #d97706}
 .order-drag-card.overdue{border-left:3px solid #dc2626}
-.odc-code{font-size:13px;font-weight:800;color:#1e2235;margin-bottom:3px}
+.odc-code{font-size:13px;font-weight:800;color:#1a1917;margin-bottom:3px}
 .odc-customer{font-size:11px;color:#888;margin-bottom:4px}
 .odc-info{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 /* 달력 드롭존 */
@@ -190,36 +190,44 @@ tr:hover td{background:#f0f4ff}
 .cal-day-cell.drop-hover{background:#eff6ff !important;border-color:#2563eb !important;border-style:dashed !important}
 .cal-day-cell.has-plans{background:#fff}
 
-/* ══ 밝은 테마 강제 적용 ══ */
-body { background: #f0f2f8 !important; }
-.main-wrap { background: #f0f2f8 !important; }
-.content { background: #f0f2f8 !important; }
-.topbar { background: #ffffff !important; box-shadow: 0 1px 4px rgba(0,0,0,.06) !important; border-bottom: 1px solid #dde3f0 !important; }
-.card { background: #ffffff !important; border: 1px solid #dde3f0 !important; box-shadow: 0 1px 4px rgba(0,0,0,.05) !important; }
-.metric { background: #ffffff !important; border: 1px solid #dde3f0 !important; box-shadow: 0 1px 3px rgba(0,0,0,.04) !important; }
-.metric-value { color: #1e2235 !important; }
-.metric.blue .metric-value { color: #2563eb !important; }
-.metric.green .metric-value { color: #16a34a !important; }
-.metric.amber .metric-value { color: #d97706 !important; }
-.metric.red .metric-value { color: #dc2626 !important; }
-.metric-label { color: #6b7a99 !important; }
-.page-title { color: #1e2235 !important; }
-.page-desc { color: #6b7a99 !important; }
-.card-title { color: #1e2235 !important; }
-.tb-title { color: #1e2235 !important; }
-.tb-breadcrumb { color: #8898bb !important; }
-th { background: #f4f6fb !important; color: #6b7a99 !important; border-bottom: 1px solid #dde3f0 !important; }
-td { color: #1e2235 !important; border-bottom: 1px solid #eaeef8 !important; }
-tr:hover td { background: #f0f4ff !important; }
-.tbl-wrap { border: 1px solid #dde3f0 !important; }
-.btn-sm { border: 1px solid #dde3f0 !important; color: #4a5578 !important; background: #fff !important; }
-.btn-sm:hover { background: #f0f4ff !important; }
-.name-sel-card { background: #fff !important; border-color: #dde3f0 !important; }
-.job-card { background: #fff !important; border-color: #dde3f0 !important; }
-.job-code { color: #1e2235 !important; }
-.log-item { background: #f4f6fb !important; }
-.log-code { color: #1e2235 !important; }
-.log-time { color: #2563eb !important; }
+/* ══ 밝은 테마 ══ */
+body{background:#f0f2f8!important}
+.main-wrap,.content{background:#f0f2f8!important}
+.topbar{background:#fff!important;border-bottom:1px solid #dde3f0!important;box-shadow:0 1px 4px rgba(0,0,0,.06)!important}
+.tb-title{color:#1e2235!important}
+.tb-breadcrumb{color:#8898bb!important}
+.page-title{color:#1e2235!important}
+.page-desc{color:#6b7a99!important}
+.card{background:#fff!important;border:1px solid #dde3f0!important;box-shadow:0 1px 4px rgba(0,0,0,.05)!important}
+.card-title{color:#1e2235!important}
+.metric{background:#fff!important;border:1px solid #dde3f0!important;box-shadow:0 1px 3px rgba(0,0,0,.04)!important}
+.metric-value{color:#1e2235!important}
+.metric.blue .metric-value{color:#2563eb!important}
+.metric.green .metric-value{color:#16a34a!important}
+.metric.amber .metric-value{color:#d97706!important}
+.metric.red .metric-value{color:#dc2626!important}
+.metric-label{color:#6b7a99!important}
+th{background:#f4f6fb!important;color:#6b7a99!important;border-bottom:1px solid #dde3f0!important}
+td{color:#1e2235!important;border-bottom:1px solid #eaeef8!important}
+tr:hover td{background:#f0f4ff!important}
+.tbl-wrap{border:1px solid #dde3f0!important}
+.btn-sm{background:#fff!important;border:1px solid #dde3f0!important;color:#4a5578!important}
+.btn-sm:hover{background:#f0f4ff!important}
+.name-sel-card{background:#fff!important;border-color:#dde3f0!important}
+.name-sel-card:hover{border-color:#2563eb!important}
+.job-card{background:#fff!important;border-color:#dde3f0!important}
+.job-code{color:#1e2235!important}
+.job-card-head{background:#fff!important}
+.job-body{background:#f8f9fc!important}
+.log-item{background:#f4f6fb!important}
+.log-code{color:#1e2235!important}
+.log-time{color:#2563eb!important}
+.modal-box{background:#fff!important}
+.modal-title{color:#1e2235!important}
+.plan-modal{background:#fff!important}
+.plan-modal-title{color:#1e2235!important}
+.fg input,.fg select,.plan-fg input{background:#f8f9fc!important;border-color:#dde3f0!important}
+.fg input:focus,.fg select:focus,.plan-fg input:focus{background:#fff!important;border-color:#2563eb!important}
 </style>
 </head>
 <body>
@@ -307,7 +315,7 @@ tr:hover td { background: #f0f4ff !important; }
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
           <div style="display:flex;align-items:center;gap:12px">
             <div id="work-avatar" style="width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0;background:#2563eb"></div>
-            <div><div id="work-username" style="font-size:18px;font-weight:800;color:#1e2235"></div><div id="work-date" style="font-size:12px;color:#888;margin-top:1px"></div></div>
+            <div><div id="work-username" style="font-size:18px;font-weight:800;color:#1a1917"></div><div id="work-date" style="font-size:12px;color:#888;margin-top:1px"></div></div>
           </div>
           <button onclick="backToSelect()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;background:#f5f5f5;border:none;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;color:#555;font-family:inherit"><i class="ti ti-arrow-left"></i> 이름 선택</button>
         </div>
@@ -321,7 +329,7 @@ tr:hover td { background: #f0f4ff !important; }
         <div id="job-card-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px"></div>
         <div style="background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:18px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <div style="font-size:13px;font-weight:700;color:#1e2235;display:flex;align-items:center;gap:6px"><i class="ti ti-history" style="font-size:15px"></i> 나의 작업 기록</div>
+            <div style="font-size:13px;font-weight:700;color:#1a1917;display:flex;align-items:center;gap:6px"><i class="ti ti-history" style="font-size:15px"></i> 나의 작업 기록</div>
             <span id="log-count" style="font-size:12px;color:#aaa">0건</span>
           </div>
           <div id="log-list"><div style="text-align:center;color:#bbb;font-size:13px;padding:20px">아직 기록이 없습니다</div></div>
@@ -347,93 +355,77 @@ tr:hover td { background: #f0f4ff !important; }
     <div><div class="page-title">수주관리</div><div class="page-desc">수주 현황 및 생산계획 연동 조회</div></div>
     <button class="btn-sm primary" onclick="openOrderModal()"><i class="ti ti-plus"></i> 수주 등록</button>
   </div>
-
-  <!-- KPI -->
   <div class="metrics">
     <div class="metric blue"><div class="metric-label">전체 수주</div><div class="metric-value" id="or-total">0</div></div>
     <div class="metric amber"><div class="metric-label">납기 임박 (7일)</div><div class="metric-value" id="or-urgent">0</div></div>
     <div class="metric red"><div class="metric-label">납기 지연</div><div class="metric-value" id="or-late">0</div></div>
     <div class="metric green"><div class="metric-label">완료</div><div class="metric-value" id="or-done">0</div></div>
   </div>
-
-  <!-- 탭: 수주목록 / 일별 / 월별 -->
-  <div style="display:flex;gap:4px;margin-bottom:16px;background:#f0f4ff;padding:4px;border-radius:10px;width:fit-content">
-    <button id="tab-order-list" onclick="switchOrderTab('list')" style="padding:7px 18px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:#2563eb;color:#fff;transition:all .2s">수주 목록</button>
-    <button id="tab-order-daily" onclick="switchOrderTab('daily')" style="padding:7px 18px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:#6b7280;transition:all .2s">일별 계획</button>
-    <button id="tab-order-monthly" onclick="switchOrderTab('monthly')" style="padding:7px 18px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:#6b7280;transition:all .2s">월별 계획</button>
+  <div style="display:flex;gap:3px;margin-bottom:16px;background:#eef1f8;padding:4px;border-radius:10px;width:fit-content">
+    <button id="tab-btn-list" onclick="switchOrderTab('list')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:#2563eb;color:#fff;transition:all .2s">수주 목록</button>
+    <button id="tab-btn-daily" onclick="switchOrderTab('daily')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:#6b7280;transition:all .2s">일별 계획</button>
+    <button id="tab-btn-monthly" onclick="switchOrderTab('monthly')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:#6b7280;transition:all .2s">월별 계획</button>
   </div>
-
   <!-- 수주 목록 탭 -->
   <div id="order-tab-list">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin:0"><i class="ti ti-clipboard-list"></i> 수주 목록</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <input id="or-search" class="inp-s" placeholder="🔍 고객사/품목 검색" oninput="renderOrdersTable()" style="padding:6px 10px;border:1px solid #e0e0e0;border-radius:7px;font-size:12px;font-family:inherit;outline:none;width:160px">
-          <select id="or-sf" onchange="renderOrdersTable()" style="padding:6px 10px;border:1px solid #e0e0e0;border-radius:7px;font-size:12px;font-family:inherit;outline:none;background:#fff">
-            <option value="">전체 상태</option>
-            <option value="active">진행중</option>
-            <option value="done">완료</option>
+        <div style="display:flex;gap:6px">
+          <input id="or-search" placeholder="🔍 고객사/품목 검색" oninput="renderOrdersTable()" style="padding:6px 10px;border:1px solid #dde3f0;border-radius:7px;font-size:12px;font-family:inherit;outline:none;width:160px;background:#fff">
+          <select id="or-sf" onchange="renderOrdersTable()" style="padding:6px 10px;border:1px solid #dde3f0;border-radius:7px;font-size:12px;font-family:inherit;outline:none;background:#fff">
+            <option value="">전체 상태</option><option value="active">진행중</option><option value="done">완료</option>
           </select>
         </div>
       </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>수주번호(W/C)</th><th>고객사</th><th>품목명</th><th>작업코드</th><th>수주수량</th><th>납기일</th><th>D-Day</th><th>상태</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
-          <tbody id="orders-tbody"><tr><td colspan="10" style="text-align:center;color:#aaa;padding:28px">등록된 수주가 없습니다</td></tr></tbody>
-        </table>
-      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>수주번호(W/C)</th><th>고객사</th><th>품목명</th><th>작업코드</th><th>수주수량</th><th>납기일</th><th>D-Day</th><th>상태</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
+        <tbody id="orders-tbody"><tr><td colspan="10" style="text-align:center;color:#aaa;padding:28px">등록된 수주가 없습니다</td></tr></tbody>
+      </table></div>
     </div>
   </div>
-
   <!-- 일별 계획 탭 -->
   <div id="order-tab-daily" style="display:none">
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin:0"><i class="ti ti-calendar-day"></i> 일별 생산계획 현황</div>
         <div style="display:flex;align-items:center;gap:6px">
           <button class="btn-sm" onclick="changeDay(-1)">◀</button>
-          <input type="date" id="plan-day-picker" style="padding:6px 10px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;font-family:inherit;outline:none" onchange="renderDayPlans()">
+          <input type="date" id="plan-day-picker" onchange="renderDayPlans()" style="padding:6px 10px;border:1px solid #dde3f0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;background:#fff">
           <button class="btn-sm" onclick="changeDay(1)">▶</button>
           <button class="btn-sm" onclick="goTodayDay()">오늘</button>
         </div>
       </div>
-      <!-- 일별 요약 -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px" id="day-kpis">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px">
         <div style="background:#f0f6ff;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:6px">계획 건수</div><div style="font-size:22px;font-weight:800;color:#2563eb" id="dk-cnt">—</div></div>
         <div style="background:#f0fdf4;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:6px">계획수량</div><div style="font-size:22px;font-weight:800;color:#16a34a" id="dk-plan">—</div></div>
-        <div style="background:#fff7ed;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:6px">실적수량</div><div style="font-size:22px;font-weight:800;color:#d97706" id="dk-act">—</div></div>
-        <div style="background:#fef3f2;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:6px">달성률</div><div style="font-size:22px;font-weight:800;color:#dc2626" id="dk-rate">—</div></div>
+        <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:6px">실적수량</div><div style="font-size:22px;font-weight:800;color:#d97706" id="dk-act">—</div></div>
+        <div style="background:#fff1f2;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:6px">달성률</div><div style="font-size:22px;font-weight:800;color:#dc2626" id="dk-rate">—</div></div>
       </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>작업코드</th><th>고객사</th><th>수주번호</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
-          <tbody id="day-plans-tbody"><tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
-        </table>
-      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>작업코드</th><th>고객사</th><th>수주번호</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
+        <tbody id="day-plans-tbody"><tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
+      </table></div>
     </div>
   </div>
-
   <!-- 월별 계획 탭 -->
   <div id="order-tab-monthly" style="display:none">
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin:0"><i class="ti ti-calendar-month"></i> 월별 생산계획 현황</div>
         <div style="display:flex;align-items:center;gap:6px">
           <button class="btn-sm" onclick="changeMonth(-1)">◀</button>
-          <input type="month" id="plan-month-picker" style="padding:6px 10px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;font-family:inherit;outline:none" onchange="renderMonthPlans()">
+          <input type="month" id="plan-month-picker" onchange="renderMonthPlans()" style="padding:6px 10px;border:1px solid #dde3f0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;background:#fff">
           <button class="btn-sm" onclick="changeMonth(1)">▶</button>
           <button class="btn-sm" onclick="goThisMonth()">이번달</button>
         </div>
       </div>
-      <!-- 월별 요약 -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px">
-        <div style="background:#f0f6ff;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:6px">총 계획 건수</div><div style="font-size:22px;font-weight:800;color:#2563eb" id="mk-cnt">—</div></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px">
+        <div style="background:#f0f6ff;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:6px">총 계획건수</div><div style="font-size:22px;font-weight:800;color:#2563eb" id="mk-cnt">—</div></div>
         <div style="background:#f0fdf4;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:6px">총 계획수량</div><div style="font-size:22px;font-weight:800;color:#16a34a" id="mk-plan">—</div></div>
-        <div style="background:#fff7ed;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:6px">총 실적수량</div><div style="font-size:22px;font-weight:800;color:#d97706" id="mk-act">—</div></div>
-        <div style="background:#fef3f2;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:6px">달성률</div><div style="font-size:22px;font-weight:800;color:#dc2626" id="mk-rate">—</div></div>
+        <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:6px">총 실적수량</div><div style="font-size:22px;font-weight:800;color:#d97706" id="mk-act">—</div></div>
+        <div style="background:#fff1f2;border-radius:10px;padding:14px;text-align:center"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:6px">달성률</div><div style="font-size:22px;font-weight:800;color:#dc2626" id="mk-rate">—</div></div>
       </div>
-      <!-- 일자별 그룹 테이블 -->
       <div id="month-plans-wrap"><div style="text-align:center;color:#aaa;padding:24px">해당 월 계획이 없습니다</div></div>
     </div>
   </div>
@@ -474,7 +466,7 @@ tr:hover td { background: #f0f4ff !important; }
           <div class="card-title" style="margin:0"><i class="ti ti-calendar-month"></i> 생산계획 달력</div>
           <div style="display:flex;align-items:center;gap:6px">
             <button class="btn-sm" onclick="calPrev()">◀</button>
-            <span style="font-size:14px;font-weight:700;color:#1e2235;min-width:90px;text-align:center" id="cal-month-label"></span>
+            <span style="font-size:14px;font-weight:700;color:#1a1917;min-width:90px;text-align:center" id="cal-month-label"></span>
             <button class="btn-sm" onclick="calNext()">▶</button>
             <button class="btn-sm" onclick="calGotoToday()">오늘</button>
           </div>
@@ -691,8 +683,10 @@ async function loadAll() {
     renderPlansTable();
     renderCalendar();
     renderOrderKPIs();
-    if(currentOrderTab==='daily') renderDayPlans();
-    if(currentOrderTab==='monthly') renderMonthPlans();
+    if(typeof currentOrderTab!=='undefined'){
+      if(currentOrderTab==='daily')renderDayPlans();
+      if(currentOrderTab==='monthly')renderMonthPlans();
+    }
   } catch(e) { console.error('loadAll error:', e); }
 }
 function startPolling() { if(pollingTimer) clearInterval(pollingTimer); pollingTimer = setInterval(loadAll, 3000); }
@@ -1085,7 +1079,7 @@ function renderCalendar() {
     const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday = ds===today;
     const dow = new Date(calYear,calMonth,d).getDay();
-    const dayColor = dow===0?'#ef4444':dow===6?'#2563eb':'#1e2235';
+    const dayColor = dow===0?'#ef4444':dow===6?'#2563eb':'#1a1917';
     const dayNumStyle = isToday
       ? 'width:22px;height:22px;background:#2563eb;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800'
       : `font-size:12px;font-weight:700;color:${dayColor}`;
@@ -1227,174 +1221,135 @@ function renderLogs(){
 });
 
 
-/* ══ 수주관리 탭 전환 ══ */
-let currentOrderTab = 'list';
-window.switchOrderTab = function(tab) {
-  currentOrderTab = tab;
-  ['list','daily','monthly'].forEach(t => {
-    const el = document.getElementById('order-tab-' + t);
-    const btn = document.getElementById('tab-order-' + t);
-    if(el) el.style.display = t === tab ? 'block' : 'none';
-    if(btn) {
-      btn.style.background = t === tab ? '#2563eb' : 'transparent';
-      btn.style.color = t === tab ? '#fff' : '#6b7280';
-      btn.style.fontWeight = t === tab ? '700' : '600';
-    }
+/* ══ 수주관리 탭 ══ */
+let currentOrderTab='list';
+window.switchOrderTab=function(tab){
+  currentOrderTab=tab;
+  ['list','daily','monthly'].forEach(t=>{
+    const el=document.getElementById('order-tab-'+t);
+    const btn=document.getElementById('tab-btn-'+t);
+    if(el)el.style.display=t===tab?'block':'none';
+    if(btn){btn.style.background=t===tab?'#2563eb':'transparent';btn.style.color=t===tab?'#fff':'#6b7280';btn.style.fontWeight=t===tab?'700':'600';}
   });
-  if(tab === 'daily') renderDayPlans();
-  if(tab === 'monthly') renderMonthPlans();
+  if(tab==='daily')renderDayPlans();
+  if(tab==='monthly')renderMonthPlans();
 };
 
-/* ══ 일별 계획 ══ */
-window.changeDay = function(d) {
-  const picker = document.getElementById('plan-day-picker');
-  if(!picker) return;
-  const dt = new Date(picker.value || todayISO());
-  dt.setDate(dt.getDate() + d);
-  picker.value = dt.toISOString().slice(0,10);
-  renderDayPlans();
+window.changeDay=function(d){
+  const p=document.getElementById('plan-day-picker');if(!p)return;
+  const dt=new Date(p.value||todayISO());dt.setDate(dt.getDate()+d);
+  p.value=dt.toISOString().slice(0,10);renderDayPlans();
 };
-window.goTodayDay = function() {
-  const picker = document.getElementById('plan-day-picker');
-  if(picker) { picker.value = todayISO(); renderDayPlans(); }
-};
+window.goTodayDay=function(){const p=document.getElementById('plan-day-picker');if(p){p.value=todayISO();renderDayPlans();}};
 
-window.renderDayPlans = function() {
-  const picker = document.getElementById('plan-day-picker');
-  const dateStr = picker?.value || todayISO();
-  const plans = Object.values(cachedPlans).filter(p => p.date === dateStr);
-  const sm = {done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
-  const sc = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
-
-  // KPI
-  const totalPlan = plans.reduce((s,p) => s+(p.planQty||0), 0);
-  const totalAct = plans.reduce((s,p) => s+(p.actQty||0), 0);
-  const rate = totalPlan > 0 ? Math.round(totalAct/totalPlan*100) : 0;
-  const el = id => document.getElementById(id);
-  if(el('dk-cnt')) el('dk-cnt').textContent = plans.length || '0';
-  if(el('dk-plan')) el('dk-plan').textContent = totalPlan.toLocaleString();
-  if(el('dk-act')) el('dk-act').textContent = totalAct.toLocaleString();
-  if(el('dk-rate')) el('dk-rate').textContent = rate + '%';
-
-  const tbody = document.getElementById('day-plans-tbody');
-  if(!tbody) return;
-  if(!plans.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px">해당 날짜 계획이 없습니다</td></tr>';
-    return;
-  }
-  tbody.innerHTML = plans.map(p => {
-    const pct = p.planQty > 0 ? Math.round((p.actQty||0)/p.planQty*100) : 0;
-    const st = p.status || 'planned';
+window.renderDayPlans=function(){
+  const p=document.getElementById('plan-day-picker');
+  const dateStr=p?.value||todayISO();
+  const plans=Object.values(cachedPlans).filter(x=>x.date===dateStr);
+  const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
+  const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+  const tp=plans.reduce((s,x)=>s+(x.planQty||0),0);
+  const ta=plans.reduce((s,x)=>s+(x.actQty||0),0);
+  const rate=tp>0?Math.round(ta/tp*100):0;
+  const el=id=>document.getElementById(id);
+  if(el('dk-cnt'))el('dk-cnt').textContent=plans.length;
+  if(el('dk-plan'))el('dk-plan').textContent=tp.toLocaleString();
+  if(el('dk-act'))el('dk-act').textContent=ta.toLocaleString();
+  if(el('dk-rate'))el('dk-rate').textContent=rate+'%';
+  const tbody=el('day-plans-tbody');if(!tbody)return;
+  if(!plans.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px">해당 날짜 계획이 없습니다</td></tr>';return;}
+  tbody.innerHTML=plans.map(p=>{
+    const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
+    const st=p.status||'planned';
     return `<tr>
       <td style="font-weight:700;color:#2563eb">${esc(p.code)}</td>
       <td>${esc(p.customer||'—')}</td>
       <td style="font-size:11px;color:#888">${esc(p.orderId||'—')}</td>
       <td style="font-family:monospace">${(p.planQty||0).toLocaleString()} EA</td>
       <td style="font-family:monospace;color:${(p.actQty||0)>0?'#16a34a':'#aaa'}">${(p.actQty||0).toLocaleString()} EA</td>
-      <td><div style="display:flex;align-items:center;gap:6px"><div class="prog-bar" style="width:60px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:12px">${pct}%</span></div></td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div class="prog-bar" style="width:55px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:12px">${pct}%</span></div></td>
       <td><span class="badge ${sc[st]}">${sm[st]}</span></td>
       <td style="font-size:12px;color:#888">${esc(p.remark||'—')}</td>
     </tr>`;
   }).join('');
 };
 
-/* ══ 월별 계획 ══ */
-window.changeMonth = function(d) {
-  const picker = document.getElementById('plan-month-picker');
-  if(!picker) return;
-  const [y,m] = (picker.value || new Date().toISOString().slice(0,7)).split('-').map(Number);
-  const dt = new Date(y, m-1+d, 1);
-  picker.value = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
-  renderMonthPlans();
+window.changeMonth=function(d){
+  const p=document.getElementById('plan-month-picker');if(!p)return;
+  const [y,m]=(p.value||new Date().toISOString().slice(0,7)).split('-').map(Number);
+  const dt=new Date(y,m-1+d,1);
+  p.value=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;renderMonthPlans();
 };
-window.goThisMonth = function() {
-  const picker = document.getElementById('plan-month-picker');
-  const now = new Date();
-  if(picker) { picker.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`; renderMonthPlans(); }
+window.goThisMonth=function(){
+  const p=document.getElementById('plan-month-picker');
+  const n=new Date();if(p){p.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;renderMonthPlans();}
 };
 
-window.renderMonthPlans = function() {
-  const picker = document.getElementById('plan-month-picker');
-  const monthStr = picker?.value || new Date().toISOString().slice(0,7);
-  const plans = Object.values(cachedPlans).filter(p => p.date?.startsWith(monthStr));
-  plans.sort((a,b) => a.date > b.date ? 1 : -1);
-  const sm = {done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
-  const sc = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
-
-  // KPI
-  const totalPlan = plans.reduce((s,p) => s+(p.planQty||0), 0);
-  const totalAct = plans.reduce((s,p) => s+(p.actQty||0), 0);
-  const rate = totalPlan > 0 ? Math.round(totalAct/totalPlan*100) : 0;
-  const el = id => document.getElementById(id);
-  if(el('mk-cnt')) el('mk-cnt').textContent = plans.length || '0';
-  if(el('mk-plan')) el('mk-plan').textContent = totalPlan.toLocaleString();
-  if(el('mk-act')) el('mk-act').textContent = totalAct.toLocaleString();
-  if(el('mk-rate')) el('mk-rate').textContent = rate + '%';
-
-  const wrap = document.getElementById('month-plans-wrap');
-  if(!wrap) return;
-  if(!plans.length) {
-    wrap.innerHTML = '<div style="text-align:center;color:#aaa;padding:24px">해당 월 계획이 없습니다</div>';
-    return;
-  }
-
-  // 날짜별 그룹핑
-  const byDate = {};
-  plans.forEach(p => {
-    if(!byDate[p.date]) byDate[p.date] = [];
-    byDate[p.date].push(p);
-  });
-
-  const wds = ['일','월','화','수','목','금','토'];
-  wrap.innerHTML = Object.entries(byDate).map(([date, dayPlans]) => {
-    const dow = new Date(date).getDay();
-    const dayColor = dow===0?'#ef4444':dow===6?'#2563eb':'#1e2235';
-    const dayPlan = dayPlans.reduce((s,p)=>s+(p.planQty||0),0);
-    const dayAct = dayPlans.reduce((s,p)=>s+(p.actQty||0),0);
-    const dayRate = dayPlan>0?Math.round(dayAct/dayPlan*100):0;
-    const rows = dayPlans.map(p => {
-      const pct = p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
-      const st = p.status||'planned';
+window.renderMonthPlans=function(){
+  const p=document.getElementById('plan-month-picker');
+  const ms=p?.value||new Date().toISOString().slice(0,7);
+  const plans=Object.values(cachedPlans).filter(x=>x.date?.startsWith(ms));
+  plans.sort((a,b)=>a.date>b.date?1:-1);
+  const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
+  const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+  const tp=plans.reduce((s,x)=>s+(x.planQty||0),0);
+  const ta=plans.reduce((s,x)=>s+(x.actQty||0),0);
+  const rate=tp>0?Math.round(ta/tp*100):0;
+  const el=id=>document.getElementById(id);
+  if(el('mk-cnt'))el('mk-cnt').textContent=plans.length;
+  if(el('mk-plan'))el('mk-plan').textContent=tp.toLocaleString();
+  if(el('mk-act'))el('mk-act').textContent=ta.toLocaleString();
+  if(el('mk-rate'))el('mk-rate').textContent=rate+'%';
+  const wrap=el('month-plans-wrap');if(!wrap)return;
+  if(!plans.length){wrap.innerHTML='<div style="text-align:center;color:#aaa;padding:24px">해당 월 계획이 없습니다</div>';return;}
+  const byDate={};
+  plans.forEach(p=>{if(!byDate[p.date])byDate[p.date]=[];byDate[p.date].push(p);});
+  const wds=['일','월','화','수','목','금','토'];
+  wrap.innerHTML=Object.entries(byDate).map(([date,dp])=>{
+    const dow=new Date(date).getDay();
+    const dc=dow===0?'#ef4444':dow===6?'#2563eb':'#1e2235';
+    const dp2=dp.reduce((s,x)=>s+(x.planQty||0),0);
+    const da=dp.reduce((s,x)=>s+(x.actQty||0),0);
+    const dr=dp2>0?Math.round(da/dp2*100):0;
+    const rows=dp.map(p=>{
+      const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
+      const st=p.status||'planned';
       return `<tr>
         <td style="font-weight:700;color:#2563eb">${esc(p.code)}</td>
         <td>${esc(p.customer||'—')}</td>
         <td style="font-size:11px;color:#888">${esc(p.orderId||'—')}</td>
         <td style="font-family:monospace">${(p.planQty||0).toLocaleString()} EA</td>
         <td style="font-family:monospace;color:${(p.actQty||0)>0?'#16a34a':'#aaa'}">${(p.actQty||0).toLocaleString()} EA</td>
-        <td><div style="display:flex;align-items:center;gap:6px"><div class="prog-bar" style="width:50px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px">${pct}%</span></div></td>
+        <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:50px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px">${pct}%</span></div></td>
         <td><span class="badge ${sc[st]}">${sm[st]}</span></td>
         <td style="font-size:11px;color:#888">${esc(p.remark||'—')}</td>
       </tr>`;
     }).join('');
     return `<div style="margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8f9fc;border-radius:8px;border-left:3px solid ${dayColor};margin-bottom:6px">
-        <span style="font-size:14px;font-weight:800;color:${dayColor}">${date}</span>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:#f4f6fb;border-radius:8px;border-left:3px solid ${dc};margin-bottom:6px">
+        <span style="font-size:14px;font-weight:800;color:${dc}">${date}</span>
         <span style="font-size:12px;color:#888">(${wds[dow]})</span>
-        <span style="font-size:11px;background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:4px;font-weight:600;margin-left:auto">${dayPlans.length}건</span>
-        <span style="font-size:11px;color:#888">${dayPlan.toLocaleString()} EA</span>
-        <span style="font-size:11px;font-weight:700;color:${dayRate>=100?'#16a34a':dayRate>0?'#d97706':'#aaa'}">${dayRate}%</span>
+        <span style="font-size:11px;background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:4px;font-weight:600;margin-left:auto">${dp.length}건</span>
+        <span style="font-size:11px;color:#888">${dp2.toLocaleString()} EA</span>
+        <span style="font-size:11px;font-weight:700;color:${dr>=100?'#16a34a':dr>0?'#d97706':'#aaa'}">${dr}%</span>
       </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>작업코드</th><th>고객사</th><th>수주번호</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>작업코드</th><th>고객사</th><th>수주번호</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
     </div>`;
   }).join('');
 };
 
-/* ══ 수주관리 탭 초기화 ══ */
-(function initOrderTab() {
-  const today = new Date();
-  const todayVal = today.toISOString().slice(0,10);
-  const monthVal = todayVal.slice(0,7);
-  setTimeout(() => {
-    const dp = document.getElementById('plan-day-picker');
-    const mp = document.getElementById('plan-month-picker');
-    if(dp) dp.value = todayVal;
-    if(mp) mp.value = monthVal;
-  }, 100);
+/* 탭 초기화 */
+(function(){
+  const now=new Date();
+  setTimeout(()=>{
+    const dp=document.getElementById('plan-day-picker');
+    const mp=document.getElementById('plan-month-picker');
+    if(dp)dp.value=now.toISOString().slice(0,10);
+    if(mp)mp.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  },200);
 })();
 function showToast(msg){
   let t=document.getElementById('g-toast');
