@@ -274,6 +274,9 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   .metrics{grid-template-columns:repeat(2,1fr)}
   .page-header{flex-direction:column;align-items:flex-start}
 }
+
+.cal-day{cursor:default}
+.cal-drop-hover{background:rgba(59,130,246,.15)!important;border-color:var(--accent)!important;border-style:dashed!important}
 </style>
 </head>
 <body>
@@ -485,7 +488,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>작업일자</th><th>작업코드</th><th>제품코드</th><th>스펙</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
+            <thead><tr><th>등록일</th><th>작업코드</th><th>제품코드</th><th>스펙</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th style="width:100px">관리</th></tr></thead>
             <tbody id="plan-tbl"><tr><td colspan="13" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
           </table>
         </div>
@@ -1091,6 +1094,7 @@ window.selectWorker = async function(idx) {
   Object.entries(myState).forEach(([c,s])=>{if(s.action&&s.action!=='end')jobs[c]={action:s.action,since:s.since||'',open:s.action==='start'};});
   try{const ml=await API.get(`/api/logs?worker=${encodeURIComponent(currentUser)}`);if(ml){const wl=ml[currentUser]||{};logs=Object.values(wl).sort((a,b)=>b.ts-a.ts);}}catch(e){logs=[];}
   renderJobs(); renderLogs();
+  updatePlanSelect();
 };
 
 window.backToWorkers = function(){
@@ -1274,7 +1278,7 @@ window.submitPlan=async function(){
   if(!code){showToast('작업코드 입력');return;}
   if(!date){showToast('작업일자 선택');return;}
   if(qty<=0){showToast('계획수량 입력');return;}
-  const res=await API.post('/api/plans',{code,date,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim(),spec:document.getElementById('pf-spec').value.trim(),customer:document.getElementById('pf-customer').value.trim(),remark:document.getElementById('pf-remark').value.trim()});
+  const res=await API.post('/api/plans',{code,date,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim(),spec:document.getElementById('pf-spec').value.trim(),customer:document.getElementById('pf-customer').value.trim(),remark:document.getElementById('pf-remark').value.trim(),createdAt:new Date().toISOString().slice(0,10)});
   if(res){
     cachedPlans=res;
     closeModal('plan-modal');
@@ -1329,7 +1333,7 @@ function renderPlanTable(filterFn){
     const wHrs=getWorkHours(p.code);
     const isToday=p.date===new Date().toISOString().slice(0,10);
     return `<tr style="${isToday?'background:rgba(59,130,246,.04)':''}">
-      <td style="font-family:var(--mono);font-size:11px">${isToday?`<span style="color:var(--accent);font-weight:700">${p.date}</span>`:p.date||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.createdAt||p.date||'—'}</td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
       <td style="color:var(--text2)">${esc(p.productCode||'—')}</td>
       <td style="color:var(--text2);font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.spec||'')}">${esc(p.spec||'—')}</td>
@@ -1342,6 +1346,7 @@ function renderPlanTable(filterFn){
       <td><span class="badge ${sc[p.status]||'badge-gray'}">${sm[p.status]||'예정'}</span></td>
       <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
       <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" style="margin-right:4px" title="달력으로 드래그" draggable="true" ondragstart="onPlanDragStart(event,'${esc(p.id||p.code)}')" ondragend="onPlanDragEnd(event)" style="cursor:grab"><i class="ti ti-calendar-plus"></i></button>
         <button class="btn btn-secondary btn-sm" style="margin-right:4px" onclick="openEditPlanModal('${esc(p.id||p.code)}')"><i class="ti ti-edit"></i></button>
         <button class="btn btn-secondary btn-sm" style="color:#dc2626" onclick="deletePlan('${esc(p.id||p.code)}')"><i class="ti ti-trash"></i></button>
       </td>
@@ -1414,8 +1419,11 @@ function renderCalendar(){
     const dow=new Date(calYear,calMonth,d).getDay();
     const dc=dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text2)';
     const dp=Object.values(cachedPlans).filter(p=>p.date===ds);
-    const ph=dp.slice(0,2).map(p=>{const c=getCalColor(p.code);return `<div class="cal-chip" style="background:${c.bg};color:${c.text}">${p.code}</div>`;}).join('');
-    html+=`<div class="cal-day${isToday?' today':''}">
+    const ph=dp.slice(0,2).map(p=>{const c=getCalColor(p.code);return `<div class="cal-chip" style="background:${c.bg};color:${c.text}" title="${p.code} | ${p.customer||''} | ${p.planQty||0}EA">${p.code}</div>`;}).join('');
+    html+=`<div class="cal-day${isToday?' today':''}" 
+      ondragover="event.preventDefault();event.currentTarget.classList.add('cal-drop-hover')"
+      ondragleave="event.currentTarget.classList.remove('cal-drop-hover')"
+      ondrop="onCalDrop(event,'${ds}')">
       <div class="cal-num" style="color:${isToday?'var(--accent)':dc};${isToday?'font-weight:900':''}">${d}</div>
       ${ph}${dp.length>2?`<div style="font-size:9px;color:var(--text3)">+${dp.length-2}</div>`:''}
     </div>`;
@@ -2112,7 +2120,10 @@ function updatePlanSelect() {
   const today = todayISO();
   // 오늘 계획 + 미완료 계획 모두 표시
   const plans = Object.values(cachedPlans)
-    .filter(p => p.date === today || p.status === 'running' || p.status === 'planned')
+    .filter(p => {
+      const remaining = (p.planQty||0) - (p.actQty||0);
+      return remaining > 0 && p.status !== 'done';
+    })
     .sort((a,b) => a.date > b.date ? 1 : -1);
   const currentVal = sel.value;
   sel.innerHTML = '<option value="">— 계획 선택 —</option>' +
@@ -2138,11 +2149,68 @@ window.addCodeFromPlan = function() {
   showToast(`[${code}] 작업 추가됨 (잔여 ${remaining}EA)`);
 };
 
-/* ══ selectWorker에 plan-select 갱신 연결 ══ */
-const _origSelectWorker = window.selectWorker;
-window.selectWorker = async function(idx) {
-  await _origSelectWorker(idx);
-  updatePlanSelect();
+/* selectWorker에 updatePlanSelect 직접 통합됨 */
+
+/* ══ 생산계획 달력 드래그앤드롭 ══ */
+let dragPlanId = null;
+
+window.onPlanDragStart = function(e, planId) {
+  dragPlanId = planId;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.style.opacity = '0.5';
+};
+
+window.onPlanDragEnd = function(e) {
+  e.currentTarget.style.opacity = '1';
+  document.querySelectorAll('.cal-drop-hover').forEach(el => el.classList.remove('cal-drop-hover'));
+};
+
+window.onCalDrop = function(e, dateStr) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('cal-drop-hover');
+  if(!dragPlanId) return;
+
+  const plan = cachedPlans[dragPlanId] || Object.values(cachedPlans).find(p => p.id === dragPlanId || p.code === dragPlanId);
+  if(!plan) { showToast('계획 정보를 찾을 수 없습니다'); dragPlanId=null; return; }
+
+  if(plan.date === dateStr) {
+    showToast('이미 같은 날짜입니다');
+    dragPlanId = null;
+    return;
+  }
+
+  if(!confirm(`[${plan.code}] 작업일자를 ${dateStr}로 변경하시겠습니까?`)) {
+    dragPlanId = null;
+    return;
+  }
+
+  const id = dragPlanId;
+  dragPlanId = null;
+
+  API.put('/api/plans', {...plan, id, date: dateStr}).then(res => {
+    if(res && !res.error) {
+      cachedPlans = res;
+      renderPlanTable();
+      renderCalendar();
+      renderOrKPIs();
+      if(typeof curOrderTab !== 'undefined') {
+        if(curOrderTab==='daily') renderOrDay();
+        else if(curOrderTab==='monthly') renderOrMonth();
+        else if(curOrderTab==='all') renderOrAll();
+      }
+      showToast(`[${plan.code}] → ${dateStr} 이동됨`);
+    } else {
+      showToast('날짜 변경 실패');
+    }
+  });
+};
+
+/* ══ 달력 칩에 작업일자 표시 ══ */
+// getCalColor 오버라이드해서 칩에 날짜 포함
+const _origRenderCal = renderCalendar;
+renderCalendar = function() {
+  _origRenderCal();
+  // 칩 클릭으로 계획 정보 보기
 };
 function showToast(msg){
   let t=document.getElementById('g-toast');
