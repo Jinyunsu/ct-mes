@@ -360,6 +360,12 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
             <div class="page-title">작업 관리</div>
             <div class="page-desc">이름을 선택하면 작업 화면으로 이동합니다</div>
           </div>
+          <div class="ph-right">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="new-worker-name" class="input" style="width:140px;font-size:13px" placeholder="작업자 이름 입력" maxlength="10" onkeydown="if(event.key==='Enter')addWorkerName()">
+              <button class="btn btn-primary btn-sm" onclick="addWorkerName()"><i class="ti ti-user-plus"></i> 추가</button>
+            </div>
+          </div>
         </div>
         <div class="grid-auto" id="worker-grid">
           <div style="grid-column:1/-1;text-align:center;color:var(--text3);padding:40px;font-size:13px">등록된 작업자가 없습니다</div>
@@ -377,10 +383,22 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <button class="btn btn-secondary" onclick="backToWorkers()"><i class="ti ti-arrow-left"></i> 목록으로</button>
         </div>
         <div class="card" style="margin-bottom:12px">
-          <div class="card-title"><i class="ti ti-plus"></i> 작업코드 추가</div>
-          <div style="display:flex;gap:8px">
-            <input id="code-inp" class="input" type="text" placeholder="작업코드 입력 (Enter)" autocapitalize="characters" onkeydown="if(event.key==='Enter')addCode()">
-            <button class="btn btn-primary" onclick="addCode()"><i class="ti ti-plus"></i> 추가</button>
+          <div class="card-title"><i class="ti ti-plus"></i> 작업 선택</div>
+          <div style="margin-bottom:10px">
+            <label style="font-size:10px;font-weight:700;color:var(--text3);display:block;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase">생산계획에서 선택</label>
+            <div style="display:flex;gap:8px">
+              <select id="plan-select" class="input" style="flex:1">
+                <option value="">— 오늘 계획 선택 —</option>
+              </select>
+              <button class="btn btn-primary" onclick="addCodeFromPlan()"><i class="ti ti-plus"></i> 추가</button>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:10px">
+            <label style="font-size:10px;font-weight:700;color:var(--text3);display:block;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase">직접 입력</label>
+            <div style="display:flex;gap:8px">
+              <input id="code-inp" class="input" type="text" placeholder="작업코드 직접 입력 (Enter)" autocapitalize="characters" onkeydown="if(event.key==='Enter')addCode()">
+              <button class="btn btn-secondary" onclick="addCode()"><i class="ti ti-plus"></i> 추가</button>
+            </div>
           </div>
         </div>
         <div id="job-list"></div>
@@ -905,6 +923,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   <div class="qty-box">
     <div class="qty-title">작업 종료</div>
     <div class="qty-sub" id="qty-sub">생산 수량을 입력하세요</div>
+    <div id="qty-max-hint" style="font-size:11px;color:var(--amber);margin-bottom:6px;min-height:16px"></div>
     <input class="qty-input" id="qty-inp" type="number" min="0" placeholder="0">
     <div class="qty-hint">0 입력 시 수량 없이 종료됩니다</div>
     <div class="qty-btns">
@@ -981,6 +1000,7 @@ async function loadAll() {
     renderCalendar();
     renderAllLinked();
     renderOrKPIs();
+    if(typeof currentUser !== 'undefined' && currentUser) updatePlanSelect();
     if(typeof curOrderTab!=="undefined"){
       if(curOrderTab==="daily") renderOrDay();
       else if(curOrderTab==="monthly") renderOrMonth();
@@ -1122,7 +1142,7 @@ function renderJobs(){
 window.toggleJob=function(c){if(!jobs[c])return;jobs[c].open=!jobs[c].open;document.getElementById('jbody-'+c)?.classList.toggle('open',jobs[c].open);const chv=document.getElementById('jchv-'+c);if(chv)chv.textContent=jobs[c].open?'▴':'▾';};
 window.removeJob=function(c){delete jobs[c];renderJobs();};
 
-window.doAction=async function(code,action,qty=0){
+window.doAction=async function(code,action,qty=0,partialEnd=false){
   const t=new Date();
   const timeStr=t.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
   const dateStr=t.toLocaleDateString('ko-KR');
@@ -1130,7 +1150,13 @@ window.doAction=async function(code,action,qty=0){
   await API.post('/api/logs',{worker:currentUser,code,action,date:dateStr,time:timeStr,qty:qty||0,ts:t.getTime()});
   if(action==='end'){
     await API.del('/api/states',{worker:currentUser,code});
-    jobs[code]={...jobs[code],action:'end',since:timeStr,open:false};
+    if(partialEnd){
+      // 부분 완료 - 작업코드 유지, 잔여 작업 가능
+      jobs[code]={...jobs[code],action:'idle',since:timeStr,open:true};
+      showToast(`[${code}] 부분 완료 (${qty}EA) - 이어서 작업 가능`);
+    } else {
+      jobs[code]={...jobs[code],action:'end',since:timeStr,open:false};
+    }
     if(qty>0){const match=Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase()&&p.date===isoDate);if(match){const[pid,plan]=match;await API.put('/api/plans',{...plan,id:pid,actQty:(Number(plan.actQty)||0)+qty});}}
   } else {
     await API.post('/api/states',{worker:currentUser,code,action,since:timeStr,date:dateStr});
@@ -1143,8 +1169,51 @@ window.doAction=async function(code,action,qty=0){
   showToast(`[${code}] ${lbls[action]}${qty>0?' ('+qty+'EA)':''}`);
 };
 
-window.openQty=function(c){qtyTarget=c;document.getElementById('qty-sub').textContent='작업코드: '+c;document.getElementById('qty-inp').value='';openModal('qty-modal');setTimeout(()=>document.getElementById('qty-inp').focus(),150);};
-window.confirmEnd=function(){const qty=Number(document.getElementById('qty-inp').value)||0;const c=qtyTarget;closeModal('qty-modal');if(c)doAction(c,'end',qty);};
+window.openQty=function(c){
+  qtyTarget=c;
+  document.getElementById('qty-sub').textContent='작업코드: '+c;
+  document.getElementById('qty-inp').value='';
+  // 잔여수량 표시
+  const today=todayISO();
+  const plan=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase()&&(p.date===today||p.status==='running'));
+  const hintEl=document.getElementById('qty-max-hint');
+  if(plan && hintEl){
+    const already=Number(plan.actQty)||0;
+    const remaining=(plan.planQty||0)-already;
+    hintEl.textContent=`계획: ${plan.planQty}EA / 기완료: ${already}EA / 잔여: ${remaining}EA`;
+    hintEl.style.color=remaining>0?'var(--amber)':'var(--green)';
+    document.getElementById('qty-inp').max=remaining;
+  } else if(hintEl){
+    hintEl.textContent='';
+  }
+  openModal('qty-modal');
+  setTimeout(()=>document.getElementById('qty-inp').focus(),150);
+};
+window.confirmEnd=function(){
+  const qty=Number(document.getElementById('qty-inp').value)||0;
+  const c=qtyTarget;
+  if(!c) return;
+  // 계획수량 초과 체크
+  const today=todayISO();
+  const plan=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase()&&(p.date===today||p.status==='running'));
+  if(plan && qty > 0){
+    const already=Number(plan.actQty)||0;
+    const maxQty=(plan.planQty||0)-already;
+    if(qty > maxQty){
+      showToast(`최대 ${maxQty}EA까지 입력 가능합니다 (계획: ${plan.planQty}, 기완료: ${already})`);
+      return;
+    }
+    // 잔여량 체크 - 계획수량 미달이면 작업 이어서 가능
+    if(already+qty < (plan.planQty||0)){
+      // 완전 종료 아님 - pause 상태로 전환
+      closeModal('qty-modal');
+      doAction(c,'end',qty,true); // partialEnd
+      return;
+    }
+  }
+  closeModal('qty-modal');
+  if(c)doAction(c,'end',qty);
+};
 document.getElementById('qty-inp').addEventListener('keydown',e=>{if(e.key==='Enter')confirmEnd();if(e.key==='Escape')closeModal('qty-modal');});
 
 function renderLogs(){
@@ -1309,7 +1378,18 @@ function updatePlanKPI(plans){
 window.deletePlan=async function(id){
   if(!confirm('삭제하시겠습니까?'))return;
   const res=await API.del('/api/plans',{id});
-  if(res){cachedPlans=res;renderPlanTable();renderCalendar();showToast('삭제됨');}
+  if(res){
+    cachedPlans=res;
+    renderPlanTable();
+    renderCalendar();
+    renderOrKPIs();
+    if(typeof curOrderTab!=='undefined'){
+      if(curOrderTab==='daily') renderOrDay();
+      else if(curOrderTab==='monthly') renderOrMonth();
+      else if(curOrderTab==='all') renderOrAll();
+    }
+    showToast('삭제됨');
+  }
 };
 
 /* ══ 달력 ══ */
@@ -2007,6 +2087,63 @@ window.renderOrAll = function() {
     if(mp) mp.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   }, 200);
 })();
+
+/* ══ 작업자 이름 추가 ══ */
+window.addWorkerName = async function() {
+  const inp = document.getElementById('new-worker-name');
+  const val = inp?.value.trim();
+  if(!val) { showToast('이름을 입력하세요'); return; }
+  if(cachedNames.includes(val)) { showToast('이미 등록된 작업자입니다'); return; }
+  const res = await API.post('/api/names', {name: val});
+  if(res) {
+    cachedNames = res;
+    renderWorkerGrid();
+    if(inp) inp.value = '';
+    showToast(`[${val}] 작업자 추가됨`);
+  } else {
+    showToast('추가 실패');
+  }
+};
+
+/* ══ 생산계획 선택 드롭다운 갱신 ══ */
+function updatePlanSelect() {
+  const sel = document.getElementById('plan-select');
+  if(!sel) return;
+  const today = todayISO();
+  // 오늘 계획 + 미완료 계획 모두 표시
+  const plans = Object.values(cachedPlans)
+    .filter(p => p.date === today || p.status === 'running' || p.status === 'planned')
+    .sort((a,b) => a.date > b.date ? 1 : -1);
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">— 계획 선택 —</option>' +
+    plans.map(p => {
+      const remaining = (p.planQty||0) - (p.actQty||0);
+      const label = `[${p.date}] ${p.code}${p.customer?' ('+p.customer+')':''} - 잔여 ${remaining}EA`;
+      return `<option value="${esc(p.code)}" data-plan-id="${esc(p.id||p.code)}" data-remaining="${remaining}">${label}</option>`;
+    }).join('');
+  if(currentVal) sel.value = currentVal;
+}
+
+/* ══ 생산계획에서 작업코드 추가 ══ */
+window.addCodeFromPlan = function() {
+  const sel = document.getElementById('plan-select');
+  if(!sel || !sel.value) { showToast('계획을 선택하세요'); return; }
+  const code = sel.value;
+  const remaining = Number(sel.options[sel.selectedIndex]?.dataset.remaining || 0);
+  if(remaining <= 0) { showToast('이미 완료된 계획입니다'); return; }
+  if(jobs[code] !== undefined) { showToast('이미 추가된 작업코드'); return; }
+  jobs[code] = {action:'idle', since:'', open:true, planRemaining: remaining};
+  renderJobCards();
+  sel.value = '';
+  showToast(`[${code}] 작업 추가됨 (잔여 ${remaining}EA)`);
+};
+
+/* ══ selectWorker에 plan-select 갱신 연결 ══ */
+const _origSelectWorker = window.selectWorker;
+window.selectWorker = async function(idx) {
+  await _origSelectWorker(idx);
+  updatePlanSelect();
+};
 function showToast(msg){
   let t=document.getElementById('g-toast');
   if(!t){t=document.createElement('div');t.id='g-toast';t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--bg4);color:var(--text);border:1px solid var(--border2);padding:10px 20px;border-radius:30px;font-size:12px;font-weight:700;opacity:0;transition:all .25s;pointer-events:none;z-index:1000;white-space:nowrap;max-width:90vw;text-align:center';document.body.appendChild(t);}
