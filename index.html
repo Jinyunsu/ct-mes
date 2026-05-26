@@ -1047,7 +1047,7 @@ async function loadAll() {
     }
   } catch(e) {}
 }
-function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,1500); }
+function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,5000); }
 loadAll().then(startPolling);
 
 // 생산계획 필터 초기화
@@ -1554,7 +1554,7 @@ function renderPlanTable(filterFn){
       <td style="font-family:var(--mono);font-size:11px">
         <div style="display:flex;align-items:center;gap:4px;position:relative">
           <span style="color:var(--accent);font-weight:700">${p.date||'—'}</span>
-          <button onclick='event.stopPropagation();openCDP("${esc(p.id)}",this)' style='background:none;border:none;cursor:pointer;padding:2px;display:inline-flex;align-items:center' title='날짜 변경'><i class='ti ti-calendar' style='font-size:13px;color:var(--accent2)'></i></button>
+          <button class="cdp-btn" data-pid="${esc(p.id)}" style="background:none;border:none;cursor:pointer;padding:2px;display:inline-flex;align-items:center" title="날짜 변경"><i class="ti ti-calendar" style="font-size:13px;color:var(--accent2)"></i></button>
         </div>
       </td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
@@ -1622,74 +1622,31 @@ window.deletePlan=async function(id){
   }
   const planCode = plan?.code;
 
-  // 폴링 일시 중단 (삭제 도중 서버 데이터로 덮어씌워지는 것 방지)
+  // ① 로컬 캐시에서 즉시 제거 → UI 즉각 반영
   if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
-
-  // 1. 계획 삭제
-  const res = await API.del('/api/plans', {id: realId});
-  if(!res || res.error){ showToast('삭제 실패'); startPolling(); return; }
-  cachedPlans = res;
-
-  // 2. 해당 코드의 states 삭제 (모든 작업자)
-  if(planCode){
-    const stateDelPromises = Object.entries(cachedStates).map(([worker, codes])=>{
-      if(codes[planCode]){
-        return API.del('/api/states', {worker, code: planCode});
-      }
-    }).filter(Boolean);
-    await Promise.all(stateDelPromises);
-
-    // 3. 해당 코드의 logs 삭제
-    await API.del('/api/logs', {code: planCode});
-
-    // 로컬 캐시에서도 삭제
-    Object.keys(cachedStates).forEach(w=>{
-      if(cachedStates[w][planCode]) delete cachedStates[w][planCode];
-    });
-    Object.keys(cachedLogs).forEach(w=>{
-      if(cachedLogs[w]){
-        Object.keys(cachedLogs[w]).forEach(k=>{
-          if(cachedLogs[w][k]?.code===planCode) delete cachedLogs[w][k];
-        });
-      }
-    });
-
-    // 서버에서 최신 logs/states 재조회하여 캐시 동기화
-    const [freshLogs, freshStates] = await Promise.all([API.get('/api/logs'), API.get('/api/states')]);
-    if(freshLogs) cachedLogs = freshLogs;
-    if(freshStates) cachedStates = freshStates;
-    // 서버 응답에 아직 남아있을 수 있으므로 로컬에서 한 번 더 강제 제거
-    Object.keys(cachedLogs).forEach(w=>{
-      if(cachedLogs[w]){
-        Object.keys(cachedLogs[w]).forEach(k=>{
-          if(cachedLogs[w][k]?.code===planCode) delete cachedLogs[w][k];
-        });
-      }
-    });
-    Object.keys(cachedStates).forEach(w=>{
-      if(cachedStates[w]&&cachedStates[w][planCode]) delete cachedStates[w][planCode];
-    });
-  }
-
-  // 전체 UI 갱신
+  delete cachedPlans[realId];
   filterPlanTable();
   renderCalendar();
   renderOrKPIs();
-  renderAllLinked(); // 대시보드, 진행현황, 작업일보 등
-  updatePlanKPI(Object.values(cachedPlans)); // KPI 즉시 갱신
-  // 총 작업시간 즉시 재계산 (삭제된 로그 반영)
-  const _today=new Date().toISOString().slice(0,10);
-  const _dh=document.getElementById('d-hours');
-  if(_dh){const ms=_calcTotalMsForDate(_today);_dh.textContent=ms>0?fmtElapsed(ms):'—';}
-  const _dlh=document.getElementById('dl-hours');
-  if(_dlh){const ds=document.getElementById('daily-date')?.value;if(ds){const ms=_calcTotalMsForDate(ds);_dlh.textContent=ms>0?fmtElapsed(ms):'—';}}
-  if(typeof curOrderTab!=='undefined'){
-    if(curOrderTab==='daily') renderOrDay();
-    else if(curOrderTab==='monthly') renderOrMonth();
-    else if(curOrderTab==='all') renderOrAll();
+  updatePlanKPI(Object.values(cachedPlans));
+  showToast(\`[\${planCode||id}] 삭제됨\`);
+
+  // ② 서버 삭제 + 관련 로그/상태 정리 (백그라운드)
+  API.del('/api/plans', {id: realId}).then(res=>{
+    if(res && !res.error) cachedPlans = res;
+  });
+  if(planCode){
+    Object.entries(cachedStates).forEach(([worker, codes])=>{
+      if(codes[planCode]) API.del('/api/states', {worker, code: planCode});
+    });
+    API.del('/api/logs', {code: planCode});
+    // 로컬 캐시 정리
+    Object.keys(cachedStates).forEach(w=>{ if(cachedStates[w]?.[planCode]) delete cachedStates[w][planCode]; });
+    Object.keys(cachedLogs).forEach(w=>{
+      if(cachedLogs[w]) Object.keys(cachedLogs[w]).forEach(k=>{ if(cachedLogs[w][k]?.code===planCode) delete cachedLogs[w][k]; });
+    });
   }
-  showToast(`[${planCode||id}] 계획 및 관련 기록 삭제됨`);
-  // 폴링 재시작
+  renderAllLinked();
   startPolling();
 };
 
@@ -2853,6 +2810,22 @@ function showToast(msg){
 /* ══ 커스텀 날짜 선택 팝업 ══ */
 let _cdpPlanId=null, _cdpYear=0, _cdpMonth=0;
 
+// 이벤트 위임 - 달력 버튼 클릭
+document.addEventListener('click', function(e){
+  const btn = e.target.closest('.cdp-btn');
+  if(btn){
+    e.stopPropagation();
+    const pid = btn.dataset.pid;
+    if(pid) openCDP(pid, btn);
+    return;
+  }
+  // 팝업 외부 클릭 시 닫기
+  const box = document.getElementById('cdp-box');
+  if(box && box.classList.contains('open') && !box.contains(e.target)){
+    closeCDP();
+  }
+});
+
 function openCDP(planId, anchorEl){
   _cdpPlanId = planId;
   const plan = cachedPlans[planId] || Object.values(cachedPlans).find(p=>p.id===planId);
@@ -2867,22 +2840,10 @@ function openCDP(planId, anchorEl){
   box.style.top = top + 'px';
   box.style.left = left + 'px';
   box.classList.add('open');
-  // 외부 클릭 감지 (setTimeout으로 현재 클릭 이벤트 이후에 등록)
-  setTimeout(()=>{
-    document.addEventListener('click', _cdpOutsideClick);
-  }, 0);
-}
-
-function _cdpOutsideClick(e){
-  const box = document.getElementById('cdp-box');
-  if(box && !box.contains(e.target)){
-    closeCDP();
-  }
 }
 
 function closeCDP(){
   document.getElementById('cdp-box').classList.remove('open');
-  document.removeEventListener('click', _cdpOutsideClick);
   _cdpPlanId = null;
 }
 
