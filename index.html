@@ -1462,29 +1462,57 @@ function updatePlanKPI(plans){
 
 window.deletePlan=async function(id){
   if(!id||id==='undefined'){showToast('삭제할 계획 ID가 없습니다');return;}
-  if(!confirm('삭제하시겠습니까?'))return;
-  // id 찾기: 직접키 → p.id 매칭 → p.code 매칭
+  if(!confirm('이 계획과 관련된 모든 작업 기록이 삭제됩니다. 계속하시겠습니까?'))return;
+
+  // id 찾기
   let realId = id;
+  const plan = cachedPlans[id] || Object.entries(cachedPlans).find(([k,p])=>k===id||p.id===id||p.code===id)?.[1];
   if(!cachedPlans[id]){
     const found = Object.entries(cachedPlans).find(([k,p]) => k===id || p.id===id || p.code===id);
     realId = found ? found[0] : id;
   }
+  const planCode = plan?.code;
+
+  // 1. 계획 삭제
   const res = await API.del('/api/plans', {id: realId});
-  if(res && !res.error){
-    cachedPlans = res;
-    filterPlanTable();
-    renderCalendar();
-    renderOrKPIs();
-    if(typeof curOrderTab!=='undefined'){
-      if(curOrderTab==='daily') renderOrDay();
-      else if(curOrderTab==='monthly') renderOrMonth();
-      else if(curOrderTab==='all') renderOrAll();
-    }
-    showToast('삭제됨');
-  } else {
-    console.error('삭제 실패:', res);
-    showToast('삭제 실패 - 콘솔 확인');
+  if(!res || res.error){ showToast('삭제 실패'); return; }
+  cachedPlans = res;
+
+  // 2. 해당 코드의 states 삭제 (모든 작업자)
+  if(planCode){
+    const stateDelPromises = Object.entries(cachedStates).map(([worker, codes])=>{
+      if(codes[planCode]){
+        return API.del('/api/states', {worker, code: planCode});
+      }
+    }).filter(Boolean);
+    await Promise.all(stateDelPromises);
+
+    // 3. 해당 코드의 logs 삭제
+    await API.del('/api/logs', {code: planCode});
+
+    // 로컬 캐시에서도 삭제
+    Object.keys(cachedStates).forEach(w=>{
+      if(cachedStates[w][planCode]) delete cachedStates[w][planCode];
+    });
+    Object.keys(cachedLogs).forEach(w=>{
+      if(cachedLogs[w]){
+        Object.keys(cachedLogs[w]).forEach(k=>{
+          if(cachedLogs[w][k]?.code===planCode) delete cachedLogs[w][k];
+        });
+      }
+    });
   }
+
+  filterPlanTable();
+  renderCalendar();
+  renderOrKPIs();
+  renderAllLinked();
+  if(typeof curOrderTab!=='undefined'){
+    if(curOrderTab==='daily') renderOrDay();
+    else if(curOrderTab==='monthly') renderOrMonth();
+    else if(curOrderTab==='all') renderOrAll();
+  }
+  showToast(`[${planCode||id}] 계획 및 관련 기록 삭제됨`);
 };
 
 /* ══ 달력 ══ */
