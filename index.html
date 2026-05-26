@@ -1002,7 +1002,7 @@ async function loadAll() {
     renderCalendar();
     renderAllLinked();
     renderOrKPIs();
-    if(typeof currentUser !== 'undefined' && currentUser) updatePlanSelect();
+    updatePlanSelect();
     if(typeof curOrderTab!=="undefined"){
       if(curOrderTab==="daily") renderOrDay();
       else if(curOrderTab==="monthly") renderOrMonth();
@@ -1080,10 +1080,13 @@ function renderWorkerGrid() {
     let cls='',stxt='대기중',scol='var(--text3)';
     if(run>0){cls='running';stxt=`● ${run}개 작업중`;scol='var(--green)';}
     else if(pause>0){cls='paused';stxt=`⏸ ${pause}개 정지`;scol='var(--amber)';}
-    return `<div class="worker-card ${cls}" onclick="selectWorker(${i})">
-      <div class="wc-avatar" style="background:${COLORS[i%COLORS.length]}">${esc(initial(n))}</div>
-      <div class="wc-name">${esc(n)}</div>
-      <div class="wc-status" style="color:${scol}">${stxt}</div>
+    return `<div class="worker-card ${cls}" style="position:relative">
+      <button onclick="event.stopPropagation();deleteWorker('${esc(n)}')" style="position:absolute;top:6px;right:6px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:4px;line-height:1" title="삭제">✕</button>
+      <div onclick="selectWorker(${i})" style="cursor:pointer">
+        <div class="wc-avatar" style="background:${COLORS[i%COLORS.length]}">${esc(initial(n))}</div>
+        <div class="wc-name">${esc(n)}</div>
+        <div class="wc-status" style="color:${scol}">${stxt}</div>
+      </div>
     </div>`;
   }).join('');
 }
@@ -2122,6 +2125,18 @@ window.addWorkerName = async function() {
     showToast(`[${val}] 작업자 추가됨`);
   } else {
     showToast('추가 실패');
+  }
+};
+
+window.deleteWorker = async function(name) {
+  if(!confirm(`[${name}] 작업자를 삭제하시겠습니까?`)) return;
+  const res = await API.del('/api/names', {name});
+  if(res) {
+    cachedNames = res;
+    renderWorkerGrid();
+    showToast(`[${name}] 삭제됨`);
+  } else {
+    showToast('삭제 실패');
   }
 };
 
