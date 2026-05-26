@@ -1012,7 +1012,6 @@ async function loadAll() {
 }
 function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,3000); }
 loadAll().then(startPolling);
-renderCalendar(); // 페이지 로드 즉시 달력 표시
 
 // 생산계획 필터 초기화
 (function(){
@@ -1441,6 +1440,8 @@ window.deletePlan=async function(id){
 /* ══ 달력 ══ */
 const CAL_COLORS=[{bg:'rgba(59,130,246,.2)',text:'var(--accent2)'},{bg:'rgba(34,197,94,.15)',text:'#4ade80'},{bg:'rgba(167,139,250,.15)',text:'var(--purple)'},{bg:'rgba(245,158,11,.15)',text:'#fbbf24'}];
 let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+// 달력 즉시 초기화
+setTimeout(function(){ renderCalendar(); }, 0);
 const codeColorMap={};let cIdx=0;
 function getCalColor(c){if(!codeColorMap[c])codeColorMap[c]=CAL_COLORS[(cIdx++)%CAL_COLORS.length];return codeColorMap[c];}
 
@@ -1473,13 +1474,6 @@ function renderCalendar(){
   for(let i=0;i<rem;i++)html+=`<div class="cal-day" style="background:var(--bg2);opacity:.3"></div>`;
   grid.innerHTML=html;
 }
-// 달력 초기화
-(function initCal(){
-  const lbl = document.getElementById('cal-label');
-  const now = new Date();
-  if(lbl) lbl.textContent = now.getFullYear()+'년 '+(now.getMonth()+1)+'월';
-})();
-
 window.calPrev=function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();};
 window.calNext=function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();};
 window.calToday=function(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();};
