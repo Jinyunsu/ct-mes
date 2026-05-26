@@ -1983,9 +1983,8 @@ function renderProgress(){
       const activeCodes=new Map();
       Object.entries(cachedStates).forEach(([w,codes])=>{
         Object.entries(codes).forEach(([c,s])=>{
-          if(!activeCodes.has(c))activeCodes.set(c,{workers:[],action:s.action,since:s.since});
+          if(!activeCodes.has(c))activeCodes.set(c,{workers:[w],action:s.action,since:s.since});
           else activeCodes.get(c).workers.push(w);
-          activeCodes.get(c).workers.push(w);
         });
       });
       const rows=[];
