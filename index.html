@@ -785,10 +785,10 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="text-align:right"><div style="font-size:10px;color:var(--text3)">출력일시</div><div style="font-size:12px;color:var(--text2);font-family:var(--mono)" id="daily-print"></div></div>
       </div>
       <div class="metrics">
-        <div class="metric blue"><div class="metric-label">작업 코드 수</div><div class="metric-value">—</div></div>
-        <div class="metric green"><div class="metric-label">투입 인원</div><div class="metric-value">—</div></div>
-        <div class="metric cyan"><div class="metric-label">총 작업시간</div><div class="metric-value">—</div></div>
-        <div class="metric"><div class="metric-label">총 생산수량</div><div class="metric-value">—</div><div class="metric-sub">EA</div></div>
+        <div class="metric blue"><div class="metric-label">작업 코드 수</div><div class="metric-value" id="dl-codes">—</div></div>
+        <div class="metric green"><div class="metric-label">투입 인원</div><div class="metric-value" id="dl-workers">—</div></div>
+        <div class="metric cyan"><div class="metric-label">총 작업시간</div><div class="metric-value" id="dl-hours">—</div></div>
+        <div class="metric"><div class="metric-label">총 생산수량</div><div class="metric-value" id="dl-qty">—</div><div class="metric-sub">EA</div></div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -1689,14 +1689,18 @@ function renderDashboard(){
     Object.values(codes).forEach(s=>{if(s.action==='start')runningWorkers.add(w);});
   });
   // 총 작업시간 (오늘)
+  // 오늘 총 작업시간 (모든 코드 병렬 합산)
+  const todayAllCodes=new Set(
+    Object.values(cachedLogs||{}).flatMap(wl=>Object.values(wl||{})
+      .filter(l=>new Date(l.ts).toISOString().slice(0,10)===today)
+      .map(l=>l.code))
+  );
   let totalMs=0;
-  Object.values(cachedLogs||{}).forEach(wlogs=>{
-    Object.values(wlogs||{}).filter(l=>l.date===new Date().toLocaleDateString('ko-KR')).forEach(l=>{
-      // approximate
-    });
-  });
+  todayAllCodes.forEach(c=>{ totalMs+=calcWorkHours(c).ms; });
+  const totalHrs=(totalMs/3600000).toFixed(1);
 
   const el=id=>document.getElementById(id);
+  if(el('d-hours'))el('d-hours').textContent=totalHrs||'0';
   if(el('d-plan'))el('d-plan').textContent=todayPlans.length||'0';
   if(el('d-running'))el('d-running').textContent=runningWorkers.size||'0';
   if(el('d-rate'))el('d-rate').textContent=rate||'0';
@@ -1780,9 +1784,10 @@ function renderDashboard(){
   // 최근 활동
   const recentEl=document.getElementById('d-recent');
   if(recentEl){
+    const _activeCodes=new Set(Object.values(cachedPlans).map(p=>p.code?.toLowerCase()));
     const allLogs=[];
-    Object.entries(cachedLogs||{}).forEach(([w,wlogs])=>{
-      Object.values(wlogs||{}).forEach(l=>allLogs.push({...l,worker:w}));
+    Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').forEach(([w,wlogs])=>{
+      Object.values(wlogs||{}).filter(l=>_activeCodes.has(l.code?.toLowerCase())).forEach(l=>allLogs.push({...l,worker:w}));
     });
     allLogs.sort((a,b)=>b.ts-a.ts);
     const recent=allLogs.slice(0,10);
@@ -1914,10 +1919,16 @@ function renderProgress(){
   if(tlDiv){
     const todayStr=new Date().toISOString().slice(0,10);
     const todayLocal=new Date().toLocaleDateString('ko-KR');
+    const _planCodes2=new Set(Object.values(cachedPlans).map(p=>p.code?.toLowerCase()));
     const allLogs=Object.entries(cachedLogs||{}).flatMap(([w,wl])=>
       Object.values(wl||{}).filter(l=>{
         const logIso=new Date(l.ts).toISOString().slice(0,10);
-        return l.date===todayLocal||logIso===todayStr;
+        const isToday=l.date===todayLocal||logIso===todayStr;
+        if(!isToday) return false;
+        // __system__ 삭제 이벤트는 항상 표시
+        if(w==='__system__') return true;
+        // 나머지는 현재 cachedPlans에 있는 코드만
+        return _planCodes2.has(l.code?.toLowerCase());
       }).map(l=>({...l,worker:w}))
     ).sort((a,b)=>b.ts-a.ts);
     if(!allLogs.length){
@@ -1951,10 +1962,22 @@ function renderPerformance(){
   const rate=totalPlan>0?Math.round(totalAct/totalPlan*100):0;
   const donePlans=monthPlans.filter(p=>p.status==='done');
 
-  const mels=document.querySelectorAll('#page-performance .metric-value');
-  if(mels[0])mels[0].textContent=donePlans.length;
-  if(mels[1])mels[1].textContent=totalAct.toLocaleString();
-  if(mels[2])mels[2].textContent=rate;
+  // 총 작업시간 계산
+  const monthCodes=new Set(monthPlans.map(p=>p.code));
+  let perfTotalMs=0;
+  monthCodes.forEach(c=>{ perfTotalMs+=calcWorkHours(c).ms; });
+  const perfHrs=(perfTotalMs/3600000).toFixed(1);
+  // 1인당 생산성
+  const workerCount=Object.keys(cachedStates).length||1;
+  const productivity=perfTotalMs>0?((totalAct/(perfTotalMs/3600000))||0).toFixed(1):'—';
+
+  const pfEl=id=>document.getElementById(id);
+  if(pfEl('pf-done'))pfEl('pf-done').textContent=donePlans.length;
+  if(pfEl('pf-qty'))pfEl('pf-qty').textContent=totalAct.toLocaleString();
+  if(pfEl('pf-rate'))pfEl('pf-rate').textContent=rate;
+  if(pfEl('pf-hours'))pfEl('pf-hours').textContent=perfTotalMs>0?perfHrs:'—';
+  if(pfEl('pf-prod'))pfEl('pf-prod').textContent=productivity;
+  if(pfEl('pf-defect'))pfEl('pf-defect').textContent='—';
 
   // 고객사별 현황
   const custTbl=document.querySelectorAll('#page-performance .tbl-wrap')[0]?.querySelector('tbody');
@@ -2072,14 +2095,27 @@ function renderDailyReport(dateStr){
   if(subEl)subEl.textContent='작성일시: '+new Date().toLocaleString('ko-KR',{hour12:false});
 
   // 메트릭
+  const todayLocal=new Date(dateStr).toLocaleDateString('ko-KR');
   const workers=new Set();
   let totalQty=0;
   plans.forEach(p=>{totalQty+=p.actQty||0;});
-  Object.entries(cachedStates).forEach(([w])=>workers.add(w));
-  const mels=document.querySelectorAll('#page-daily .metric-value');
-  if(mels[0])mels[0].textContent=plans.length||'0';
-  if(mels[1])mels[1].textContent=workers.size||'0';
-  if(mels[3])mels[3].textContent=totalQty>0?totalQty.toLocaleString()+' EA':'—';
+  // 오늘 작업한 작업자
+  Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').forEach(([w,wl])=>{
+    if(Object.values(wl||{}).some(l=>{
+      const li=new Date(l.ts).toISOString().slice(0,10);
+      return l.date===todayLocal||li===dateStr;
+    })) workers.add(w);
+  });
+  // 총 작업시간
+  const codes=new Set(plans.map(p=>p.code));
+  let totalMs=0;
+  codes.forEach(c=>{ totalMs+=calcWorkHours(c).ms; });
+  const totalHrsStr=(totalMs/3600000).toFixed(1);
+  const el2=id=>document.getElementById(id);
+  if(el2('dl-codes'))el2('dl-codes').textContent=plans.length||'0';
+  if(el2('dl-workers'))el2('dl-workers').textContent=workers.size||'0';
+  if(el2('dl-hours'))el2('dl-hours').textContent=totalMs>0?totalHrsStr+'h':'—';
+  if(el2('dl-qty'))el2('dl-qty').textContent=totalQty>0?totalQty.toLocaleString()+' EA':'—';
 
   // 작업코드별 현황
   const ctbl=document.querySelectorAll('#page-daily .tbl-wrap')[0]?.querySelector('tbody');
