@@ -291,6 +291,26 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 .sb-logout { color: rgba(255,255,255,.5) !important; }
 .sb-logout:hover { color: #fca5a5 !important; background: rgba(239,68,68,.15) !important; }
 .sb-divider { background: rgba(255,255,255,.08) !important; }
+
+/* ══ 커스텀 날짜 선택 팝업 ══ */
+#cdp-overlay{position:fixed;inset:0;z-index:1000;display:none}
+#cdp-overlay.open{display:block}
+#cdp-box{position:fixed;background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:16px;z-index:1001;box-shadow:0 8px 32px rgba(0,0,0,.18);min-width:260px;display:none}
+#cdp-box.open{display:block}
+.cdp-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cdp-nav button{background:none;border:none;cursor:pointer;color:var(--text2);font-size:14px;padding:4px 8px;border-radius:6px;transition:background .15s}
+.cdp-nav button:hover{background:var(--bg3)}
+.cdp-month-label{font-size:13px;font-weight:800;color:var(--text)}
+.cdp-dow{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:4px}
+.cdp-dow span{font-size:10px;font-weight:700;color:var(--text3);padding:3px 0}
+.cdp-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cdp-day{padding:6px 2px;text-align:center;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--text2);transition:background .12s}
+.cdp-day:hover{background:var(--bg3);color:var(--text)}
+.cdp-day.today{color:var(--accent);font-weight:900}
+.cdp-day.selected{background:var(--accent);color:#fff}
+.cdp-day.other{color:var(--text3);opacity:.4}
+.cdp-day.empty{cursor:default}
+.cdp-footer{display:flex;justify-content:flex-end;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -1536,8 +1556,7 @@ function renderPlanTable(filterFn){
       <td style="font-family:var(--mono);font-size:11px">
         <div style="display:flex;align-items:center;gap:4px;position:relative">
           <span style="color:var(--accent);font-weight:700">${p.date||'—'}</span>
-          <input type="date" id="pd-${esc(p.id)}" value="${p.date||''}" onchange="changePlanDate('${esc(p.id)}',this.value)" style="position:fixed;opacity:0;pointer-events:none;width:1px;height:1px">
-          <button onclick="event.stopPropagation();var inp=document.getElementById('pd-${esc(p.id)}');inp.style.pointerEvents='auto';if(inp.showPicker)inp.showPicker();else inp.click();inp.style.pointerEvents='none';" style="background:none;border:none;cursor:pointer;padding:2px;display:inline-flex;align-items:center" title="날짜 변경"><i class="ti ti-calendar" style="font-size:13px;color:var(--accent2)"></i></button>
+          <button onclick="event.stopPropagation();openCDP('${esc(p.id)}',this)" style="background:none;border:none;cursor:pointer;padding:2px;display:inline-flex;align-items:center" title="날짜 변경"><i class="ti ti-calendar" style="font-size:13px;color:var(--accent2)"></i></button>
         </div>
       </td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
@@ -2758,7 +2777,25 @@ window.printDailyReport = function() {
     </style>
   </head><body>
     ${printArea.innerHTML}
-  </body></html>`);
+  
+<!-- 커스텀 날짜 선택 팝업 -->
+<div id="cdp-overlay" onclick="closeCDP()"></div>
+<div id="cdp-box">
+  <div class="cdp-nav">
+    <button onclick="cdpMove(-1)">◀</button>
+    <span class="cdp-month-label" id="cdp-label"></span>
+    <button onclick="cdpMove(1)">▶</button>
+  </div>
+  <div class="cdp-dow">
+    <span style="color:var(--red)">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span style="color:var(--accent)">토</span>
+  </div>
+  <div class="cdp-days" id="cdp-days"></div>
+  <div class="cdp-footer">
+    <button class="btn btn-secondary btn-sm" onclick="closeCDP()">취소</button>
+    <button class="btn btn-primary btn-sm" onclick="cdpSelectToday()">오늘</button>
+  </div>
+</div>
+</body></html>`);
   w.document.close();
   w.focus();
   setTimeout(()=>{ w.print(); w.close(); }, 500);
@@ -2815,6 +2852,71 @@ function showToast(msg){
   t.textContent=msg;t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
   clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(14px)';},2500);
 }
+
+/* ══ 커스텀 날짜 선택 팝업 ══ */
+let _cdpPlanId=null, _cdpYear=0, _cdpMonth=0;
+
+function openCDP(planId, anchorEl){
+  _cdpPlanId = planId;
+  const plan = cachedPlans[planId] || Object.values(cachedPlans).find(p=>p.id===planId);
+  const base = plan?.date ? new Date(plan.date+'T00:00:00') : new Date();
+  _cdpYear = base.getFullYear();
+  _cdpMonth = base.getMonth();
+  renderCDP();
+  // 위치 계산
+  const box = document.getElementById('cdp-box');
+  const rect = anchorEl.getBoundingClientRect();
+  box.style.top = (rect.bottom + 6) + 'px';
+  box.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
+  box.classList.add('open');
+  document.getElementById('cdp-overlay').classList.add('open');
+}
+
+function closeCDP(){
+  document.getElementById('cdp-box').classList.remove('open');
+  document.getElementById('cdp-overlay').classList.remove('open');
+  _cdpPlanId = null;
+}
+
+function cdpMove(d){
+  _cdpMonth += d;
+  if(_cdpMonth < 0){ _cdpMonth = 11; _cdpYear--; }
+  if(_cdpMonth > 11){ _cdpMonth = 0; _cdpYear++; }
+  renderCDP();
+}
+
+function cdpSelectToday(){
+  const today = new Date().toISOString().slice(0,10);
+  if(_cdpPlanId) changePlanDate(_cdpPlanId, today);
+  closeCDP();
+}
+
+function renderCDP(){
+  const months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  document.getElementById('cdp-label').textContent = _cdpYear+'년 '+months[_cdpMonth];
+  const today = new Date().toISOString().slice(0,10);
+  const plan = _cdpPlanId && (cachedPlans[_cdpPlanId] || Object.values(cachedPlans).find(p=>p.id===_cdpPlanId));
+  const selected = plan?.date || '';
+  const firstDay = new Date(_cdpYear, _cdpMonth, 1).getDay();
+  const lastDate = new Date(_cdpYear, _cdpMonth+1, 0).getDate();
+  let html = '';
+  for(let i=0;i<firstDay;i++) html += '<div class="cdp-day empty"></div>';
+  for(let d=1;d<=lastDate;d++){
+    const ds = _cdpYear+'-'+String(_cdpMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const isToday = ds===today;
+    const isSel = ds===selected;
+    const dow = new Date(_cdpYear,_cdpMonth,d).getDay();
+    const col = !isSel ? (dow===0?'color:var(--red)':dow===6?'color:var(--accent)':'') : '';
+    html += `<div class="cdp-day${isToday?' today':''}${isSel?' selected':''}" style="${col}" onclick="cdpPick('${ds}')">${d}</div>`;
+  }
+  document.getElementById('cdp-days').innerHTML = html;
+}
+
+function cdpPick(dateStr){
+  if(_cdpPlanId) changePlanDate(_cdpPlanId, dateStr);
+  closeCDP();
+}
+
 </script>
 </body>
 </html>
