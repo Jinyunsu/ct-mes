@@ -487,8 +487,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>등록일</th><th>작업코드</th><th>제품코드</th><th>스펙</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th></tr></thead>
-            <tbody id="plan-tbl"><tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
+            <thead><tr><th>등록일</th><th>생산계획일</th><th>작업코드</th><th>제품코드</th><th>스펙</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
+            <tbody id="plan-tbl"><tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1316,7 +1316,7 @@ function renderPlanTable(filterFn){
   let plans=Object.values(cachedPlans);
   if(filterFn)plans=plans.filter(filterFn);
   plans.sort((a,b)=>a.date>b.date?1:-1);
-  if(!plans.length){tbody.innerHTML='<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
+  if(!plans.length){tbody.innerHTML='<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
   const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
   const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
   // 작업자 투입 정보 계산
@@ -1343,6 +1343,8 @@ function renderPlanTable(filterFn){
     const wHrs=getWorkHours(p.code);
     const isToday=p.date===new Date().toISOString().slice(0,10);
     return `<tr style="${isToday?'background:rgba(59,130,246,.04)':''}">
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.createdAt||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700">${p.date||'—'}</td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
       <td style="color:var(--text2)">${esc(p.productCode||'—')}</td>
       <td style="color:var(--text2);font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.spec||'')}">${esc(p.spec||'—')}</td>
@@ -1355,7 +1357,9 @@ function renderPlanTable(filterFn){
       <td><span class="badge ${sc[p.status]||'badge-gray'}">${sm[p.status]||'예정'}</span></td>
       <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
       <td style="white-space:nowrap">
-
+        <button class="btn btn-secondary btn-sm" style="margin-right:4px" onclick="openEditPlanModal('${esc(p.id)}')" title="수정"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-secondary btn-sm" style="color:#dc2626" onclick="deletePlan('${esc(p.id)}')" title="삭제"><i class="ti ti-trash"></i></button>
+      </td>
     </tr>`;
   }).join('');
   // 요약 KPI 업데이트
@@ -1544,7 +1548,9 @@ function renderDashboard(){
         const wCnt=getWorkerCountForCode(p.code);
         const st=getPlanStatus(p);
         return `<tr>
-          <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
+          <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.createdAt||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700">${p.date||'—'}</td>
+      <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
           <td style="font-size:11px">${wCnt}명</td>
           <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()}</td>
           <td style="font-family:var(--mono);color:var(--green)">${(p.actQty||0).toLocaleString()}</td>
