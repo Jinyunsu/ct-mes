@@ -1919,16 +1919,10 @@ function renderProgress(){
   if(tlDiv){
     const todayStr=new Date().toISOString().slice(0,10);
     const todayLocal=new Date().toLocaleDateString('ko-KR');
-    const _planCodes2=new Set(Object.values(cachedPlans).map(p=>p.code?.toLowerCase()));
     const allLogs=Object.entries(cachedLogs||{}).flatMap(([w,wl])=>
       Object.values(wl||{}).filter(l=>{
         const logIso=new Date(l.ts).toISOString().slice(0,10);
-        const isToday=l.date===todayLocal||logIso===todayStr;
-        if(!isToday) return false;
-        // __system__ 삭제 이벤트는 항상 표시
-        if(w==='__system__') return true;
-        // 나머지는 현재 cachedPlans에 있는 코드만
-        return _planCodes2.has(l.code?.toLowerCase());
+        return l.date===todayLocal||logIso===todayStr;
       }).map(l=>({...l,worker:w}))
     ).sort((a,b)=>b.ts-a.ts);
     if(!allLogs.length){
