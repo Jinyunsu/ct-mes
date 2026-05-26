@@ -38,7 +38,7 @@ body{display:flex;overflow:hidden}
 ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
 
 /* ══ 로그인 ══ */
-#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;padding:24px}
+#login-screen{position:fixed;inset:0;background:#1e2235;display:flex;align-items:center;justify-content:center;z-index:999;padding:24px}
 #login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%, rgba(59,130,246,.12), transparent)}
 .login-card{position:relative;background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:48px 40px;width:100%;max-width:400px;text-align:center}
 .login-badge{width:56px;height:56px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;margin:0 auto 24px;box-shadow:0 8px 32px rgba(59,130,246,.3)}
@@ -481,7 +481,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>등록일</th><th>생산계획일</th><th>작업코드</th><th>제품코드</th><th>스펙</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
+            <thead><tr><th>등록일</th><th>생산계획일</th><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
             <tbody id="plan-tbl"><tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
           </table>
         </div>
@@ -550,7 +550,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="card">
           <div class="card-title"><i class="ti ti-timeline"></i> 오늘 작업 타임라인</div>
-          <div style="max-height:260px;overflow-y:auto">
+          <div id="d-timeline" style="max-height:260px;overflow-y:auto">
             <div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">기록 없음</div>
           </div>
         </div>
@@ -699,7 +699,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">달성률</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="dk-rate">—</div></div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>스펙</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
+        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
         <tbody id="or-day-tbody"><tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
@@ -780,8 +780,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <div class="card-title"><i class="ti ti-package"></i> 작업코드별 현황</div>
           <div class="tbl-wrap">
             <table>
-              <thead><tr><th>작업코드</th><th>고객사</th><th>계획</th><th>실적</th><th>달성률</th><th>작업시간</th><th>상태</th></tr></thead>
-              <tbody><tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr></tbody>
+              <thead><tr><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획</th><th>실적</th><th>달성률</th><th>작업시간</th><th>상태</th></tr></thead>
+              <tbody><tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -853,7 +853,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       <div><label class="label">등록일자</label><input id="pf-date" class="input" type="date" readonly style="background:var(--bg3);color:var(--text3);cursor:default"></div>
       <div><label class="label">제품코드</label><input id="pf-pcode" class="input" placeholder="예) P-2024-001"></div>
       <div><label class="label">계획수량 (EA) *</label><input id="pf-qty" class="input" type="number" placeholder="0" min="1"></div>
-      <div class="full"><label class="label">스펙</label><input id="pf-spec" class="input" placeholder="예) 200x300x50mm, SUS304"></div>
+      <div class="full"><label class="label">제품사양</label><input id="pf-spec" class="input" placeholder="예) 200x300x50mm, SUS304"></div>
       <div><label class="label">고객사</label><input id="pf-customer" class="input" placeholder="예) 현대자동차"></div>
       <div><label class="label">비고</label><input id="pf-remark" class="input" placeholder="특이사항"></div>
     </div>
@@ -876,7 +876,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       <div><label class="label">작업일자 *</label><input id="ef-date" class="input" type="date"></div>
       <div><label class="label">제품코드</label><input id="ef-pcode" class="input" placeholder="예) P-2024-001"></div>
       <div><label class="label">계획수량 (EA) *</label><input id="ef-qty" class="input" type="number" placeholder="0" min="1"></div>
-      <div class="full"><label class="label">스펙</label><input id="ef-spec" class="input" placeholder="예) 200x300x50mm, SUS304"></div>
+      <div class="full"><label class="label">제품사양</label><input id="ef-spec" class="input" placeholder="예) 200x300x50mm, SUS304"></div>
       <div><label class="label">고객사</label><input id="ef-customer" class="input" placeholder="예) 현대자동차"></div>
       <div><label class="label">상태</label>
         <select id="ef-status" class="input">
@@ -1491,24 +1491,16 @@ function renderCalendar(){
     const prevUnfinished=Object.values(cachedPlans).filter(p=>{
       if(!p.date||p.date>=ds)return false;
       if(getPlanStatus(p)==='done'||p.status==='done')return false;
-      // 실제 작업 로그 확인
+      if((p.actQty||0)>=(p.planQty||1))return false; // 수량 완료
       const allPlanLogs=Object.values(cachedLogs||{}).flatMap(wl=>
         Object.values(wl||{}).filter(l=>l.code===p.code)
       );
       if(!allPlanLogs.length)return false;
-      // end 로그가 있으면 완료 → 이월 안함
-      const hasEnd=allPlanLogs.some(l=>l.action==='end');
-      if(hasEnd) return false;
-      // start 로그만 있고 end 없으면 → 미완료 이월
-      const hasStart=allPlanLogs.some(l=>l.action==='start');
-      if(!hasStart) return false;
-      // 마지막 작업일이 ds 바로 이전이어야 함
-      const lastLogTs=allPlanLogs.reduce((max,l)=>l.ts>max?l.ts:max,0);
-      const lastLogIso=new Date(lastLogTs).toISOString().slice(0,10);
-      const dsDate=new Date(ds);
-      const lastDate=new Date(lastLogIso);
-      const diff=Math.floor((dsDate-lastDate)/(1000*60*60*24));
-      return diff>=1 && diff<=7;
+      // ds 날짜에 start 로그가 있어야 이월 표시
+      const dsStartLogs=allPlanLogs.filter(l=>
+        l.action==='start' && new Date(l.ts).toISOString().slice(0,10)===ds
+      );
+      return dsStartLogs.length>0;
     });
     const allDp=[...prevUnfinished.map(p=>({...p,_carry:true})),...dp];
     const ph=allDp.slice(0,3).map(p=>{
@@ -1819,7 +1811,65 @@ function renderProgress(){
       }).join('');
     }
   }
-}
+
+  // 타임라인 렌더링
+  const tlDiv=document.getElementById('d-timeline');
+  if(tlDiv){
+    const todayStr=new Date().toISOString().slice(0,10);
+    const todayLocal=new Date().toLocaleDateString('ko-KR');
+    const allLogs=Object.entries(cachedLogs||{}).flatMap(([w,wl])=>
+      Object.values(wl||{}).filter(l=>{
+        const logIso=new Date(l.ts).toISOString().slice(0,10);
+        return l.date===todayLocal||logIso===todayStr;
+      }).map(l=>({...l,worker:w}))
+    ).sort((a,b)=>a.ts-b.ts);
+    if(!allLogs.length){
+      tlDiv.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">오늘 작업 기록 없음</div>';
+    }else{
+      const icons={start:'▶',pause:'⏸',end:'■'};
+      const cols={start:'var(--green)',pause:'var(--amber)',end:'var(--text3)'};
+      const lbls={start:'시작',pause:'일시정지',end:'종료'};
+      tlDiv.innerHTML=allLogs.map(l=>`
+        <div class="timeline-item">
+          <div class="tl-dot" style="background:${cols[l.action]||'var(--bg4)'};color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center">${icons[l.action]||'●'}</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(l.worker)} · <span style="color:var(--accent)">${esc(l.code)}</span></div>
+            <div style="font-size:11px;color:var(--text3)">${lbls[l.action]||l.action}${l.qty>0?' · '+l.qty.toLocaleString()+'EA':''}</div>
+          </div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--text3)">${l.time||''}</div>
+        </div>`).join('');
+    }
+  }
+
+
+  // 타임라인 렌더링
+  const tlDiv=document.getElementById('d-timeline');
+  if(tlDiv){
+    const todayStr=new Date().toISOString().slice(0,10);
+    const todayLocal=new Date().toLocaleDateString('ko-KR');
+    const allLogs=Object.entries(cachedLogs||{}).flatMap(([w,wl])=>
+      Object.values(wl||{}).filter(l=>{
+        const logIso=new Date(l.ts).toISOString().slice(0,10);
+        return l.date===todayLocal||logIso===todayStr;
+      }).map(l=>({...l,worker:w}))
+    ).sort((a,b)=>a.ts-b.ts);
+    if(!allLogs.length){
+      tlDiv.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">오늘 작업 기록 없음</div>';
+    }else{
+      const tlIcons={start:'▶',pause:'⏸',end:'■'};
+      const tlCols={start:'var(--green)',pause:'var(--amber)',end:'var(--text3)'};
+      const tlLbls={start:'시작',pause:'일시정지',end:'종료'};
+      tlDiv.innerHTML=allLogs.map(l=>`
+        <div class="timeline-item">
+          <div class="tl-dot" style="background:${tlCols[l.action]||'var(--bg4)'};color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${tlIcons[l.action]||'●'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(l.worker)} · <span style="color:var(--accent)">${esc(l.code)}</span></div>
+            <div style="font-size:11px;color:var(--text3)">${tlLbls[l.action]||l.action}${l.qty>0?' · '+l.qty.toLocaleString()+'EA':''}</div>
+          </div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--text3);flex-shrink:0">${l.time||''}</div>
+        </div>`).join('');
+    }
+  }}
 
 // ── 실적분석 ──
 function renderPerformance(){
@@ -1937,13 +1987,15 @@ function renderDailyReport(dateStr){
   if(ctbl){
     const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
     const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
-    if(!plans.length)ctbl.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr>';
+    if(!plans.length)ctbl.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr>';
     else ctbl.innerHTML=plans.map(p=>{
       const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
       const hrs=calcWorkHours(p.code);
       const st=getPlanStatus(p);
       return `<tr>
         <td style="font-weight:700;font-family:var(--mono)">${esc(p.code)}</td>
+        <td style="font-size:11px;color:var(--text2)">${esc(p.productCode||'—')}</td>
+        <td style="font-size:11px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.spec||'—')}</td>
         <td style="font-size:11px">${esc(p.customer||'—')}</td>
         <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()}</td>
         <td style="font-family:var(--mono);color:var(--green)">${(p.actQty||0).toLocaleString()}</td>
@@ -2194,7 +2246,7 @@ window.renderOrMonth = function() {
         <span style="font-size:11px;font-weight:700;color:${dr>=100?'var(--green)':dr>0?'var(--amber)':'var(--text3)'}">${dr}%</span>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>스펙</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
+        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
         <tbody>${dp.map(orPlanRow).join('')}</tbody>
       </table></div>
     </div>`;
