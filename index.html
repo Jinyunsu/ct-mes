@@ -1226,7 +1226,8 @@ function _calcTotalMsForDate(dateStr){
   const todayLocalForDate=new Date(dateStr).toLocaleDateString('ko-KR');
   let allDI=[];
   Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').map(([,wlogs])=>wlogs).forEach(wlogs=>{
-    const de=Object.values(wlogs||{}).filter(l=>{const li=new Date(l.ts).toISOString().slice(0,10);return l.date===todayLocalForDate||li===dateStr;}).sort((a,b)=>a.ts-b.ts);
+    const _vc=new Set(Object.values(cachedPlans).map(p=>p.code?.toLowerCase()));
+    const de=Object.values(wlogs||{}).filter(l=>{const li=new Date(l.ts).toISOString().slice(0,10);return (l.date===todayLocalForDate||li===dateStr)&&_vc.has(l.code?.toLowerCase());}).sort((a,b)=>a.ts-b.ts);
     const cm={};
     de.forEach(l=>{if(!cm[l.code])cm[l.code]=null;if(l.action==='start')cm[l.code]=l.ts;else if((l.action==='end'||l.action==='pause')&&cm[l.code]!=null){allDI.push([cm[l.code],l.ts]);cm[l.code]=null;}});
     Object.entries(cm).forEach(([code,st])=>{
@@ -1611,6 +1612,17 @@ window.deletePlan=async function(id){
     const [freshLogs, freshStates] = await Promise.all([API.get('/api/logs'), API.get('/api/states')]);
     if(freshLogs) cachedLogs = freshLogs;
     if(freshStates) cachedStates = freshStates;
+    // 서버 응답에 아직 남아있을 수 있으므로 로컬에서 한 번 더 강제 제거
+    Object.keys(cachedLogs).forEach(w=>{
+      if(cachedLogs[w]){
+        Object.keys(cachedLogs[w]).forEach(k=>{
+          if(cachedLogs[w][k]?.code===planCode) delete cachedLogs[w][k];
+        });
+      }
+    });
+    Object.keys(cachedStates).forEach(w=>{
+      if(cachedStates[w]&&cachedStates[w][planCode]) delete cachedStates[w][planCode];
+    });
   }
 
   // 전체 UI 갱신
@@ -1798,9 +1810,10 @@ function renderDashboard(){
     Object.values(codes).forEach(s=>{if(s.action==='start')runningWorkers.add(w);});
   });
   // 총 작업시간 (오늘) - 코드/작업자 관계없이 전체 구간 병합
+  const _validCodes=new Set(Object.values(cachedPlans).map(p=>p.code?.toLowerCase()));
   let allDayIntervals = [];
-  Object.values(cachedLogs||{}).forEach(wlogs=>{
-    const todayEntries = Object.values(wlogs||{}).filter(l=>new Date(l.ts).toISOString().slice(0,10)===today).sort((a,b)=>a.ts-b.ts);
+  Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').map(([,wlogs])=>wlogs).forEach(wlogs=>{
+    const todayEntries = Object.values(wlogs||{}).filter(l=>new Date(l.ts).toISOString().slice(0,10)===today && _validCodes.has(l.code?.toLowerCase())).sort((a,b)=>a.ts-b.ts);
     const codeMap = {};
     todayEntries.forEach(l=>{
       if(!codeMap[l.code]) codeMap[l.code] = null;
@@ -2238,19 +2251,21 @@ function renderDailyReport(dateStr){
   let totalQty=0;
   plans.forEach(p=>{totalQty+=p.actQty||0;});
   // 오늘 작업한 작업자
+  const _planCodes=new Set(Object.values(cachedPlans).filter(p=>p.date===dateStr).map(p=>p.code?.toLowerCase()));
   Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').forEach(([w,wl])=>{
     if(Object.values(wl||{}).some(l=>{
       const li=new Date(l.ts).toISOString().slice(0,10);
-      return l.date===todayLocal||li===dateStr;
+      return (l.date===todayLocal||li===dateStr)&&_planCodes.has(l.code?.toLowerCase());
     })) workers.add(w);
   });
   // 총 작업시간 - 해당 날짜의 전체 구간 병합 (병렬 중복 방지)
   let allDateIntervals = [];
   const todayLocalForDate = new Date(dateStr).toLocaleDateString('ko-KR');
   Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').map(([,wlogs])=>wlogs).forEach(wlogs=>{
+    const _vc2=new Set(Object.values(cachedPlans).map(p=>p.code?.toLowerCase()));
     const dateEntries = Object.values(wlogs||{}).filter(l=>{
       const li=new Date(l.ts).toISOString().slice(0,10);
-      return l.date===todayLocalForDate||li===dateStr;
+      return (l.date===todayLocalForDate||li===dateStr)&&_vc2.has(l.code?.toLowerCase());
     }).sort((a,b)=>a.ts-b.ts);
     const codeMap2={};
     dateEntries.forEach(l=>{
