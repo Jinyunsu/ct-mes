@@ -931,6 +931,14 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.32.2/lib/msal-browser.min.js"></script>
 <script>
+// 전역 래퍼 함수 (MSAL 로드 전 클릭 방지)
+function msLogin() {
+  if(typeof window._msLogin === 'function') window._msLogin();
+  else alert('잠시 후 다시 시도해주세요');
+}
+function msLogout() {
+  if(typeof window._msLogout === 'function') window._msLogout();
+}
 /* ══ MSAL ══ */
 const msalConfig = {
   auth: {
@@ -963,12 +971,12 @@ function setUser(account) {
   document.getElementById('tb-av').textContent = initials;
 }
 
-window.msLogin = async function() {
+window._msLogin = async function() {
   document.getElementById('login-err').textContent = '';
   try { await msalInstance.loginRedirect({ scopes: ['User.Read'] }); }
   catch(e) { document.getElementById('login-err').textContent = '로그인 실패: ' + e.message; }
 };
-window.msLogout = function() {
+window._msLogout = function() {
   if(!confirm('로그아웃 하시겠습니까?')) return;
   msalInstance.logoutRedirect({ postLogoutRedirectUri: window.location.href });
 };
@@ -1844,8 +1852,8 @@ function renderProgress(){
 
 
   // 타임라인 렌더링
-  const tlDiv=document.getElementById('d-timeline');
-  if(tlDiv){
+  const tlDiv2=document.getElementById('d-timeline');
+  if(tlDiv2){
     const todayStr=new Date().toISOString().slice(0,10);
     const todayLocal=new Date().toLocaleDateString('ko-KR');
     const allLogs=Object.entries(cachedLogs||{}).flatMap(([w,wl])=>
@@ -1855,12 +1863,12 @@ function renderProgress(){
       }).map(l=>({...l,worker:w}))
     ).sort((a,b)=>a.ts-b.ts);
     if(!allLogs.length){
-      tlDiv.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">오늘 작업 기록 없음</div>';
+      tlDiv2.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">오늘 작업 기록 없음</div>';
     }else{
       const tlIcons={start:'▶',pause:'⏸',end:'■'};
       const tlCols={start:'var(--green)',pause:'var(--amber)',end:'var(--text3)'};
       const tlLbls={start:'시작',pause:'일시정지',end:'종료'};
-      tlDiv.innerHTML=allLogs.map(l=>`
+      tlDiv2.innerHTML=allLogs.map(l=>`
         <div class="timeline-item">
           <div class="tl-dot" style="background:${tlCols[l.action]||'var(--bg4)'};color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${tlIcons[l.action]||'●'}</div>
           <div style="flex:1;min-width:0">
