@@ -1332,8 +1332,8 @@ function renderPlanTable(filterFn){
   if(filterFn)plans=plans.filter(filterFn);
   plans.sort((a,b)=>a.date>b.date?1:-1);
   if(!plans.length){tbody.innerHTML='<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
-  const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
-  const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+  const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+  const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
   // 작업자 투입 정보 계산
   function getWorkerCount(code){
     let cnt=new Set();
@@ -1493,10 +1493,17 @@ if(dpEl)dpEl.textContent=dn.toLocaleString('ko-KR',{hour12:false});
 function getPlanStatus(p){
   const today=new Date().toISOString().slice(0,10);
   if(p.status==='done')return 'done';
-  if(p.actQty>0&&p.actQty<p.planQty&&p.date<today)return 'failed';
-  if(p.date===today)return 'running';
+  if(!p.date)return 'planned'; // 생산계획일 없으면 예정
   if(p.date<today&&(!p.actQty||p.actQty<p.planQty))return 'failed';
-  return p.status||'planned';
+  if(p.date===today){
+    // 오늘 날짜 - 실제 작업중인지 확인
+    const isRunning=Object.values(cachedStates).some(codes=>
+      codes[p.code]&&codes[p.code].action==='start'
+    );
+    if(isRunning)return 'running';
+    return 'waiting'; // 오늘인데 작업 안함 = 대기
+  }
+  return 'planned'; // 미래 날짜 = 예정
 }
 
 function getWorkerCountForCode(code){
@@ -1514,15 +1521,30 @@ function getLogsForCode(code){
 }
 
 function calcWorkHours(code){
-  let total=0;
+  // 각 작업자별 구간 수집
+  const intervals=[];
   Object.values(cachedLogs||{}).forEach(wlogs=>{
     const entries=Object.values(wlogs||{}).filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
     let st=null;
     entries.forEach(l=>{
       if(l.action==='start')st=l.ts;
-      else if((l.action==='end'||l.action==='pause')&&st){total+=l.ts-st;st=null;}
+      else if((l.action==='end'||l.action==='pause')&&st){
+        intervals.push([st,l.ts]);st=null;
+      }
     });
+    // 현재 작업중인 경우
+    if(st){intervals.push([st,Date.now()]);}
   });
+  if(!intervals.length)return {ms:0,str:'—'};
+  // 구간 병합 (중복 제거)
+  intervals.sort((a,b)=>a[0]-b[0]);
+  const merged=[[...intervals[0]]];
+  for(let i=1;i<intervals.length;i++){
+    const last=merged[merged.length-1];
+    if(intervals[i][0]<=last[1])last[1]=Math.max(last[1],intervals[i][1]);
+    else merged.push([...intervals[i]]);
+  }
+  const total=merged.reduce((s,[a,b])=>s+(b-a),0);
   const h=Math.floor(total/3600000),m=Math.floor((total%3600000)/60000);
   return {ms:total,str:total?h>0?`${h}h ${m}m`:`${m}m`:'—'};
 }
@@ -1559,8 +1581,8 @@ function renderDashboard(){
   if(ptbl){
     if(!todayPlans.length){ptbl.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">오늘 등록된 계획이 없습니다</td></tr>';
     }else{
-      const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
-      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+      const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
       ptbl.innerHTML=todayPlans.map(p=>{
         const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
         const wCnt=getWorkerCountForCode(p.code);
@@ -1656,8 +1678,8 @@ function renderProgress(){
     if(!runPlans.length&&!runningCodes.size){
       ptbl.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">진행중인 작업이 없습니다</td></tr>';
     }else{
-      const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
-      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+      const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
       // Collect all active codes from states
       const activeCodes=new Map();
       Object.entries(cachedStates).forEach(([w,codes])=>{
@@ -1683,7 +1705,7 @@ function renderProgress(){
           <td style="font-family:var(--mono)">${(plan.planQty||0).toLocaleString()}</td>
           <td style="font-family:var(--mono);color:var(--green)">${(plan.actQty||0).toLocaleString()}</td>
           <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-family:var(--mono)">${pct}%</span></div></td>
-          <td><span class="badge badge-blue" style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite;display:inline-block"></span>작업중</span></td>
+          <td><span class="badge ${info.action==='start'?'badge-blue':'badge-amber'}" style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:${info.action==='start'?'var(--green)':'var(--amber)'};${info.action==='start'?'animation:pulse 1.4s infinite;':''}display:inline-block"></span>${info.action==='start'?'작업중':'일시정지'}</span></td>
           <td style="font-size:11px;color:var(--text3)">${recentLog?recentLog.time:'—'}</td>
         </tr>`);
       });
@@ -1765,8 +1787,8 @@ function renderPerformance(){
     const sorted=[...monthPlans].sort((a,b)=>(b.actQty||0)-(a.actQty||0));
     if(!sorted.length)codeTbl.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr>';
     else{
-      const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
-      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+      const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
       codeTbl.innerHTML=sorted.map(p=>{
         const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
         const st=getPlanStatus(p);
@@ -1830,8 +1852,8 @@ function renderDailyReport(dateStr){
   // 작업코드별 현황
   const ctbl=document.querySelectorAll('#page-daily .tbl-wrap')[0]?.querySelector('tbody');
   if(ctbl){
-    const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
-    const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+    const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+    const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
     if(!plans.length)ctbl.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr>';
     else ctbl.innerHTML=plans.map(p=>{
       const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
