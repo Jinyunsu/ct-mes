@@ -1012,6 +1012,7 @@ async function loadAll() {
 }
 function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,3000); }
 loadAll().then(startPolling);
+renderCalendar(); // 페이지 로드 즉시 달력 표시
 
 // 생산계획 필터 초기화
 (function(){
@@ -1306,10 +1307,9 @@ window.submitPlan=async function(){
   const date=document.getElementById('pf-date').value;
   const qty=Number(document.getElementById('pf-qty').value)||0;
   if(!code){showToast('작업코드 입력');return;}
-  if(!date){showToast('작업일자 선택');return;}
   if(qty<=0){showToast('계획수량 입력');return;}
   const today=new Date().toISOString().slice(0,10);
-  const res=await API.post('/api/plans',{code,date:date||today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',createdAt:today,status:'planned'});
+  const res=await API.post('/api/plans',{code,date:'',createdAt:today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',createdAt:today,status:'planned'});
   if(res){
     cachedPlans=res;
     closeModal('plan-modal');
@@ -1459,7 +1459,7 @@ function renderCalendar(){
     const isToday=ds===today;
     const dow=new Date(calYear,calMonth,d).getDay();
     const dc=dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text2)';
-    const dp=Object.values(cachedPlans).filter(p=>p.date===ds);
+    const dp=Object.values(cachedPlans).filter(p=>p.date&&p.date===ds);
     const ph=dp.slice(0,2).map(p=>{const c=getCalColor(p.code);return `<div class="cal-chip" style="background:${c.bg};color:${c.text}" title="${p.code} | ${p.customer||''} | ${p.planQty||0}EA">${p.code}</div>`;}).join('');
     html+=`<div class="cal-day${isToday?' today':''}"
       ondragover="event.preventDefault();event.currentTarget.style.background='rgba(59,130,246,.15)'"
@@ -1473,6 +1473,13 @@ function renderCalendar(){
   for(let i=0;i<rem;i++)html+=`<div class="cal-day" style="background:var(--bg2);opacity:.3"></div>`;
   grid.innerHTML=html;
 }
+// 달력 초기화
+(function initCal(){
+  const lbl = document.getElementById('cal-label');
+  const now = new Date();
+  if(lbl) lbl.textContent = now.getFullYear()+'년 '+(now.getMonth()+1)+'월';
+})();
+
 window.calPrev=function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();};
 window.calNext=function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();};
 window.calToday=function(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();};
