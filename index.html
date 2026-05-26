@@ -1766,15 +1766,29 @@ function renderDashboard(){
   Object.entries(cachedStates).forEach(([w,codes])=>{
     Object.values(codes).forEach(s=>{if(s.action==='start')runningWorkers.add(w);});
   });
-  // 총 작업시간 (오늘)
-  // 오늘 총 작업시간 (모든 코드 병렬 합산)
-  const todayAllCodes=new Set(
-    Object.values(cachedLogs||{}).flatMap(wl=>Object.values(wl||{})
-      .filter(l=>new Date(l.ts).toISOString().slice(0,10)===today)
-      .map(l=>l.code))
-  );
+  // 총 작업시간 (오늘) - 코드/작업자 관계없이 전체 구간 병합
+  let allDayIntervals = [];
+  Object.values(cachedLogs||{}).forEach(wlogs=>{
+    const todayEntries = Object.values(wlogs||{}).filter(l=>new Date(l.ts).toISOString().slice(0,10)===today).sort((a,b)=>a.ts-b.ts);
+    const codeMap = {};
+    todayEntries.forEach(l=>{
+      if(!codeMap[l.code]) codeMap[l.code] = null;
+      if(l.action==='start') codeMap[l.code] = l.ts;
+      else if((l.action==='end'||l.action==='pause') && codeMap[l.code]!=null){ allDayIntervals.push([codeMap[l.code],l.ts]); codeMap[l.code]=null; }
+    });
+    Object.values(codeMap).forEach(st=>{ if(st!=null) allDayIntervals.push([st,Date.now()]); });
+  });
   let totalMs=0;
-  todayAllCodes.forEach(c=>{ totalMs+=calcWorkHours(c).ms; });
+  if(allDayIntervals.length){
+    allDayIntervals.sort((a,b)=>a[0]-b[0]);
+    const merged=[[...allDayIntervals[0]]];
+    for(let i=1;i<allDayIntervals.length;i++){
+      const last=merged[merged.length-1];
+      if(allDayIntervals[i][0]<=last[1]) last[1]=Math.max(last[1],allDayIntervals[i][1]);
+      else merged.push([...allDayIntervals[i]]);
+    }
+    totalMs=merged.reduce((s,[a,b])=>s+(b-a),0);
+  }
   const totalHrs=(totalMs/3600000).toFixed(1);
 
   const el=id=>document.getElementById(id);
@@ -2193,10 +2207,33 @@ function renderDailyReport(dateStr){
       return l.date===todayLocal||li===dateStr;
     })) workers.add(w);
   });
-  // 총 작업시간
-  const codes=new Set(plans.map(p=>p.code));
+  // 총 작업시간 - 해당 날짜의 전체 구간 병합 (병렬 중복 방지)
+  let allDateIntervals = [];
+  const todayLocalForDate = new Date(dateStr).toLocaleDateString('ko-KR');
+  Object.values(cachedLogs||{}).forEach(wlogs=>{
+    const dateEntries = Object.values(wlogs||{}).filter(l=>{
+      const li=new Date(l.ts).toISOString().slice(0,10);
+      return l.date===todayLocalForDate||li===dateStr;
+    }).sort((a,b)=>a.ts-b.ts);
+    const codeMap2={};
+    dateEntries.forEach(l=>{
+      if(!codeMap2[l.code]) codeMap2[l.code]=null;
+      if(l.action==='start') codeMap2[l.code]=l.ts;
+      else if((l.action==='end'||l.action==='pause')&&codeMap2[l.code]!=null){ allDateIntervals.push([codeMap2[l.code],l.ts]); codeMap2[l.code]=null; }
+    });
+    Object.values(codeMap2).forEach(st=>{if(st!=null) allDateIntervals.push([st,Date.now()]);});
+  });
   let totalMs=0;
-  codes.forEach(c=>{ totalMs+=calcWorkHours(c).ms; });
+  if(allDateIntervals.length){
+    allDateIntervals.sort((a,b)=>a[0]-b[0]);
+    const merged2=[[...allDateIntervals[0]]];
+    for(let i=1;i<allDateIntervals.length;i++){
+      const last=merged2[merged2.length-1];
+      if(allDateIntervals[i][0]<=last[1]) last[1]=Math.max(last[1],allDateIntervals[i][1]);
+      else merged2.push([...allDateIntervals[i]]);
+    }
+    totalMs=merged2.reduce((s,[a,b])=>s+(b-a),0);
+  }
   const totalHrsStr=(totalMs/3600000).toFixed(1);
   const el2=id=>document.getElementById(id);
   if(el2('dl-codes'))el2('dl-codes').textContent=plans.length||'0';
@@ -2250,7 +2287,7 @@ function renderDailyReport(dateStr){
           <td style="font-family:var(--mono);font-weight:700">${esc(code)}</td>
           <td style="font-family:var(--mono);font-size:11px">${startLog?.time||'—'}</td>
           <td style="font-family:var(--mono);font-size:11px">${endLog?.time||'진행중'}</td>
-          <td style="font-family:var(--mono);font-size:11px">${code==='—'?'—':fmtElapsed(calcWorkerCodeHours(n,code))}</td>
+          <td style="font-family:var(--mono);font-size:11px">${fmtElapsed(calcWorkerCodeHours(worker,code))}</td>
           <td style="font-family:var(--mono);color:var(--green)">${qty>0?qty.toLocaleString()+' EA':'—'}</td>
         </tr>`);
       });
@@ -2372,12 +2409,12 @@ function renderOrKPIs() {
   if(el('or-rate')) el('or-rate').textContent = rate;
 }
 
-const OR_SM = {done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
-const OR_SC = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+const OR_SM = {done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+const OR_SC = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
 
 function orPlanRow(p) {
   const pct = p.planQty>0 ? Math.round((p.actQty||0)/p.planQty*100) : 0;
-  const st = p.status||'planned';
+  const st = getPlanStatus(p);
   return `<tr>
     <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
     <td>${esc(p.customer||'—')}</td>
