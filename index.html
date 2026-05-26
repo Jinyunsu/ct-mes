@@ -293,8 +293,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 .sb-divider { background: rgba(255,255,255,.08) !important; }
 
 /* ══ 커스텀 날짜 선택 팝업 ══ */
-#cdp-box{position:fixed;background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:16px;z-index:1001;box-shadow:0 8px 32px rgba(0,0,0,.18);min-width:260px;display:none}
-#cdp-box.open{display:block}
+#cdp-box{position:fixed;background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:16px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.18);min-width:260px;display:none}
 .cdp-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .cdp-nav button{background:none;border:none;cursor:pointer;color:var(--text2);font-size:14px;padding:4px 8px;border-radius:6px;transition:background .15s}
 .cdp-nav button:hover{background:var(--bg3)}
@@ -1519,7 +1518,7 @@ window.submitPlan=async function(){
 function renderPlanTable(filterFn){
   const tbody=document.getElementById('plan-tbl');
   if(!tbody)return;
-  let plans=Object.values(cachedPlans).map(p=>({...p, id: p.id || Object.keys(cachedPlans).find(k=>cachedPlans[k]===p) || p.code}));
+  let plans=Object.entries(cachedPlans).map(([k,p])=>({...p, id: p.id||k}));
   if(filterFn)plans=plans.filter(filterFn);
   plans.sort((a,b)=>a.date>b.date?1:-1);
   if(!plans.length){tbody.innerHTML='<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
@@ -1764,16 +1763,25 @@ function getLogsForCode(code){
 
 function calcWorkHours(code){
   const intervals=[];
-  Object.values(cachedLogs||{}).forEach(wlogs=>{
+  // 작업자별로 독립 처리
+  Object.entries(cachedLogs||{}).forEach(([worker, wlogs])=>{
     const entries=Object.values(wlogs||{}).filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
     let st=null;
     entries.forEach(l=>{
-      if(l.action==='start') st=l.ts;
-      else if((l.action==='end'||l.action==='pause')&&st){ intervals.push([st,l.ts]); st=null; }
+      if(l.action==='start'){
+        st=l.ts; // start 중복 시 최신 start로 갱신
+      } else if((l.action==='end'||l.action==='pause') && st!=null){
+        intervals.push([st, l.ts]);
+        st=null;
+      }
     });
-    if(st){
-      const isStillRunning=Object.values(cachedStates||{}).some(codes=>codes[code]&&codes[code].action==='start');
-      if(isStillRunning) intervals.push([st,Date.now()]); // 현재 작업중
+    // 미종료 구간: cachedStates에서 해당 작업자+코드가 실제로 start 상태일 때만
+    if(st!=null){
+      const workerState = cachedStates?.[worker]?.[code];
+      if(workerState && workerState.action==='start'){
+        intervals.push([st, Date.now()]);
+      }
+      // 그 외(end됐지만 로그 누락 등)는 무시
     }
   });
   if(!intervals.length) return {ms:0,str:'—'};
@@ -1790,9 +1798,9 @@ function calcWorkHours(code){
   const s=Math.floor((total%60000)/1000);
   let str='—';
   if(total>0){
-    if(h>0) str=`${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
-    else if(m>0) str=`${m}m ${String(s).padStart(2,'0')}s`;
-    else str=`${s}s`;
+    if(h>0) str=h+'h '+String(m).padStart(2,'0')+'m '+String(s).padStart(2,'0')+'s';
+    else if(m>0) str=m+'m '+String(s).padStart(2,'0')+'s';
+    else str=s+'s';
   }
   return {ms:total,str};
 }
@@ -2808,83 +2816,89 @@ function showToast(msg){
 }
 
 /* ══ 커스텀 날짜 선택 팝업 ══ */
-let _cdpPlanId=null, _cdpYear=0, _cdpMonth=0;
+let _cdpPlanId=null, _cdpKey=null, _cdpYear=0, _cdpMonth=0;
 
-// 이벤트 위임 - 달력 버튼 클릭
-document.addEventListener('click', function(e){
-  const btn = e.target.closest('.cdp-btn');
-  if(btn){
-    e.stopPropagation();
-    const pid = btn.dataset.pid;
-    if(pid) openCDP(pid, btn);
-    return;
-  }
-  // 팝업 외부 클릭 시 닫기
-  const box = document.getElementById('cdp-box');
-  if(box && box.classList.contains('open') && !box.contains(e.target)){
-    closeCDP();
-  }
-});
-
-function openCDP(planId, anchorEl){
-  _cdpPlanId = planId;
-  const plan = cachedPlans[planId] || Object.values(cachedPlans).find(p=>p.id===planId);
-  const base = plan?.date ? new Date(plan.date+'T00:00:00') : new Date();
+function openCDP(key, anchorEl){
+  _cdpKey = key;
+  _cdpPlanId = key;
+  const plan = cachedPlans[key];
+  const base = plan && plan.date ? new Date(plan.date+'T00:00:00') : new Date();
   _cdpYear = base.getFullYear();
   _cdpMonth = base.getMonth();
-  renderCDP();
+  _renderCDP();
   const box = document.getElementById('cdp-box');
   const rect = anchorEl.getBoundingClientRect();
-  const top = rect.bottom + 6;
-  const left = Math.min(rect.left, window.innerWidth - 280);
-  box.style.top = top + 'px';
-  box.style.left = left + 'px';
-  box.classList.add('open');
+  box.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+  box.style.left = Math.min(rect.left + window.scrollX, window.innerWidth - 285) + 'px';
+  box.style.display = 'block';
 }
+window.openCDP = openCDP;
 
 function closeCDP(){
-  document.getElementById('cdp-box').classList.remove('open');
-  _cdpPlanId = null;
+  const box = document.getElementById('cdp-box');
+  if(box) box.style.display = 'none';
+  _cdpKey = null; _cdpPlanId = null;
 }
+window.closeCDP = closeCDP;
 
 function cdpMove(d){
   _cdpMonth += d;
-  if(_cdpMonth < 0){ _cdpMonth = 11; _cdpYear--; }
-  if(_cdpMonth > 11){ _cdpMonth = 0; _cdpYear++; }
-  renderCDP();
+  if(_cdpMonth < 0){ _cdpMonth=11; _cdpYear--; }
+  if(_cdpMonth > 11){ _cdpMonth=0; _cdpYear++; }
+  _renderCDP();
 }
+window.cdpMove = cdpMove;
 
 function cdpSelectToday(){
   const today = new Date().toISOString().slice(0,10);
-  if(_cdpPlanId) changePlanDate(_cdpPlanId, today);
+  if(_cdpKey) changePlanDate(_cdpKey, today);
   closeCDP();
 }
+window.cdpSelectToday = cdpSelectToday;
 
-function renderCDP(){
+function _renderCDP(){
   const months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  document.getElementById('cdp-label').textContent = _cdpYear+'년 '+months[_cdpMonth];
+  const lbl = document.getElementById('cdp-label');
+  if(lbl) lbl.textContent = _cdpYear+'년 '+months[_cdpMonth];
   const today = new Date().toISOString().slice(0,10);
-  const plan = _cdpPlanId && (cachedPlans[_cdpPlanId] || Object.values(cachedPlans).find(p=>p.id===_cdpPlanId));
-  const selected = plan?.date || '';
+  const plan = _cdpKey ? cachedPlans[_cdpKey] : null;
+  const selected = plan ? (plan.date||'') : '';
   const firstDay = new Date(_cdpYear, _cdpMonth, 1).getDay();
   const lastDate = new Date(_cdpYear, _cdpMonth+1, 0).getDate();
   let html = '';
   for(let i=0;i<firstDay;i++) html += '<div class="cdp-day empty"></div>';
   for(let d=1;d<=lastDate;d++){
     const ds = _cdpYear+'-'+String(_cdpMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    const isToday = ds===today;
-    const isSel = ds===selected;
+    const cls = 'cdp-day'+(ds===today?' today':'')+(ds===selected?' selected':'');
     const dow = new Date(_cdpYear,_cdpMonth,d).getDay();
-    const col = !isSel ? (dow===0?'color:var(--red)':dow===6?'color:var(--accent)':'') : '';
-    html += `<div class="cdp-day${isToday?' today':''}${isSel?' selected':''}" style="${col}" onclick="cdpPick('${ds}')">${d}</div>`;
+    const col = ds!==selected ? (dow===0?'color:var(--red)':dow===6?'color:var(--accent)':'') : '';
+    html += '<div class="'+cls+'" style="'+col+'" onclick="cdpPick(''+ds+'')">'+d+'</div>';
   }
-  document.getElementById('cdp-days').innerHTML = html;
+  const grid = document.getElementById('cdp-days');
+  if(grid) grid.innerHTML = html;
 }
 
 function cdpPick(dateStr){
-  if(_cdpPlanId) changePlanDate(_cdpPlanId, dateStr);
+  if(_cdpKey) changePlanDate(_cdpKey, dateStr);
   closeCDP();
 }
+window.cdpPick = cdpPick;
+
+// 달력 버튼 이벤트 위임 (문서 레벨)
+document.addEventListener('click', function(e){
+  const btn = e.target.closest('.cdp-btn');
+  if(btn){
+    e.preventDefault();
+    e.stopPropagation();
+    const key = btn.getAttribute('data-pid');
+    if(key && key !== 'undefined') openCDP(key, btn);
+    return;
+  }
+  const box = document.getElementById('cdp-box');
+  if(box && box.style.display==='block' && !box.contains(e.target)){
+    closeCDP();
+  }
+}, true);
 
 </script>
 </body>
