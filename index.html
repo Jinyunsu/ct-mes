@@ -986,10 +986,11 @@ let pollingTimer=null;
 
 async function loadAll() {
   try {
-    const [n,s,p] = await Promise.all([API.get('/api/names'),API.get('/api/states'),API.get('/api/plans')]);
+    const [n,s,p,l] = await Promise.all([API.get('/api/names'),API.get('/api/states'),API.get('/api/plans'),API.get('/api/logs')]);
     if(n) cachedNames=n;
     if(s) cachedStates=s;
     if(p) cachedPlans=p;
+    if(l) cachedLogs=l;
     renderWorkerGrid();
     renderWorkerListPage();
     renderPlanTable();
@@ -1189,6 +1190,9 @@ window.doAction=async function(code,action,qty=0,partialEnd=false){
   // 로그 즉시 추가
   const newLog={worker:currentUser,code,action,date:dateStr,time:timeStr,qty:qty||0,ts:t.getTime()};
   logs=[newLog,...logs];
+  // cachedLogs 즉시 업데이트
+  if(!cachedLogs[currentUser])cachedLogs[currentUser]={};
+  cachedLogs[currentUser][newLog.ts]=newLog;
   renderJobs(); renderLogs();
   // API 비동기 처리
   API.post('/api/logs',newLog);
@@ -1382,7 +1386,7 @@ function renderPlanTable(filterFn){
   tbody.innerHTML=plans.map(p=>{
     const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
     const wCnt=getWorkerCount(p.code);
-    const wHrs=getWorkHours(p.code);
+    const wHrs=calcWorkHours(p.code);
     const isToday=p.date===new Date().toISOString().slice(0,10);
     return `<tr style="${isToday?'background:rgba(59,130,246,.04)':''}" draggable="true" ondragstart="onPlanRowDrag(event,'${esc(p.id)}')" style="cursor:grab">
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.createdAt||'—'}</td>
@@ -1395,7 +1399,7 @@ function renderPlanTable(filterFn){
       <td style="font-family:var(--mono);text-align:right;color:${(p.actQty||0)>0?'var(--green)':'var(--text3)'}">${(p.actQty||0).toLocaleString()} EA</td>
       <td><div style="display:flex;align-items:center;gap:6px"><div class="prog-bar" style="width:50px"><div class="prog-fill ${pct>=100?'green':pct>=50?'':'red'}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-family:var(--mono);font-weight:700;color:${pct>=100?'var(--green)':pct>=50?'var(--text)':'var(--red)'}">${pct}%</span></div></td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${wCnt}명</td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${wHrs}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${typeof wHrs==='object'?wHrs.str:wHrs}</td>
       <td><span class="badge ${sc[getPlanStatus(p)]||'badge-gray'}">${sm[getPlanStatus(p)]||'예정'}</span></td>
       <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
       <td style="white-space:nowrap">
@@ -1487,11 +1491,17 @@ function renderCalendar(){
     const prevUnfinished=Object.values(cachedPlans).filter(p=>{
       if(!p.date||p.date>=ds)return false;
       if(getPlanStatus(p)==='done'||p.status==='done')return false;
-      // 미완료 + 날짜가 ds 이전 + ds가 p.date 바로 다음날
-      const pDate=new Date(p.date);
+      // 실제 작업자가 작업한 마지막 날짜 확인
+      const allPlanLogs=Object.values(cachedLogs||{}).flatMap(wl=>
+        Object.values(wl||{}).filter(l=>l.code===p.code)
+      );
+      if(!allPlanLogs.length)return false; // 작업 기록 없으면 이월 안함
+      const lastLogDate=allPlanLogs.reduce((max,l)=>l.ts>max?l.ts:max,0);
+      const lastLogIso=new Date(lastLogDate).toISOString().slice(0,10);
       const dsDate=new Date(ds);
-      const diff=Math.floor((dsDate-pDate)/(1000*60*60*24));
-      return diff===1; // 바로 다음날만
+      const lastDate=new Date(lastLogIso);
+      const diff=Math.floor((dsDate-lastDate)/(1000*60*60*24));
+      return diff>=1 && diff<=30; // 마지막 작업일 다음날부터 표시
     });
     const allDp=[...prevUnfinished.map(p=>({...p,_carry:true})),...dp];
     const ph=allDp.slice(0,3).map(p=>{
