@@ -1141,10 +1141,26 @@ window.selectWorker = async function(idx) {
   document.getElementById('worker-select').style.display='none';
   document.getElementById('worker-work').style.display='block';
   const myState=cachedStates[currentUser]||{};
-  Object.entries(myState).forEach(([c,s])=>{if(s.action&&s.action!=='end')jobs[c]={action:s.action,since:s.since||'',open:s.action==='start'};});
+  Object.entries(myState).forEach(([c,s])=>{
+    if(s.action&&s.action!=='end'){
+      // startTs 복원: cachedLogs에서 해당 코드의 마지막 start 로그 timestamp 사용
+      let startTs = null;
+      if(s.action==='start'){
+        const workerLogs = Object.values(cachedLogs?.[currentUser]||{}).filter(l=>l.code===c&&l.action==='start').sort((a,b)=>b.ts-a.ts);
+        if(workerLogs.length) startTs = workerLogs[0].ts;
+        else if(s.since){
+          // since 문자열(HH:MM:SS)로 오늘 날짜 기준 timestamp 역산
+          const parts=s.since.split(':').map(Number);
+          if(parts.length===3){const d=new Date();d.setHours(parts[0],parts[1],parts[2],0);startTs=d.getTime();}
+        }
+      }
+      jobs[c]={action:s.action,since:s.since||'',open:s.action==='start',startTs};
+    }
+  });
   try{const ml=await API.get(`/api/logs?worker=${encodeURIComponent(currentUser)}`);if(ml){const wl=ml[currentUser]||{};logs=Object.values(wl).sort((a,b)=>b.ts-a.ts);}}catch(e){logs=[];}
   renderJobs(); renderLogs();
   updatePlanSelect();
+  startJobTimer();
 };
 
 window.backToWorkers = function(){
