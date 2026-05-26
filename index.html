@@ -1476,7 +1476,7 @@ window.submitPlan=async function(){
   if(!code){showToast('작업코드 입력');return;}
   if(qty<=0){showToast('계획수량 입력');return;}
   const today=new Date().toISOString().slice(0,10);
-  const res=await API.post('/api/plans',{code,date:'',createdAt:today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',createdAt:today,status:'planned'});
+  const res=await API.post('/api/plans',{code,date:'',createdAt:today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',status:'planned'});
   if(res){
     cachedPlans=res;
     closeModal('plan-modal');
@@ -1568,7 +1568,7 @@ function filterPlanTable(){
   const codeVal=(document.getElementById('plan-filter-code')?.value||'').toLowerCase();
   const custVal=(document.getElementById('plan-filter-customer')?.value||'').toLowerCase();
   renderPlanTable(p=>{
-    if(dateVal&&!p.date?.startsWith(dateVal))return false;
+    if(dateVal&&p.date&&!p.date.startsWith(dateVal))return false;
     if(codeVal&&!p.code?.toLowerCase().includes(codeVal))return false;
     if(custVal&&!p.customer?.toLowerCase().includes(custVal))return false;
     return true;
