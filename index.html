@@ -1004,7 +1004,7 @@ async function loadAll() {
     }
   } catch(e) {}
 }
-function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,3000); }
+function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,1500); }
 loadAll().then(startPolling);
 
 // 생산계획 필터 초기화
@@ -1176,24 +1176,31 @@ window.doAction=async function(code,action,qty=0,partialEnd=false){
   const timeStr=t.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
   const dateStr=t.toLocaleDateString('ko-KR');
   const isoDate=t.toISOString().slice(0,10);
-  await API.post('/api/logs',{worker:currentUser,code,action,date:dateStr,time:timeStr,qty:qty||0,ts:t.getTime()});
+  // 로컬 즉시 반영 (빠른 반응)
   if(action==='end'){
-    await API.del('/api/states',{worker:currentUser,code});
     if(partialEnd){
-      // 부분 완료 - 작업코드 유지, 잔여 작업 가능
       jobs[code]={...jobs[code],action:'idle',since:timeStr,open:true};
-      showToast(`[${code}] 부분 완료 (${qty}EA) - 이어서 작업 가능`);
     } else {
       jobs[code]={...jobs[code],action:'end',since:timeStr,open:false};
     }
-    if(qty>0){const match=Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase()&&p.date===isoDate);if(match){const[pid,plan]=match;await API.put('/api/plans',{...plan,id:pid,actQty:(Number(plan.actQty)||0)+qty});}}
   } else {
-    await API.post('/api/states',{worker:currentUser,code,action,since:timeStr,date:dateStr});
     jobs[code]={...jobs[code],action,since:timeStr,open:action==='start'};
   }
-  const ml=await API.get(`/api/logs?worker=${encodeURIComponent(currentUser)}`);
-  if(ml){const wl=ml[currentUser]||{};logs=Object.values(wl).sort((a,b)=>b.ts-a.ts);}
+  // 로그 즉시 추가
+  const newLog={worker:currentUser,code,action,date:dateStr,time:timeStr,qty:qty||0,ts:t.getTime()};
+  logs=[newLog,...logs];
   renderJobs(); renderLogs();
+  // API 비동기 처리
+  API.post('/api/logs',newLog);
+  if(action==='end'){
+    API.del('/api/states',{worker:currentUser,code});
+    if(qty>0){
+      const match=Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase()&&p.date===isoDate);
+      if(match){const[pid,plan]=match;API.put('/api/plans',{...plan,id:pid,actQty:(Number(plan.actQty)||0)+qty});}
+    }
+  } else {
+    API.post('/api/states',{worker:currentUser,code,action,since:timeStr,date:dateStr});
+  }
   const lbls={start:'▶ 시작',pause:'⏸ 정지',end:'■ 종료'};
   showToast(`[${code}] ${lbls[action]}${qty>0?' ('+qty+'EA)':''}`);
 };
@@ -1369,7 +1376,7 @@ function renderPlanTable(filterFn){
       <td><div style="display:flex;align-items:center;gap:6px"><div class="prog-bar" style="width:50px"><div class="prog-fill ${pct>=100?'green':pct>=50?'':'red'}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-family:var(--mono);font-weight:700;color:${pct>=100?'var(--green)':pct>=50?'var(--text)':'var(--red)'}">${pct}%</span></div></td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${wCnt}명</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${wHrs}</td>
-      <td><span class="badge ${sc[p.status]||'badge-gray'}">${sm[p.status]||'예정'}</span></td>
+      <td><span class="badge ${sc[getPlanStatus(p)]||'badge-gray'}">${sm[getPlanStatus(p)]||'예정'}</span></td>
       <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-secondary btn-sm" style="margin-right:4px" onclick="openEditPlanModal('${esc(p.id)}')" title="수정"><i class="ti ti-edit"></i></button>
@@ -1877,7 +1884,10 @@ function renderDailyReport(dateStr){
     const allRows=[];
     const todayLocalStr=new Date(dateStr).toLocaleDateString('ko-KR');
     Object.entries(cachedLogs||{}).forEach(([worker,wlogs])=>{
-      const dayLogs=Object.values(wlogs||{}).filter(l=>l.date===todayLocalStr).sort((a,b)=>a.ts-b.ts);
+      const dayLogs=Object.values(wlogs||{}).filter(l=>{
+        const logIso=new Date(l.ts).toISOString().slice(0,10);
+        return l.date===todayLocalStr||logIso===dateStr;
+      }).filter(l=>lr).sort((a,b)=>a.ts-b.ts);
       const codes=new Set(dayLogs.map(l=>l.code));
       codes.forEach(code=>{
         const codeLogs=dayLogs.filter(l=>l.code===code);
