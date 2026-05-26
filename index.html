@@ -1229,7 +1229,13 @@ function _calcTotalMsForDate(dateStr){
     const de=Object.values(wlogs||{}).filter(l=>{const li=new Date(l.ts).toISOString().slice(0,10);return l.date===todayLocalForDate||li===dateStr;}).sort((a,b)=>a.ts-b.ts);
     const cm={};
     de.forEach(l=>{if(!cm[l.code])cm[l.code]=null;if(l.action==='start')cm[l.code]=l.ts;else if((l.action==='end'||l.action==='pause')&&cm[l.code]!=null){allDI.push([cm[l.code],l.ts]);cm[l.code]=null;}});
-    Object.values(cm).forEach(st=>{if(st!=null)allDI.push([st,Date.now()]);});
+    Object.entries(cm).forEach(([code,st])=>{
+      if(st!=null){
+        const isStillRunning=Object.values(cachedStates||{}).some(codes=>codes[code]&&codes[code].action==='start');
+        if(isStillRunning) allDI.push([st,Date.now()]);
+        else allDI.push([st,st]); // 미종료지만 states에 없으면 0구간 (삭제된 코드)
+      }
+    });
   });
   if(!allDI.length)return 0;
   allDI.sort((a,b)=>a[0]-b[0]);
@@ -1569,9 +1575,12 @@ window.deletePlan=async function(id){
   }
   const planCode = plan?.code;
 
+  // 폴링 일시 중단 (삭제 도중 서버 데이터로 덮어씌워지는 것 방지)
+  if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
+
   // 1. 계획 삭제
   const res = await API.del('/api/plans', {id: realId});
-  if(!res || res.error){ showToast('삭제 실패'); return; }
+  if(!res || res.error){ showToast('삭제 실패'); startPolling(); return; }
   cachedPlans = res;
 
   // 2. 해당 코드의 states 삭제 (모든 작업자)
@@ -1598,20 +1607,7 @@ window.deletePlan=async function(id){
       }
     });
 
-    // 타임라인용 삭제 기록 추가 (시스템 이벤트)
-    const delTs = Date.now();
-    const delTime = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
-    if(!cachedLogs['__system__']) cachedLogs['__system__'] = {};
-    cachedLogs['__system__'][delTs] = {
-      worker: '시스템',
-      code: planCode,
-      action: 'delete',
-      date: new Date().toLocaleDateString('ko-KR'),
-      time: delTime,
-      qty: 0,
-      ts: delTs,
-      _isDelete: true
-    };
+
   }
 
   // 전체 UI 갱신
@@ -1632,6 +1628,8 @@ window.deletePlan=async function(id){
     else if(curOrderTab==='all') renderOrAll();
   }
   showToast(`[${planCode||id}] 계획 및 관련 기록 삭제됨`);
+  // 폴링 재시작
+  startPolling();
 };
 
 /* ══ 달력 ══ */
@@ -1757,7 +1755,10 @@ function calcWorkHours(code){
       if(l.action==='start') st=l.ts;
       else if((l.action==='end'||l.action==='pause')&&st){ intervals.push([st,l.ts]); st=null; }
     });
-    if(st) intervals.push([st,Date.now()]); // 현재 작업중
+    if(st){
+      const isStillRunning=Object.values(cachedStates||{}).some(codes=>codes[code]&&codes[code].action==='start');
+      if(isStillRunning) intervals.push([st,Date.now()]); // 현재 작업중
+    }
   });
   if(!intervals.length) return {ms:0,str:'—'};
   intervals.sort((a,b)=>a[0]-b[0]);
@@ -1803,7 +1804,13 @@ function renderDashboard(){
       if(l.action==='start') codeMap[l.code] = l.ts;
       else if((l.action==='end'||l.action==='pause') && codeMap[l.code]!=null){ allDayIntervals.push([codeMap[l.code],l.ts]); codeMap[l.code]=null; }
     });
-    Object.values(codeMap).forEach(st=>{ if(st!=null) allDayIntervals.push([st,Date.now()]); });
+    Object.entries(codeMap).forEach(([code,st])=>{
+      if(st!=null){
+        const isStillRunning=Object.values(cachedStates||{}).some(codes=>codes[code]&&codes[code].action==='start');
+        if(isStillRunning) allDayIntervals.push([st,Date.now()]);
+        // 삭제된 코드는 미종료 구간 무시
+      }
+    });
   });
   let totalMs=0;
   if(allDayIntervals.length){
@@ -2038,10 +2045,10 @@ function renderProgress(){
   if(tlDiv){
     const todayStr=new Date().toISOString().slice(0,10);
     const todayLocal=new Date().toLocaleDateString('ko-KR');
-    const allLogs=Object.entries(cachedLogs||{}).flatMap(([w,wl])=>
+    const allLogs=Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').flatMap(([w,wl])=>
       Object.values(wl||{}).filter(l=>{
         const logIso=new Date(l.ts).toISOString().slice(0,10);
-        return l.date===todayLocal||logIso===todayStr;
+        return (l.date===todayLocal||logIso===todayStr) && l.action!=='delete';
       }).map(l=>({...l,worker:w}))
     ).sort((a,b)=>b.ts-a.ts);
     if(!allLogs.length){
@@ -2248,7 +2255,12 @@ function renderDailyReport(dateStr){
       if(l.action==='start') codeMap2[l.code]=l.ts;
       else if((l.action==='end'||l.action==='pause')&&codeMap2[l.code]!=null){ allDateIntervals.push([codeMap2[l.code],l.ts]); codeMap2[l.code]=null; }
     });
-    Object.values(codeMap2).forEach(st=>{if(st!=null) allDateIntervals.push([st,Date.now()]);});
+    Object.entries(codeMap2).forEach(([code,st])=>{
+      if(st!=null){
+        const isStillRunning=Object.values(cachedStates||{}).some(codes=>codes[code]&&codes[code].action==='start');
+        if(isStillRunning) allDateIntervals.push([st,Date.now()]);
+      }
+    });
   });
   let totalMs=0;
   if(allDateIntervals.length){
