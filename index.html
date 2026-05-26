@@ -944,6 +944,7 @@ const msalInstance = new msal.PublicClientApplication(msalConfig);
 
 async function initAuth() {
   try {
+    await msalInstance.initialize();
     const resp = await msalInstance.handleRedirectPromise();
     if(resp) { setUser(resp.account); return; }
   } catch(e) { document.getElementById('login-err').textContent = '오류: ' + e.message; }
