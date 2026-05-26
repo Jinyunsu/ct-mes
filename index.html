@@ -1017,7 +1017,7 @@ async function loadAll() {
     if(l) cachedLogs=l;
     renderWorkerGrid();
     renderWorkerListPage();
-    renderPlanTable();
+    filterPlanTable();
     renderCalendar();
     renderAllLinked();
     renderOrKPIs();
@@ -1536,10 +1536,10 @@ function renderPlanTable(filterFn){
       <td style="font-family:var(--mono);font-size:11px">
         <div style="display:flex;align-items:center;gap:4px;position:relative">
           <span style="color:var(--accent);font-weight:700">${p.date||'—'}</span>
-          <label style="cursor:pointer;display:flex;align-items:center;position:relative">
-            <i class="ti ti-calendar" style="font-size:13px;color:var(--accent2)"></i>
-            <input type="date" value="${p.date||''}" onchange="changePlanDate('${esc(p.id)}',this.value)" style="position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;left:0;top:0;border:none;background:transparent">
-          </label>
+          <span style="position:relative;display:inline-flex;align-items:center;cursor:pointer">
+            <i class="ti ti-calendar" style="font-size:13px;color:var(--accent2);pointer-events:none"></i>
+            <input type="date" value="${p.date||''}" onchange="changePlanDate('${esc(p.id)}',this.value)" style="position:absolute;opacity:0;width:20px;height:20px;cursor:pointer;left:0;top:0;border:none;background:transparent;padding:0">
+          </span>
         </div>
       </td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
