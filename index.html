@@ -1162,6 +1162,26 @@ window.addCode = function(){
   renderJobs(); inp.value=''; inp.focus();
 };
 
+
+function fmtElapsed(ms){
+  const s=Math.floor(ms/1000);
+  const h=Math.floor(s/3600);
+  const m=Math.floor((s%3600)/60);
+  const sec=s%60;
+  if(h>0) return h+'h '+String(m).padStart(2,'0')+'m '+String(sec).padStart(2,'0')+'s';
+  if(m>0) return m+'m '+String(sec).padStart(2,'0')+'s';
+  return sec+'s';
+}
+
+// 작업 카드 타이머 - 1초마다 갱신
+let _jobTimerInterval = null;
+function startJobTimer(){
+  if(_jobTimerInterval) clearInterval(_jobTimerInterval);
+  _jobTimerInterval = setInterval(()=>{
+    const hasRunning = Object.values(jobs).some(j=>j.action==='start');
+    if(hasRunning) renderJobs();
+  }, 1000);
+}
 function renderJobs(){
   const list=document.getElementById('job-list');
   const codes=Object.keys(jobs);
@@ -1172,7 +1192,8 @@ function renderJobs(){
     const badgeCls=a==='start'?'badge-green':a==='pause'?'badge-amber':a==='end'?'badge-gray':'badge-gray';
     const badgeTxt=a==='start'?'작업중':a==='pause'?'일시정지':a==='end'?'완료':'대기';
     const cardCls=a==='start'?'running':a==='pause'?'paused':'';
-    const since=a==='start'&&s.since?`<div style="font-size:11px;color:var(--text3);margin:8px 0 10px">${s.since} 부터 작업중</div>`:a==='pause'&&s.since?`<div style="font-size:11px;color:var(--text3);margin:8px 0 10px">${s.since} 일시정지됨</div>`:'<div style="margin-top:8px"></div>';
+        const elapsed=a==='start'&&s.startTs?fmtElapsed(Date.now()-s.startTs):'';
+    const since=a==='start'?`<div style="font-size:13px;font-weight:700;color:var(--green);margin:8px 0 10px;font-family:var(--mono);letter-spacing:.5px">${elapsed||'0s'}</div>`:a==='pause'&&s.since?`<div style="font-size:11px;color:var(--amber);margin:8px 0 10px">${s.since} 일시정지</div>`:'';
     return `<div class="job-card ${cardCls}">
       <div class="job-head" onclick="toggleJob('${esc(c)}')">
         <div class="job-dot ${dotCls}"></div>
@@ -1209,7 +1230,7 @@ window.doAction=async function(code,action,qty=0,partialEnd=false){
       jobs[code]={...jobs[code],action:'end',since:timeStr,open:false};
     }
   } else {
-    jobs[code]={...jobs[code],action,since:timeStr,open:action==='start'};
+    jobs[code]={...jobs[code],action,since:timeStr,startTs:action==='start'?t.getTime():(jobs[code]?.startTs||null),open:action==='start'};
   }
   // 로그 즉시 추가
   const newLog={worker:currentUser,code,action,date:dateStr,time:timeStr,qty:qty||0,ts:t.getTime()};
@@ -1218,6 +1239,7 @@ window.doAction=async function(code,action,qty=0,partialEnd=false){
   if(!cachedLogs[currentUser])cachedLogs[currentUser]={};
   cachedLogs[currentUser][newLog.ts]=newLog;
   renderJobs(); renderLogs();
+  startJobTimer();
   // API 비동기 처리
   API.post('/api/logs',newLog);
   if(action==='end'){
