@@ -5,25 +5,22 @@ async function ensureTable() {
   await sql`
     CREATE TABLE IF NOT EXISTS plans (
       id TEXT PRIMARY KEY,
-      code TEXT,
-      date TEXT,
+      code TEXT DEFAULT '',
+      date TEXT DEFAULT '',
       plan_qty INTEGER DEFAULT 0,
       act_qty INTEGER DEFAULT 0,
-      product_code TEXT,
-      spec TEXT,
-      customer TEXT,
-      remark TEXT,
+      product_code TEXT DEFAULT '',
+      spec TEXT DEFAULT '',
+      customer TEXT DEFAULT '',
+      remark TEXT DEFAULT '',
       status TEXT DEFAULT 'planned',
+      created_at_date TEXT DEFAULT '',
+      data JSONB,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
-  // 혹시 없는 컬럼 추가
-  const cols = ['code','date','plan_qty','act_qty','product_code','spec','customer','remark','status'];
-  for (const col of cols) {
-    try {
-      await sql`ALTER TABLE plans ADD COLUMN IF NOT EXISTS ${sql.unsafe(col)} TEXT`;
-    } catch(e) {}
-  }
+  try { await sql`ALTER TABLE plans ADD COLUMN IF NOT EXISTS created_at_date TEXT DEFAULT ''`; } catch(e) {}
+  try { await sql`ALTER TABLE plans ADD COLUMN IF NOT EXISTS data JSONB`; } catch(e) {}
 }
 
 function rowToObj(row) {
@@ -38,6 +35,7 @@ function rowToObj(row) {
     customer: row.customer || '',
     remark: row.remark || '',
     status: row.status || 'planned',
+    createdAt: row.created_at_date || row.created_at?.slice(0,10) || '',
   };
 }
 
@@ -60,15 +58,22 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const p = req.body;
       const id = p.id || `plan_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+      const createdAtDate = p.createdAt || new Date().toISOString().slice(0,10);
       await sql`
-        INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, status)
-        VALUES (${id}, ${p.code||''}, ${p.date||''}, ${Number(p.planQty)||0}, ${Number(p.actQty)||0},
-                ${p.productCode||''}, ${p.spec||''}, ${p.customer||''}, ${p.remark||''}, ${p.status||'planned'})
+        INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, status, created_at_date)
+        VALUES (
+          ${id}, ${p.code||''}, ${p.date||''},
+          ${Number(p.planQty)||0}, ${Number(p.actQty)||0},
+          ${p.productCode||''}, ${p.spec||''},
+          ${p.customer||''}, ${p.remark||''}, ${p.status||'planned'},
+          ${createdAtDate}
+        )
         ON CONFLICT (id) DO UPDATE SET
-          code=${p.code||''}, date=${p.date||''}, plan_qty=${Number(p.planQty)||0},
-          act_qty=${Number(p.actQty)||0}, product_code=${p.productCode||''},
-          spec=${p.spec||''}, customer=${p.customer||''}, remark=${p.remark||''},
-          status=${p.status||'planned'}
+          code = EXCLUDED.code, date = EXCLUDED.date,
+          plan_qty = EXCLUDED.plan_qty, act_qty = EXCLUDED.act_qty,
+          product_code = EXCLUDED.product_code, spec = EXCLUDED.spec,
+          customer = EXCLUDED.customer, remark = EXCLUDED.remark,
+          status = EXCLUDED.status
       `;
       const rows = await sql`SELECT * FROM plans ORDER BY created_at ASC`;
       const result = {};
@@ -81,14 +86,20 @@ export default async function handler(req, res) {
       const id = p.id;
       if (!id) return res.status(400).json({ error: 'id required' });
       await sql`
-        INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, status)
-        VALUES (${id}, ${p.code||''}, ${p.date||''}, ${Number(p.planQty)||0}, ${Number(p.actQty)||0},
-                ${p.productCode||''}, ${p.spec||''}, ${p.customer||''}, ${p.remark||''}, ${p.status||'planned'})
+        INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, status, created_at_date)
+        VALUES (
+          ${id}, ${p.code||''}, ${p.date||''},
+          ${Number(p.planQty)||0}, ${Number(p.actQty)||0},
+          ${p.productCode||''}, ${p.spec||''},
+          ${p.customer||''}, ${p.remark||''}, ${p.status||'planned'},
+          ${p.createdAt||''}
+        )
         ON CONFLICT (id) DO UPDATE SET
-          code=${p.code||''}, date=${p.date||''}, plan_qty=${Number(p.planQty)||0},
-          act_qty=${Number(p.actQty)||0}, product_code=${p.productCode||''},
-          spec=${p.spec||''}, customer=${p.customer||''}, remark=${p.remark||''},
-          status=${p.status||'planned'}
+          code = EXCLUDED.code, date = EXCLUDED.date,
+          plan_qty = EXCLUDED.plan_qty, act_qty = EXCLUDED.act_qty,
+          product_code = EXCLUDED.product_code, spec = EXCLUDED.spec,
+          customer = EXCLUDED.customer, remark = EXCLUDED.remark,
+          status = EXCLUDED.status
       `;
       const rows = await sql`SELECT * FROM plans ORDER BY created_at ASC`;
       const result = {};
