@@ -1731,7 +1731,7 @@ function renderDashboard(){
   const totalHrs=(totalMs/3600000).toFixed(1);
 
   const el=id=>document.getElementById(id);
-  if(el('d-hours'))el('d-hours').textContent=totalHrs||'0';
+  if(el('d-hours'))el('d-hours').textContent=totalMs>0?fmtElapsed(totalMs):'—';
   if(el('d-plan'))el('d-plan').textContent=todayPlans.length||'0';
   if(el('d-running'))el('d-running').textContent=runningWorkers.size||'0';
   if(el('d-rate'))el('d-rate').textContent=rate||'0';
@@ -2000,7 +2000,7 @@ function renderPerformance(){
   if(pfEl('pf-done'))pfEl('pf-done').textContent=donePlans.length;
   if(pfEl('pf-qty'))pfEl('pf-qty').textContent=totalAct.toLocaleString();
   if(pfEl('pf-rate'))pfEl('pf-rate').textContent=rate;
-  if(pfEl('pf-hours'))pfEl('pf-hours').textContent=perfTotalMs>0?perfHrs:'—';
+  if(pfEl('pf-hours'))pfEl('pf-hours').textContent=perfTotalMs>0?fmtElapsed(perfTotalMs):'—';
   if(pfEl('pf-prod'))pfEl('pf-prod').textContent=productivity;
   if(pfEl('pf-defect'))pfEl('pf-defect').textContent='—';
 
@@ -2139,7 +2139,7 @@ function renderDailyReport(dateStr){
   const el2=id=>document.getElementById(id);
   if(el2('dl-codes'))el2('dl-codes').textContent=plans.length||'0';
   if(el2('dl-workers'))el2('dl-workers').textContent=workers.size||'0';
-  if(el2('dl-hours'))el2('dl-hours').textContent=totalMs>0?totalHrsStr+'h':'—';
+  if(el2('dl-hours'))el2('dl-hours').textContent=totalMs>0?fmtElapsed(totalMs):'—';
   if(el2('dl-qty'))el2('dl-qty').textContent=totalQty>0?totalQty.toLocaleString()+' EA':'—';
 
   // 작업코드별 현황
