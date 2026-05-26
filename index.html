@@ -645,10 +645,10 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
       </div>
       <div class="metrics">
-        <div class="metric blue"><div class="metric-label">전체 작업자</div><div class="metric-value">—</div><div class="metric-sub">명</div></div>
-        <div class="metric green"><div class="metric-label">현재 작업중</div><div class="metric-value">—</div><div class="metric-sub">명</div></div>
-        <div class="metric"><div class="metric-label">오늘 투입</div><div class="metric-value">—</div><div class="metric-sub">명</div></div>
-        <div class="metric cyan"><div class="metric-label">평균 투입시간</div><div class="metric-value">—</div><div class="metric-sub">hr</div></div>
+        <div class="metric blue"><div class="metric-label">전체 작업자</div><div class="metric-value" id="wm-total">—</div><div class="metric-sub">명</div></div>
+        <div class="metric green"><div class="metric-label">현재 작업중</div><div class="metric-value" id="wm-running">—</div><div class="metric-sub">명</div></div>
+        <div class="metric"><div class="metric-label">오늘 투입</div><div class="metric-value" id="wm-today">—</div><div class="metric-sub">명</div></div>
+        <div class="metric cyan"><div class="metric-label">평균 투입시간</div><div class="metric-value" id="wm-avg">—</div><div class="metric-sub">hr</div></div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -772,8 +772,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="ph-left"><div class="page-title">작업일보</div><div class="page-desc">일일 작업 내역 확인 및 출력</div></div>
         <div class="ph-right">
           <input type="date" id="daily-date" class="input" style="width:auto;font-size:12px">
-          <button class="btn btn-secondary btn-sm"><i class="ti ti-printer"></i> 인쇄</button>
-          <button class="btn btn-secondary btn-sm"><i class="ti ti-file-spreadsheet"></i> 엑셀</button>
+          <button class="btn btn-secondary btn-sm" onclick="printDailyReport()"><i class="ti ti-printer"></i> 인쇄</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportDailyExcel()"><i class="ti ti-file-spreadsheet"></i> 엑셀</button>
         </div>
       </div>
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:18px 22px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center">
@@ -1749,6 +1749,34 @@ function renderDashboard(){
     }
   }
 
+  // 일별 생산수량 추이 차트
+  const chartEl = document.getElementById('chart-daily');
+  if(chartEl){
+    // 최근 7일 데이터
+    const days = [];
+    for(let i=6;i>=0;i--){
+      const d = new Date(); d.setDate(d.getDate()-i);
+      const iso = d.toISOString().slice(0,10);
+      const dayPlans = Object.values(cachedPlans).filter(p=>p.date===iso);
+      const qty = dayPlans.reduce((s,p)=>s+(p.actQty||0),0);
+      days.push({iso, label: `${d.getMonth()+1}/${d.getDate()}`, qty});
+    }
+    const maxQty = Math.max(...days.map(d=>d.qty), 1);
+    if(days.every(d=>d.qty===0)){
+      chartEl.innerHTML='<div style="text-align:center;width:100%;color:var(--text3);font-size:12px;align-self:center">데이터 없음</div>';
+    } else {
+      chartEl.innerHTML = days.map(d=>{
+        const pct = Math.round(d.qty/maxQty*100);
+        const isToday = d.iso===today;
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="font-size:9px;color:var(--text3);font-family:var(--mono)">${d.qty>0?d.qty:''}</div>
+          <div style="width:100%;background:${isToday?'var(--accent)':'var(--accent2)'};border-radius:3px 3px 0 0;height:${Math.max(pct,2)}%;opacity:${isToday?1:0.6};min-height:${d.qty>0?'4px':'0'}"></div>
+          <div style="font-size:9px;color:${isToday?'var(--accent)':'var(--text3)'};font-weight:${isToday?700:400}">${d.label}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+
   // 최근 활동
   const recentEl=document.getElementById('d-recent');
   if(recentEl){
@@ -2010,6 +2038,33 @@ function renderPerformance(){
 function renderWorkerStats(){
   const tbl=document.getElementById('worker-stats-tbl');
   if(!tbl)return;
+
+  const today=new Date().toISOString().slice(0,10);
+  const todayStr=new Date().toLocaleDateString('ko-KR');
+
+  // 메트릭 업데이트
+  const totalWorkers=cachedNames.length;
+  const runningWorkers=cachedNames.filter(n=>Object.values(cachedStates[n]||{}).some(s=>s.action==='start')).length;
+  const todayWorkers=cachedNames.filter(n=>{
+    return Object.values(cachedLogs?.[n]||{}).some(l=>{
+      const logIso=new Date(l.ts).toISOString().slice(0,10);
+      return l.date===todayStr||logIso===today;
+    });
+  }).length;
+  // 평균 투입시간
+  const workerHours=cachedNames.map(n=>{
+    const codes=new Set(Object.values(cachedLogs?.[n]||{}).map(l=>l.code));
+    return Array.from(codes).reduce((s,c)=>s+calcWorkHours(c).ms,0);
+  }).filter(ms=>ms>0);
+  const avgMs=workerHours.length?workerHours.reduce((s,ms)=>s+ms,0)/workerHours.length:0;
+  const avgH=(avgMs/3600000).toFixed(1);
+
+  const el=id=>document.getElementById(id);
+  if(el('wm-total'))el('wm-total').textContent=totalWorkers||'0';
+  if(el('wm-running'))el('wm-running').textContent=runningWorkers||'0';
+  if(el('wm-today'))el('wm-today').textContent=todayWorkers||'0';
+  if(el('wm-avg'))el('wm-avg').textContent=avgH||'0';
+
   if(!cachedNames.length){tbl.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr>';return;}
   tbl.innerHTML=cachedNames.map(n=>{
     const st=cachedStates[n]||{};
@@ -2020,10 +2075,14 @@ function renderWorkerStats(){
     const codeSet=new Set(todayLogs.map(l=>l.code));
     const totalQty=todayLogs.filter(l=>l.action==='end').reduce((s,l)=>s+(l.qty||0),0);
     const isWorking=Object.values(st).some(s=>s.action==='start');
+    // 작업자 전체 코드 투입시간 합산 (실시간)
+    const workerTotalMs = Array.from(codeSet).reduce((sum, c)=>sum+calcWorkHours(c).ms, 0);
+    const wh = Math.floor(workerTotalMs/3600000), wm = Math.floor((workerTotalMs%3600000)/60000);
+    const wHrsStr = workerTotalMs>0?(wh>0?`${wh}h ${wm}m`:`${wm}m`):'—';
     return `<tr>
       <td style="font-weight:600">${esc(n)}</td>
       <td style="font-family:var(--mono)">${codeSet.size}</td>
-      <td style="font-family:var(--mono)">${calcWorkHours(activeCodes[0]||'').str}</td>
+      <td style="font-family:var(--mono)">${wHrsStr}</td>
       <td style="font-family:var(--mono);color:var(--green)">${totalQty>0?totalQty.toLocaleString()+' EA':'—'}</td>
       <td><span class="badge ${isWorking?'badge-green':activeCodes.length?'badge-amber':'badge-gray'}">${isWorking?'작업중':activeCodes.length?'정지':'대기'}</span></td>
     </tr>`;
@@ -2085,7 +2144,8 @@ function renderDailyReport(dateStr){
         const logIso=new Date(l.ts).toISOString().slice(0,10);
         return l.date===todayLocalStr||logIso===dateStr;
       }).sort((a,b)=>a.ts-b.ts);
-      const codes=new Set(dayLogs.map(l=>l.code));
+      const _planCodes=new Set(Object.values(cachedPlans).map(p=>p.code?.toLowerCase()));
+      const codes=new Set(dayLogs.map(l=>l.code).filter(c=>_planCodes.has(c?.toLowerCase())));
       codes.forEach(code=>{
         const codeLogs=dayLogs.filter(l=>l.code===code);
         const startLog=codeLogs.find(l=>l.action==='start');
@@ -2333,7 +2393,7 @@ window.renderOrAll = function() {
   if(!plans.length) { tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>'; return; }
   tbody.innerHTML = plans.map(p=>{
     const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
-    const st=p.status||'planned';
+    const st=getPlanStatus(p);
     return `<tr>
       <td style="font-size:12px;color:var(--text3)">${p.date||'—'}</td>
       <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
@@ -2484,6 +2544,86 @@ window.onCalDrop = function(e, dateStr) {
       showToast('변경 실패');
     }
   });
+};
+
+/* ══ 작업일보 인쇄 ══ */
+window.printDailyReport = function() {
+  const dateVal = document.getElementById('daily-date')?.value;
+  if(!dateVal){ showToast('날짜를 선택하세요'); return; }
+  const printArea = document.getElementById('daily-report-area');
+  if(!printArea){ showToast('작업일보를 먼저 조회하세요'); return; }
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <title>작업일보 ${dateVal}</title>
+    <style>
+      body{font-family:'Malgun Gothic',sans-serif;color:#1a1a1a;margin:20px;font-size:12px}
+      h2{font-size:18px;font-weight:800;margin-bottom:4px}
+      .sub{font-size:11px;color:#666;margin-bottom:20px}
+      table{width:100%;border-collapse:collapse;margin-bottom:20px}
+      th{background:#f0f0f0;font-size:10px;font-weight:700;padding:7px 8px;border:1px solid #ccc;text-align:left}
+      td{padding:7px 8px;border:1px solid #ddd;font-size:11px}
+      .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
+      .badge-green{background:#dcfce7;color:#15803d}
+      .badge-blue{background:#dbeafe;color:#1d4ed8}
+      .badge-gray{background:#f3f4f6;color:#6b7280}
+      .badge-red{background:#fee2e2;color:#dc2626}
+      @media print{body{margin:0}}
+    </style>
+  </head><body>
+    ${printArea.innerHTML}
+  </body></html>`);
+  w.document.close();
+  w.focus();
+  setTimeout(()=>{ w.print(); w.close(); }, 500);
+};
+
+/* ══ 작업일보 엑셀 내보내기 ══ */
+window.exportDailyExcel = function() {
+  const dateVal = document.getElementById('daily-date')?.value;
+  if(!dateVal){ showToast('날짜를 선택하세요'); return; }
+  const today = new Date().toISOString().slice(0,10);
+  const plans = Object.values(cachedPlans).filter(p=>p.date===dateVal);
+
+  // CSV 생성
+  const rows = [['작업코드','제품코드','제품사양','고객사','계획수량','실적수량','달성률','작업시간','상태']];
+  plans.forEach(p=>{
+    const pct = p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
+    const hrs = calcWorkHours(p.code);
+    const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+    rows.push([
+      p.code||'', p.productCode||'', p.spec||'', p.customer||'',
+      p.planQty||0, p.actQty||0, pct+'%',
+      hrs.str, sm[getPlanStatus(p)]||'—'
+    ]);
+  });
+
+  // 작업자별 활동
+  rows.push([]);
+  rows.push(['작업자','담당코드','시작','종료','생산수량']);
+  const todayLocal = new Date(dateVal).toLocaleDateString('ko-KR');
+  Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').forEach(([worker,wlogs])=>{
+    const dayLogs = Object.values(wlogs||{}).filter(l=>{
+      const logIso=new Date(l.ts).toISOString().slice(0,10);
+      return l.date===todayLocal||logIso===dateVal;
+    });
+    const codes = new Set(dayLogs.map(l=>l.code));
+    codes.forEach(code=>{
+      const codeLogs = dayLogs.filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
+      const start = codeLogs.find(l=>l.action==='start');
+      const end = codeLogs.filter(l=>l.action==='end').pop();
+      rows.push([worker, code, start?.time||'—', end?.time||'—', end?.qty||0]);
+    });
+  });
+
+  const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('
+');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `작업일보_${dateVal}.csv`;
+  a.click();
+  showToast(`작업일보 ${dateVal} 엑셀 저장됨`);
 };
 function showToast(msg){
   let t=document.getElementById('g-toast');
