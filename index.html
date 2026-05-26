@@ -395,13 +395,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
               <button class="btn btn-primary" onclick="addCodeFromPlan()"><i class="ti ti-plus"></i> 추가</button>
             </div>
           </div>
-          <div style="border-top:1px solid var(--border);padding-top:10px">
-            <label style="font-size:10px;font-weight:700;color:var(--text3);display:block;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase">직접 입력</label>
-            <div style="display:flex;gap:8px">
-              <input id="code-inp" class="input" type="text" placeholder="작업코드 직접 입력 (Enter)" autocapitalize="characters" onkeydown="if(event.key==='Enter')addCode()">
-              <button class="btn btn-secondary" onclick="addCode()"><i class="ti ti-plus"></i> 추가</button>
-            </div>
-          </div>
+
         </div>
         <div id="job-list"></div>
         <div class="card" style="margin-top:12px">
@@ -2203,7 +2197,7 @@ window.addCodeFromPlan = function() {
   if(remaining <= 0) { showToast('이미 완료된 계획입니다'); return; }
   if(jobs[code] !== undefined) { showToast('이미 추가된 작업코드'); return; }
   jobs[code] = {action:'idle', since:'', open:true, planRemaining: remaining};
-  renderJobCards();
+  renderJobs();
   sel.value = '';
   showToast(`[${code}] 작업 추가됨 (잔여 ${remaining}EA)`);
 };
