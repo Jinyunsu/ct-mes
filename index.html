@@ -1607,7 +1607,10 @@ window.deletePlan=async function(id){
       }
     });
 
-
+    // 서버에서 최신 logs/states 재조회하여 캐시 동기화
+    const [freshLogs, freshStates] = await Promise.all([API.get('/api/logs'), API.get('/api/states')]);
+    if(freshLogs) cachedLogs = freshLogs;
+    if(freshStates) cachedStates = freshStates;
   }
 
   // 전체 UI 갱신
@@ -2244,7 +2247,7 @@ function renderDailyReport(dateStr){
   // 총 작업시간 - 해당 날짜의 전체 구간 병합 (병렬 중복 방지)
   let allDateIntervals = [];
   const todayLocalForDate = new Date(dateStr).toLocaleDateString('ko-KR');
-  Object.values(cachedLogs||{}).forEach(wlogs=>{
+  Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').map(([,wlogs])=>wlogs).forEach(wlogs=>{
     const dateEntries = Object.values(wlogs||{}).filter(l=>{
       const li=new Date(l.ts).toISOString().slice(0,10);
       return l.date===todayLocalForDate||li===dateStr;
