@@ -1491,17 +1491,24 @@ function renderCalendar(){
     const prevUnfinished=Object.values(cachedPlans).filter(p=>{
       if(!p.date||p.date>=ds)return false;
       if(getPlanStatus(p)==='done'||p.status==='done')return false;
-      // 실제 작업자가 작업한 마지막 날짜 확인
+      // 실제 작업 로그 확인
       const allPlanLogs=Object.values(cachedLogs||{}).flatMap(wl=>
         Object.values(wl||{}).filter(l=>l.code===p.code)
       );
-      if(!allPlanLogs.length)return false; // 작업 기록 없으면 이월 안함
-      const lastLogDate=allPlanLogs.reduce((max,l)=>l.ts>max?l.ts:max,0);
-      const lastLogIso=new Date(lastLogDate).toISOString().slice(0,10);
+      if(!allPlanLogs.length)return false;
+      // end 로그가 있으면 완료 → 이월 안함
+      const hasEnd=allPlanLogs.some(l=>l.action==='end');
+      if(hasEnd) return false;
+      // start 로그만 있고 end 없으면 → 미완료 이월
+      const hasStart=allPlanLogs.some(l=>l.action==='start');
+      if(!hasStart) return false;
+      // 마지막 작업일이 ds 바로 이전이어야 함
+      const lastLogTs=allPlanLogs.reduce((max,l)=>l.ts>max?l.ts:max,0);
+      const lastLogIso=new Date(lastLogTs).toISOString().slice(0,10);
       const dsDate=new Date(ds);
       const lastDate=new Date(lastLogIso);
       const diff=Math.floor((dsDate-lastDate)/(1000*60*60*24));
-      return diff>=1 && diff<=30; // 마지막 작업일 다음날부터 표시
+      return diff>=1 && diff<=7;
     });
     const allDp=[...prevUnfinished.map(p=>({...p,_carry:true})),...dp];
     const ph=allDp.slice(0,3).map(p=>{
