@@ -487,8 +487,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>등록일</th><th>작업코드</th><th>제품코드</th><th>스펙</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th style="width:100px">관리</th></tr></thead>
-            <tbody id="plan-tbl"><tr><td colspan="13" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
+            <thead><tr><th>등록일</th><th>작업코드</th><th>제품코드</th><th>스펙</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th></tr></thead>
+            <tbody id="plan-tbl"><tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1013,6 +1013,14 @@ async function loadAll() {
 function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,3000); }
 loadAll().then(startPolling);
 
+// 생산계획 필터 초기화
+(function(){
+  const now = new Date();
+  const mp = document.getElementById('plan-filter-date');
+  if(mp) mp.value = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+})();
+
+
 /* ══ 네비게이션 ══ */
 const PAGE_INFO = {
   worker:{title:'작업 관리',parent:'작업'},
@@ -1281,7 +1289,7 @@ window.submitPlan=async function(){
   if(res){
     cachedPlans=res;
     closeModal('plan-modal');
-    renderPlanTable();
+    filterPlanTable();
     renderCalendar();
     renderOrKPIs();
     if(typeof curPlanTab!=='undefined'){
@@ -1305,7 +1313,7 @@ function renderPlanTable(filterFn){
   let plans=Object.values(cachedPlans);
   if(filterFn)plans=plans.filter(filterFn);
   plans.sort((a,b)=>a.date>b.date?1:-1);
-  if(!plans.length){tbody.innerHTML='<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
+  if(!plans.length){tbody.innerHTML='<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
   const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
   const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
   // 작업자 투입 정보 계산
@@ -1345,9 +1353,6 @@ function renderPlanTable(filterFn){
       <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
       <td style="white-space:nowrap">
 
-        <button class="btn btn-secondary btn-sm" style="margin-right:4px" onclick="openEditPlanModal('${esc(p.id||p.code)}')"><i class="ti ti-edit"></i></button>
-        <button class="btn btn-secondary btn-sm" style="color:#dc2626" onclick="deletePlan('${esc(p.id||p.code)}')"><i class="ti ti-trash"></i></button>
-      </td>
     </tr>`;
   }).join('');
   // 요약 KPI 업데이트
@@ -1392,7 +1397,7 @@ window.deletePlan=async function(id){
   const res = await API.del('/api/plans', {id: realId});
   if(res && !res.error){
     cachedPlans = res;
-    renderPlanTable();
+    filterPlanTable();
     renderCalendar();
     renderOrKPIs();
     if(typeof curOrderTab!=='undefined'){
