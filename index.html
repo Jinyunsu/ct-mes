@@ -1938,35 +1938,7 @@ function renderProgress(){
     }
   }
 
-
-  // 타임라인 렌더링
-  const tlDiv2=document.getElementById('d-timeline');
-  if(tlDiv2){
-    const todayStr=new Date().toISOString().slice(0,10);
-    const todayLocal=new Date().toLocaleDateString('ko-KR');
-    const allLogs=Object.entries(cachedLogs||{}).flatMap(([w,wl])=>
-      Object.values(wl||{}).filter(l=>{
-        const logIso=new Date(l.ts).toISOString().slice(0,10);
-        return l.date===todayLocal||logIso===todayStr;
-      }).map(l=>({...l,worker:w}))
-    ).sort((a,b)=>a.ts-b.ts);
-    if(!allLogs.length){
-      tlDiv2.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">오늘 작업 기록 없음</div>';
-    }else{
-      const tlIcons={start:'▶',pause:'⏸',end:'■',delete:'✕'};
-      const tlCols={start:'var(--green)',pause:'var(--amber)',end:'var(--text3)',delete:'var(--red)'};
-      const tlLbls={start:'시작',pause:'일시정지',end:'종료',delete:'계획 삭제'};
-      tlDiv2.innerHTML=allLogs.map(l=>`
-        <div class="timeline-item">
-          <div class="tl-dot" style="background:${tlCols[l.action]||'var(--bg4)'};color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${tlIcons[l.action]||'●'}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(l.worker)} · <span style="color:var(--accent)">${esc(l.code)}</span></div>
-            <div style="font-size:11px;color:var(--text3)">${tlLbls[l.action]||l.action}${l.qty>0?' · '+l.qty.toLocaleString()+'EA':''}</div>
-          </div>
-          <div style="font-size:11px;font-family:var(--mono);color:var(--text3);flex-shrink:0">${l.time||''}</div>
-        </div>`).join('');
-    }
-  }}
+}
 
 // ── 실적분석 ──
 function renderPerformance(){
@@ -2070,8 +2042,7 @@ function renderWorkerStats(){
     const st=cachedStates[n]||{};
     const activeCodes=Object.keys(st).filter(c=>st[c].action&&st[c].action!=='end');
     const allLogs=Object.values(cachedLogs?.[n]||{});
-    const todayStr=new Date().toLocaleDateString('ko-KR');
-    const todayLogs=allLogs.filter(l=>l.date===todayStr);
+        const todayLogs=allLogs.filter(l=>l.date===todayStr);
     const codeSet=new Set(todayLogs.map(l=>l.code));
     const totalQty=todayLogs.filter(l=>l.action==='end').reduce((s,l)=>s+(l.qty||0),0);
     const isWorking=Object.values(st).some(s=>s.action==='start');
@@ -2601,8 +2572,7 @@ window.exportDailyExcel = function() {
   // 작업자별 활동
   rows.push([]);
   rows.push(['작업자','담당코드','시작','종료','생산수량']);
-  const todayLocal = new Date(dateVal).toLocaleDateString('ko-KR');
-  Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').forEach(([worker,wlogs])=>{
+    Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').forEach(([worker,wlogs])=>{
     const dayLogs = Object.values(wlogs||{}).filter(l=>{
       const logIso=new Date(l.ts).toISOString().slice(0,10);
       return l.date===todayLocal||logIso===dateVal;
