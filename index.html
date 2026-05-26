@@ -1501,6 +1501,21 @@ window.deletePlan=async function(id){
         });
       }
     });
+
+    // 타임라인용 삭제 기록 추가 (시스템 이벤트)
+    const delTs = Date.now();
+    const delTime = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+    if(!cachedLogs['__system__']) cachedLogs['__system__'] = {};
+    cachedLogs['__system__'][delTs] = {
+      worker: '시스템',
+      code: planCode,
+      action: 'delete',
+      date: new Date().toLocaleDateString('ko-KR'),
+      time: delTime,
+      qty: 0,
+      ts: delTs,
+      _isDelete: true
+    };
   }
 
   // 전체 UI 갱신
@@ -1876,7 +1891,7 @@ function renderProgress(){
         const logIso=new Date(l.ts).toISOString().slice(0,10);
         return l.date===todayLocal||logIso===todayStr;
       }).map(l=>({...l,worker:w}))
-    ).sort((a,b)=>a.ts-b.ts);
+    ).sort((a,b)=>b.ts-a.ts);
     if(!allLogs.length){
       tlDiv.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">오늘 작업 기록 없음</div>';
     }else{
@@ -1910,9 +1925,9 @@ function renderProgress(){
     if(!allLogs.length){
       tlDiv2.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">오늘 작업 기록 없음</div>';
     }else{
-      const tlIcons={start:'▶',pause:'⏸',end:'■'};
-      const tlCols={start:'var(--green)',pause:'var(--amber)',end:'var(--text3)'};
-      const tlLbls={start:'시작',pause:'일시정지',end:'종료'};
+      const tlIcons={start:'▶',pause:'⏸',end:'■',delete:'✕'};
+      const tlCols={start:'var(--green)',pause:'var(--amber)',end:'var(--text3)',delete:'var(--red)'};
+      const tlLbls={start:'시작',pause:'일시정지',end:'종료',delete:'계획 삭제'};
       tlDiv2.innerHTML=allLogs.map(l=>`
         <div class="timeline-item">
           <div class="tl-dot" style="background:${tlCols[l.action]||'var(--bg4)'};color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${tlIcons[l.action]||'●'}</div>
@@ -2065,7 +2080,7 @@ function renderDailyReport(dateStr){
   if(wtbl){
     const allRows=[];
     const todayLocalStr=new Date(dateStr).toLocaleDateString('ko-KR');
-    Object.entries(cachedLogs||{}).forEach(([worker,wlogs])=>{
+    Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').forEach(([worker,wlogs])=>{
       const dayLogs=Object.values(wlogs||{}).filter(l=>{
         const logIso=new Date(l.ts).toISOString().slice(0,10);
         return l.date===todayLocalStr||logIso===dateStr;
