@@ -291,23 +291,6 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 .sb-logout { color: rgba(255,255,255,.5) !important; }
 .sb-logout:hover { color: #fca5a5 !important; background: rgba(239,68,68,.15) !important; }
 .sb-divider { background: rgba(255,255,255,.08) !important; }
-
-/* ══ 커스텀 날짜 선택 팝업 ══ */
-#cdp-box{position:fixed;background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:16px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.18);min-width:260px;display:none}
-.cdp-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.cdp-nav button{background:none;border:none;cursor:pointer;color:var(--text2);font-size:14px;padding:4px 8px;border-radius:6px;transition:background .15s}
-.cdp-nav button:hover{background:var(--bg3)}
-.cdp-month-label{font-size:13px;font-weight:800;color:var(--text)}
-.cdp-dow{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:4px}
-.cdp-dow span{font-size:10px;font-weight:700;color:var(--text3);padding:3px 0}
-.cdp-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cdp-day{padding:6px 2px;text-align:center;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--text2);transition:background .12s}
-.cdp-day:hover{background:var(--bg3);color:var(--text)}
-.cdp-day.today{color:var(--accent);font-weight:900}
-.cdp-day.selected{background:var(--accent);color:#fff}
-.cdp-day.other{color:var(--text3);opacity:.4}
-.cdp-day.empty{cursor:default}
-.cdp-footer{display:flex;justify-content:flex-end;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -1046,7 +1029,7 @@ async function loadAll() {
     }
   } catch(e) {}
 }
-function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,5000); }
+function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,1500); }
 loadAll().then(startPolling);
 
 // 생산계획 필터 초기화
@@ -1518,7 +1501,7 @@ window.submitPlan=async function(){
 function renderPlanTable(filterFn){
   const tbody=document.getElementById('plan-tbl');
   if(!tbody)return;
-  let plans=Object.entries(cachedPlans).map(([k,p])=>({...p, id: p.id||k}));
+  let plans=Object.values(cachedPlans).map(p=>({...p, id: p.id || Object.keys(cachedPlans).find(k=>cachedPlans[k]===p) || p.code}));
   if(filterFn)plans=plans.filter(filterFn);
   plans.sort((a,b)=>a.date>b.date?1:-1);
   if(!plans.length){tbody.innerHTML='<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
@@ -1553,7 +1536,8 @@ function renderPlanTable(filterFn){
       <td style="font-family:var(--mono);font-size:11px">
         <div style="display:flex;align-items:center;gap:4px;position:relative">
           <span style="color:var(--accent);font-weight:700">${p.date||'—'}</span>
-          <button class="cdp-btn" data-pid="${esc(p.id)}" style="background:none;border:none;cursor:pointer;padding:2px;display:inline-flex;align-items:center" title="날짜 변경"><i class="ti ti-calendar" style="font-size:13px;color:var(--accent2)"></i></button>
+          <input type="date" id="pd-${esc(p.id)}" value="${p.date||''}" onchange="changePlanDate('${esc(p.id)}',this.value)" style="position:fixed;opacity:0;pointer-events:none;width:1px;height:1px">
+          <button onclick="event.stopPropagation();var inp=document.getElementById('pd-${esc(p.id)}');inp.style.pointerEvents='auto';if(inp.showPicker)inp.showPicker();else inp.click();inp.style.pointerEvents='none';" style="background:none;border:none;cursor:pointer;padding:2px;display:inline-flex;align-items:center" title="날짜 변경"><i class="ti ti-calendar" style="font-size:13px;color:var(--accent2)"></i></button>
         </div>
       </td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
@@ -1621,31 +1605,74 @@ window.deletePlan=async function(id){
   }
   const planCode = plan?.code;
 
-  // ① 로컬 캐시에서 즉시 제거 → UI 즉각 반영
+  // 폴링 일시 중단 (삭제 도중 서버 데이터로 덮어씌워지는 것 방지)
   if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
-  delete cachedPlans[realId];
+
+  // 1. 계획 삭제
+  const res = await API.del('/api/plans', {id: realId});
+  if(!res || res.error){ showToast('삭제 실패'); startPolling(); return; }
+  cachedPlans = res;
+
+  // 2. 해당 코드의 states 삭제 (모든 작업자)
+  if(planCode){
+    const stateDelPromises = Object.entries(cachedStates).map(([worker, codes])=>{
+      if(codes[planCode]){
+        return API.del('/api/states', {worker, code: planCode});
+      }
+    }).filter(Boolean);
+    await Promise.all(stateDelPromises);
+
+    // 3. 해당 코드의 logs 삭제
+    await API.del('/api/logs', {code: planCode});
+
+    // 로컬 캐시에서도 삭제
+    Object.keys(cachedStates).forEach(w=>{
+      if(cachedStates[w][planCode]) delete cachedStates[w][planCode];
+    });
+    Object.keys(cachedLogs).forEach(w=>{
+      if(cachedLogs[w]){
+        Object.keys(cachedLogs[w]).forEach(k=>{
+          if(cachedLogs[w][k]?.code===planCode) delete cachedLogs[w][k];
+        });
+      }
+    });
+
+    // 서버에서 최신 logs/states 재조회하여 캐시 동기화
+    const [freshLogs, freshStates] = await Promise.all([API.get('/api/logs'), API.get('/api/states')]);
+    if(freshLogs) cachedLogs = freshLogs;
+    if(freshStates) cachedStates = freshStates;
+    // 서버 응답에 아직 남아있을 수 있으므로 로컬에서 한 번 더 강제 제거
+    Object.keys(cachedLogs).forEach(w=>{
+      if(cachedLogs[w]){
+        Object.keys(cachedLogs[w]).forEach(k=>{
+          if(cachedLogs[w][k]?.code===planCode) delete cachedLogs[w][k];
+        });
+      }
+    });
+    Object.keys(cachedStates).forEach(w=>{
+      if(cachedStates[w]&&cachedStates[w][planCode]) delete cachedStates[w][planCode];
+    });
+  }
+
+  // 전체 UI 갱신
   filterPlanTable();
   renderCalendar();
   renderOrKPIs();
-  updatePlanKPI(Object.values(cachedPlans));
-  showToast('['+( planCode||id)+'] 삭제됨');
-
-  // ② 서버 삭제 + 관련 로그/상태 정리 (백그라운드)
-  API.del('/api/plans', {id: realId}).then(res=>{
-    if(res && !res.error) cachedPlans = res;
-  });
-  if(planCode){
-    Object.entries(cachedStates).forEach(([worker, codes])=>{
-      if(codes[planCode]) API.del('/api/states', {worker, code: planCode});
-    });
-    API.del('/api/logs', {code: planCode});
-    // 로컬 캐시 정리
-    Object.keys(cachedStates).forEach(w=>{ if(cachedStates[w]?.[planCode]) delete cachedStates[w][planCode]; });
-    Object.keys(cachedLogs).forEach(w=>{
-      if(cachedLogs[w]) Object.keys(cachedLogs[w]).forEach(k=>{ if(cachedLogs[w][k]?.code===planCode) delete cachedLogs[w][k]; });
-    });
+  renderAllLinked(); // 대시보드, 진행현황, 작업일보 등
+  updatePlanKPI(Object.values(cachedPlans)); // KPI 즉시 갱신
+  // 총 작업시간 즉시 재계산 (삭제된 로그 반영)
+  const _today=new Date().toISOString().slice(0,10);
+  const _dh=document.getElementById('d-hours');
+  if(_dh){const ms=_calcTotalMsForDate(_today);_dh.textContent=ms>0?fmtElapsed(ms):'—';}
+  const _dlh=document.getElementById('dl-hours');
+  if(_dlh){const ds=document.getElementById('daily-date')?.value;if(ds){const ms=_calcTotalMsForDate(ds);_dlh.textContent=ms>0?fmtElapsed(ms):'—';}}
+  if(typeof curOrderTab!=='undefined'){
+    if(curOrderTab==='daily') renderOrDay();
+    else if(curOrderTab==='monthly') renderOrMonth();
+    else if(curOrderTab==='all') renderOrAll();
   }
-  renderAllLinked();
+  showToast(`[${planCode||id}] 계획 및 관련 기록 삭제됨`);
+  // 폴링 재시작
   startPolling();
 };
 
@@ -1763,25 +1790,16 @@ function getLogsForCode(code){
 
 function calcWorkHours(code){
   const intervals=[];
-  // 작업자별로 독립 처리
-  Object.entries(cachedLogs||{}).forEach(([worker, wlogs])=>{
+  Object.values(cachedLogs||{}).forEach(wlogs=>{
     const entries=Object.values(wlogs||{}).filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
     let st=null;
     entries.forEach(l=>{
-      if(l.action==='start'){
-        st=l.ts; // start 중복 시 최신 start로 갱신
-      } else if((l.action==='end'||l.action==='pause') && st!=null){
-        intervals.push([st, l.ts]);
-        st=null;
-      }
+      if(l.action==='start') st=l.ts;
+      else if((l.action==='end'||l.action==='pause')&&st){ intervals.push([st,l.ts]); st=null; }
     });
-    // 미종료 구간: cachedStates에서 해당 작업자+코드가 실제로 start 상태일 때만
-    if(st!=null){
-      const workerState = cachedStates?.[worker]?.[code];
-      if(workerState && workerState.action==='start'){
-        intervals.push([st, Date.now()]);
-      }
-      // 그 외(end됐지만 로그 누락 등)는 무시
+    if(st){
+      const isStillRunning=Object.values(cachedStates||{}).some(codes=>codes[code]&&codes[code].action==='start');
+      if(isStillRunning) intervals.push([st,Date.now()]); // 현재 작업중
     }
   });
   if(!intervals.length) return {ms:0,str:'—'};
@@ -1798,9 +1816,9 @@ function calcWorkHours(code){
   const s=Math.floor((total%60000)/1000);
   let str='—';
   if(total>0){
-    if(h>0) str=h+'h '+String(m).padStart(2,'0')+'m '+String(s).padStart(2,'0')+'s';
-    else if(m>0) str=m+'m '+String(s).padStart(2,'0')+'s';
-    else str=s+'s';
+    if(h>0) str=`${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+    else if(m>0) str=`${m}m ${String(s).padStart(2,'0')}s`;
+    else str=`${s}s`;
   }
   return {ms:total,str};
 }
@@ -2740,24 +2758,7 @@ window.printDailyReport = function() {
     </style>
   </head><body>
     ${printArea.innerHTML}
-  
-<!-- 커스텀 날짜 선택 팝업 -->
-<div id="cdp-box">
-  <div class="cdp-nav">
-    <button onclick="cdpMove(-1)">◀</button>
-    <span class="cdp-month-label" id="cdp-label"></span>
-    <button onclick="cdpMove(1)">▶</button>
-  </div>
-  <div class="cdp-dow">
-    <span style="color:var(--red)">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span style="color:var(--accent)">토</span>
-  </div>
-  <div class="cdp-days" id="cdp-days"></div>
-  <div class="cdp-footer">
-    <button class="btn btn-secondary btn-sm" onclick="closeCDP()">취소</button>
-    <button class="btn btn-primary btn-sm" onclick="cdpSelectToday()">오늘</button>
-  </div>
-</div>
-</body></html>`);
+  </body></html>`);
   w.document.close();
   w.focus();
   setTimeout(()=>{ w.print(); w.close(); }, 500);
@@ -2814,92 +2815,6 @@ function showToast(msg){
   t.textContent=msg;t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
   clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(14px)';},2500);
 }
-
-/* ══ 커스텀 날짜 선택 팝업 ══ */
-let _cdpPlanId=null, _cdpKey=null, _cdpYear=0, _cdpMonth=0;
-
-function openCDP(key, anchorEl){
-  _cdpKey = key;
-  _cdpPlanId = key;
-  const plan = cachedPlans[key];
-  const base = plan && plan.date ? new Date(plan.date+'T00:00:00') : new Date();
-  _cdpYear = base.getFullYear();
-  _cdpMonth = base.getMonth();
-  _renderCDP();
-  const box = document.getElementById('cdp-box');
-  const rect = anchorEl.getBoundingClientRect();
-  box.style.top = (rect.bottom + window.scrollY + 6) + 'px';
-  box.style.left = Math.min(rect.left + window.scrollX, window.innerWidth - 285) + 'px';
-  box.style.display = 'block';
-}
-window.openCDP = openCDP;
-
-function closeCDP(){
-  const box = document.getElementById('cdp-box');
-  if(box) box.style.display = 'none';
-  _cdpKey = null; _cdpPlanId = null;
-}
-window.closeCDP = closeCDP;
-
-function cdpMove(d){
-  _cdpMonth += d;
-  if(_cdpMonth < 0){ _cdpMonth=11; _cdpYear--; }
-  if(_cdpMonth > 11){ _cdpMonth=0; _cdpYear++; }
-  _renderCDP();
-}
-window.cdpMove = cdpMove;
-
-function cdpSelectToday(){
-  const today = new Date().toISOString().slice(0,10);
-  if(_cdpKey) changePlanDate(_cdpKey, today);
-  closeCDP();
-}
-window.cdpSelectToday = cdpSelectToday;
-
-function _renderCDP(){
-  const months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  const lbl = document.getElementById('cdp-label');
-  if(lbl) lbl.textContent = _cdpYear+'년 '+months[_cdpMonth];
-  const today = new Date().toISOString().slice(0,10);
-  const plan = _cdpKey ? cachedPlans[_cdpKey] : null;
-  const selected = plan ? (plan.date||'') : '';
-  const firstDay = new Date(_cdpYear, _cdpMonth, 1).getDay();
-  const lastDate = new Date(_cdpYear, _cdpMonth+1, 0).getDate();
-  let html = '';
-  for(let i=0;i<firstDay;i++) html += '<div class="cdp-day empty"></div>';
-  for(let d=1;d<=lastDate;d++){
-    const ds = _cdpYear+'-'+String(_cdpMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    const cls = 'cdp-day'+(ds===today?' today':'')+(ds===selected?' selected':'');
-    const dow = new Date(_cdpYear,_cdpMonth,d).getDay();
-    const col = ds!==selected ? (dow===0?'color:var(--red)':dow===6?'color:var(--accent)':'') : '';
-    html += '<div class="'+cls+'" style="'+col+'" onclick="cdpPick(''+ds+'')">'+d+'</div>';
-  }
-  const grid = document.getElementById('cdp-days');
-  if(grid) grid.innerHTML = html;
-}
-
-function cdpPick(dateStr){
-  if(_cdpKey) changePlanDate(_cdpKey, dateStr);
-  closeCDP();
-}
-window.cdpPick = cdpPick;
-
-// 달력 버튼 이벤트 위임 (문서 레벨)
-document.addEventListener('click', function(e){
-  const btn = e.target.closest('.cdp-btn');
-  if(btn){
-    e.preventDefault();
-    e.stopPropagation();
-    const key = btn.getAttribute('data-pid');
-    if(key && key !== 'undefined') openCDP(key, btn);
-    return;
-  }
-  const box = document.getElementById('cdp-box');
-  if(box && box.style.display==='block' && !box.contains(e.target)){
-    closeCDP();
-  }
-}, true);
-
 </script>
 </body>
 </html>
