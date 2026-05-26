@@ -24,6 +24,15 @@ async function ensureTable() {
 }
 
 function rowToObj(row) {
+  // created_at이 Date객체일 수 있으므로 toString 처리
+  let createdAt = row.created_at_date || '';
+  if(!createdAt && row.created_at) {
+    try {
+      createdAt = new Date(row.created_at).toISOString().slice(0, 10);
+    } catch(e) {
+      createdAt = '';
+    }
+  }
   return {
     id: row.id,
     code: row.code || '',
@@ -35,7 +44,7 @@ function rowToObj(row) {
     customer: row.customer || '',
     remark: row.remark || '',
     status: row.status || 'planned',
-    createdAt: row.created_at_date || row.created_at?.slice(0,10) || '',
+    createdAt: createdAt,
   };
 }
 
