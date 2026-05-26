@@ -1503,10 +1503,12 @@ window.deletePlan=async function(id){
     });
   }
 
+  // 전체 UI 갱신
   filterPlanTable();
   renderCalendar();
   renderOrKPIs();
-  renderAllLinked();
+  renderAllLinked(); // 대시보드, 진행현황, 작업일보 등
+  updatePlanKPI(Object.values(cachedPlans)); // KPI 즉시 갱신
   if(typeof curOrderTab!=='undefined'){
     if(curOrderTab==='daily') renderOrDay();
     else if(curOrderTab==='monthly') renderOrMonth();
