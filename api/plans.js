@@ -1,134 +1,2268 @@
-import { neon } from '@neondatabase/serverless';
-const sql = neon(process.env.DATABASE_URL);
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTNS MES Lite · 생산관리 시스템</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css">
+<style>
+:root {
+  --bg: #f0f2f8;
+  --bg2: #ffffff;
+  --bg3: #f5f7fb;
+  --bg4: #eaecf5;
+  --border: rgba(0,0,0,.08);
+  --border2: rgba(0,0,0,.12);
+  --text: #1e2235;
+  --text2: #4a5278;
+  --text3: #8892b0;
+  --accent: #3b82f6;
+  --accent2: #60a5fa;
+  --green: #16a34a;
+  --amber: #d97706;
+  --red: #dc2626;
+  --purple: #7c3aed;
+  --cyan: #0891b2;
+  --font: 'Noto Sans KR', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius: 10px;
+  --radius2: 14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font);color:var(--text);background:var(--bg)}
+body{display:flex;overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
 
-async function ensureTable() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS plans (
-      id TEXT PRIMARY KEY,
-      code TEXT DEFAULT '',
-      date TEXT DEFAULT '',
-      plan_qty INTEGER DEFAULT 0,
-      act_qty INTEGER DEFAULT 0,
-      product_code TEXT DEFAULT '',
-      spec TEXT DEFAULT '',
-      customer TEXT DEFAULT '',
-      remark TEXT DEFAULT '',
-      status TEXT DEFAULT 'planned',
-      created_at_date TEXT DEFAULT '',
-      data JSONB,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `;
-  try { await sql`ALTER TABLE plans ADD COLUMN IF NOT EXISTS created_at_date TEXT DEFAULT ''`; } catch(e) {}
-  try { await sql`ALTER TABLE plans ADD COLUMN IF NOT EXISTS data JSONB`; } catch(e) {}
+/* ══ 로그인 ══ */
+#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;padding:24px}
+#login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%, rgba(59,130,246,.12), transparent)}
+.login-card{position:relative;background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:48px 40px;width:100%;max-width:400px;text-align:center}
+.login-badge{width:56px;height:56px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;margin:0 auto 24px;box-shadow:0 8px 32px rgba(59,130,246,.3)}
+.login-title{font-size:24px;font-weight:900;color:var(--text);margin-bottom:4px;letter-spacing:-.5px}
+.login-sub{font-size:13px;color:var(--text2);margin-bottom:36px}
+.login-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:15px;background:#fff;border:none;border-radius:12px;cursor:pointer;font-size:14px;font-weight:700;color:#111;font-family:var(--font);transition:all .2s}
+.login-btn:hover{background:#f0f4ff;transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.login-btn img{width:20px;height:20px}
+.login-err{font-size:12px;color:var(--red);margin-top:14px;min-height:18px}
+.login-version{font-size:11px;color:var(--text3);margin-top:24px;font-family:var(--mono)}
+
+/* ══ 사이드바 ══ */
+.sidebar{width:220px;height:100vh;background:#1e2235;border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:50;transition:transform .25s ease;flex-shrink:0}
+.sb-header{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
+.sb-brand{display:flex;align-items:center;gap:10px}
+.sb-icon{width:32px;height:32px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;flex-shrink:0}
+.sb-name{font-size:13px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.sb-ver{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.sb-nav{flex:1;overflow-y:auto;padding:10px 8px}
+.sb-label{padding:12px 10px 5px;font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--text3);text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border:none;background:transparent;color:var(--text2);border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:500;font-family:var(--font);text-align:left;margin-bottom:1px;transition:all .15s}
+.sb-item:hover{background:var(--bg3);color:var(--text)}
+.sb-item.active{background:rgba(59,130,246,.15);color:var(--accent2);font-weight:700}
+.sb-item.active .sb-dot{background:var(--accent)}
+.sb-item i{font-size:15px;width:18px;text-align:center;flex-shrink:0;opacity:.7}
+.sb-item.active i{opacity:1}
+.sb-dot{width:5px;height:5px;border-radius:50%;background:var(--text3);flex-shrink:0;margin-left:auto;display:none}
+.sb-item.active .sb-dot{display:block}
+.sb-divider{height:1px;background:var(--border);margin:8px 10px}
+.sb-footer{padding:12px;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;margin-bottom:6px}
+.sb-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
+.sb-uname{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-uemail{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-logout{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:none;background:rgba(239,68,68,.08);color:#f87171;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);transition:all .15s}
+.sb-logout:hover{background:rgba(239,68,68,.15)}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:49}
+
+/* ══ 메인 ══ */
+.main-wrap{margin-left:220px;flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-title{font-size:14px;font-weight:700;color:var(--text)}
+.tb-sep{color:var(--text3);font-size:12px}
+.tb-page{font-size:13px;color:var(--text2)}
+.tb-right{display:flex;align-items:center;gap:12px}
+.tb-clock{font-size:12px;font-weight:600;color:var(--text2);font-family:var(--mono);background:var(--bg3);padding:4px 10px;border-radius:6px;border:1px solid var(--border)}
+.tb-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700}
+.tb-live{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.tb-live::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.menu-toggle{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px}
+
+.content{flex:1;overflow-y:auto;padding:24px}
+.page{display:none}
+.page.active{display:block}
+
+/* ══ 공통 컴포넌트 ══ */
+.page-header{margin-bottom:22px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.ph-left{}
+.page-title{font-size:18px;font-weight:900;color:var(--text);letter-spacing:-.4px;margin-bottom:3px}
+.page-desc{font-size:12px;color:var(--text2)}
+.ph-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:18px}
+.card-title{font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title i{font-size:14px;color:var(--accent)}
+
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px;position:relative;overflow:hidden}
+.metric::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.metric.blue::after{background:linear-gradient(90deg,var(--accent),transparent)}
+.metric.green::after{background:linear-gradient(90deg,var(--green),transparent)}
+.metric.amber::after{background:linear-gradient(90deg,var(--amber),transparent)}
+.metric.red::after{background:linear-gradient(90deg,var(--red),transparent)}
+.metric.purple::after{background:linear-gradient(90deg,var(--purple),transparent)}
+.metric.cyan::after{background:linear-gradient(90deg,var(--cyan),transparent)}
+.metric-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.metric-value{font-size:22px;font-weight:900;color:var(--text);font-family:var(--mono);line-height:1}
+.metric-sub{font-size:10px;color:var(--text3);margin-top:5px}
+.metric-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:28px;opacity:.06}
+
+.btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);display:inline-flex;align-items:center;gap:5px;transition:all .15s;border:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#2563eb}
+.btn-secondary{background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}
+.btn-secondary:hover{background:var(--bg4);color:var(--text)}
+.btn-success{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.btn-danger{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn i{font-size:13px}
+
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.03em}
+.badge-blue{background:rgba(59,130,246,.15);color:var(--accent2);border:1px solid rgba(59,130,246,.2)}
+.badge-green{background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.2)}
+.badge-amber{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
+.badge-red{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+.badge-gray{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+.badge-purple{background:rgba(167,139,250,.12);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+.badge-cyan{background:rgba(34,211,238,.12);color:var(--cyan);border:1px solid rgba(34,211,238,.2)}
+
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{font-size:10px;font-weight:700;color:var(--text3);padding:9px 12px;border-bottom:1px solid var(--border);text-align:left;letter-spacing:.06em;text-transform:uppercase;background:var(--bg3)}
+td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
+.tbl-wrap{border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;overflow-x:auto}
+
+.prog-bar{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;min-width:50px}
+.prog-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .3s}
+.prog-fill.green{background:var(--green)}
+.prog-fill.amber{background:var(--amber)}
+.prog-fill.red{background:var(--red)}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+
+.input{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:12px;font-family:var(--font);color:var(--text);outline:none;transition:border-color .2s;width:100%}
+.input:focus{border-color:var(--accent)}
+.input::placeholder{color:var(--text3)}
+.label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;display:block}
+.form-group{margin-bottom:14px}
+
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+.chip-live{background:rgba(34,197,94,.1);color:var(--green);border-color:rgba(34,197,94,.2)}
+
+.stat-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.stat-row:last-child{border-bottom:none}
+.stat-label{font-size:12px;color:var(--text2)}
+.stat-value{font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono)}
+
+/* ══ 작업자 카드 ══ */
+.worker-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px;cursor:pointer;transition:all .2s;text-align:center;position:relative;overflow:hidden}
+.worker-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--bg4);transition:background .2s}
+.worker-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.worker-card.running::before{background:var(--green)}
+.worker-card.running{border-color:rgba(34,197,94,.3)}
+.worker-card.paused::before{background:var(--amber)}
+.worker-card.paused{border-color:rgba(245,158,11,.3)}
+.wc-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;margin:0 auto 10px}
+.wc-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.wc-status{font-size:11px;font-weight:600}
+
+/* ══ 작업 카드 ══ */
+.job-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden;transition:border-color .2s;margin-bottom:8px}
+.job-card.running{border-color:rgba(34,197,94,.3)}
+.job-card.paused{border-color:rgba(245,158,11,.3)}
+.job-head{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer}
+.job-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-idle{background:var(--text3)}
+.dot-run{background:var(--green);animation:pulse 1.4s infinite}
+.dot-pause{background:var(--amber)}
+.dot-done{background:var(--text3)}
+.job-code{font-size:14px;font-weight:700;color:var(--text);flex:1;font-family:var(--mono)}
+.job-body{display:none;padding:0 16px 14px;border-top:1px solid var(--border)}
+.job-body.open{display:block}
+.job-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:12px}
+.jbtn{padding:10px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s}
+.jbtn:disabled{opacity:.25;cursor:default}
+.jbtn-start{background:rgba(34,197,94,.15);color:#4ade80}
+.jbtn-start:hover:not(:disabled){background:rgba(34,197,94,.25)}
+.jbtn-pause{background:rgba(245,158,11,.12);color:#fbbf24}
+.jbtn-pause:hover:not(:disabled){background:rgba(245,158,11,.2)}
+.jbtn-end{background:rgba(239,68,68,.1);color:#f87171}
+.jbtn-end:hover:not(:disabled){background:rgba(239,68,68,.18)}
+
+/* ══ 모달 ══ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:200;padding:24px;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:18px;padding:26px 24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:800;color:var(--text);margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:2px 6px;border-radius:6px;transition:color .15s}
+.modal-close:hover{color:var(--text)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.form-grid .full{grid-column:1/-1}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end}
+
+/* ══ 수량 모달 ══ */
+.qty-box{background:var(--bg2);border:1px solid var(--border2);border-radius:18px;padding:28px 24px;width:100%;max-width:300px;text-align:center}
+.qty-title{font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px}
+.qty-sub{font-size:12px;color:var(--text2);margin-bottom:18px}
+.qty-input{width:100%;background:var(--bg3);border:2px solid var(--border2);border-radius:10px;padding:14px;font-size:28px;font-weight:900;font-family:var(--mono);outline:none;text-align:center;color:var(--text);margin-bottom:6px;transition:border-color .2s}
+.qty-input:focus{border-color:var(--accent)}
+.qty-hint{font-size:11px;color:var(--text3);margin-bottom:16px}
+.qty-btns{display:flex;gap:8px}
+.qty-btns button{flex:1;padding:12px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)}
+
+/* ══ 생산 현황 바 ══ */
+.status-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:8px 0}
+.sb-done{background:var(--green)}
+.sb-run{background:var(--accent)}
+.sb-plan{background:var(--bg4)}
+
+/* ══ KPI 카드 ══ */
+.kpi-row{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg3);border-radius:10px;margin-bottom:6px;border:1px solid var(--border)}
+.kpi-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.kpi-label{font-size:11px;color:var(--text2);margin-bottom:2px}
+.kpi-val{font-size:15px;font-weight:800;color:var(--text);font-family:var(--mono)}
+.kpi-trend{margin-left:auto;font-size:11px;font-weight:700}
+.kpi-up{color:var(--green)}
+.kpi-down{color:var(--red)}
+
+/* ══ 달력 ══ */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-day{min-height:72px;padding:5px;background:var(--bg3);border-radius:7px;border:1px solid var(--border);cursor:pointer;transition:background .15s}
+.cal-day:hover{background:var(--bg4)}
+.cal-day.today{border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.06)}
+.cal-num{font-size:11px;font-weight:700;margin-bottom:3px}
+.cal-chip{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+
+/* ══ 타임라인 ══ */
+.timeline-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.timeline-item:last-child{border-bottom:none}
+.tl-dot{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;margin-top:1px}
+.tl-code{font-size:12px;font-weight:700;color:var(--text)}
+.tl-action{font-size:11px;color:var(--text2);margin-top:1px}
+.tl-time{font-size:11px;font-weight:600;color:var(--text3);font-family:var(--mono);margin-left:auto;flex-shrink:0}
+
+/* ══ 반응형 ══ */
+@media(max-width:900px){
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .sidebar{background:#1e2235!important;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sb-overlay.open{display:block}
+  .main-wrap{margin-left:0}
+  .menu-toggle{display:block}
+  .content{padding:16px}
+  .tb-clock{display:none}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .page-header{flex-direction:column;align-items:flex-start}
 }
 
-function rowToObj(row) {
-  // created_at이 Date객체일 수 있으므로 toString 처리
-  let createdAt = row.created_at_date || '';
-  if(!createdAt && row.created_at) {
-    try {
-      createdAt = new Date(row.created_at).toISOString().slice(0, 10);
-    } catch(e) {
-      createdAt = '';
-    }
-  }
-  return {
-    id: row.id,
-    code: row.code || '',
-    date: row.date || '',
-    planQty: Number(row.plan_qty) || 0,
-    actQty: Number(row.act_qty) || 0,
-    productCode: row.product_code || '',
-    spec: row.spec || '',
-    customer: row.customer || '',
-    remark: row.remark || '',
-    status: row.status || 'planned',
-    createdAt: createdAt,
-  };
-}
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+</style>
+</head>
+<body>
+<div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
 
+<!-- 로그인 -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-badge"><i class="ti ti-building-factory-2"></i></div>
+    <div class="login-title">CTNS MES Lite</div>
+    <div class="login-sub">생산관리 시스템에 오신 것을 환영합니다</div>
+    <button class="login-btn" onclick="msLogin()">
+      <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/microsoft.svg" alt="MS">
+      Microsoft 계정으로 로그인
+    </button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-version">v2.0 · CTNS</div>
+  </div>
+</div>
+
+<!-- 사이드바 -->
+<div class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <div class="sb-brand">
+      <div class="sb-icon"><i class="ti ti-building-factory-2"></i></div>
+      <div><div class="sb-name">CTNS MES Lite</div><div class="sb-ver">생산관리 v2.0</div></div>
+    </div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-label">작업</div>
+    <button class="sb-item active" id="sb-worker" onclick="go('worker')"><i class="ti ti-tool"></i> 작업 관리<span class="sb-dot"></span></button>
+
+    <div class="sb-divider"></div>
+    <div class="sb-label">생산</div>
+    <button class="sb-item" id="sb-dashboard" onclick="go('dashboard')"><i class="ti ti-layout-dashboard"></i> 대시보드<span class="sb-dot"></span></button>
+    <button class="sb-item" id="sb-prodplan" onclick="go('prodplan')"><i class="ti ti-calendar-event"></i> 생산계획<span class="sb-dot"></span></button>
+    <button class="sb-item" id="sb-progress" onclick="go('progress')"><i class="ti ti-activity"></i> 진행현황<span class="sb-dot"></span></button>
+    <button class="sb-item" id="sb-performance" onclick="go('performance')"><i class="ti ti-chart-bar"></i> 실적분석<span class="sb-dot"></span></button>
+
+
+
+    <div class="sb-divider"></div>
+    <div class="sb-label">관리</div>
+    <button class="sb-item" id="sb-workers" onclick="go('workers')"><i class="ti ti-users"></i> 작업자 현황<span class="sb-dot"></span></button>
+    <button class="sb-item" id="sb-orders" onclick="go('orders')"><i class="ti ti-clipboard-list"></i> 수주관리<span class="sb-dot"></span></button>
+    <button class="sb-item" id="sb-daily" onclick="go('daily')"><i class="ti ti-report"></i> 작업일보<span class="sb-dot"></span></button>
+    <button class="sb-item" id="sb-settings" onclick="go('settings')"><i class="ti ti-settings"></i> 설정<span class="sb-dot"></span></button>
+  </div>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">?</div>
+      <div style="flex:1;min-width:0">
+        <div class="sb-uname" id="sb-uname">로그인 중...</div>
+        <div class="sb-uemail" id="sb-uemail"></div>
+      </div>
+    </div>
+    <button class="sb-logout" onclick="msLogout()"><i class="ti ti-logout"></i> 로그아웃</button>
+  </div>
+</div>
+
+<!-- 메인 -->
+<div class="main-wrap">
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="ti ti-menu-2"></i></button>
+      <span class="tb-title" id="tb-title">작업 관리</span>
+      <span class="tb-sep">·</span>
+      <span class="tb-page" id="tb-page">CTNS MES Lite</span>
+    </div>
+    <div class="tb-right">
+      <div class="tb-badge tb-live">실시간</div>
+      <div class="tb-clock" id="clock">--:--:--</div>
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;cursor:pointer" id="tb-av" onclick="msLogout()"></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ 작업 관리 ══ -->
+    <div class="page active" id="page-worker">
+      <div id="worker-select">
+        <div class="page-header">
+          <div class="ph-left">
+            <div class="page-title">작업 관리</div>
+            <div class="page-desc">이름을 선택하면 작업 화면으로 이동합니다</div>
+          </div>
+          <div class="ph-right">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="new-worker-name" class="input" style="width:140px;font-size:13px" placeholder="작업자 이름 입력" maxlength="10" onkeydown="if(event.key==='Enter')addWorkerName()">
+              <button class="btn btn-primary btn-sm" onclick="addWorkerName()"><i class="ti ti-user-plus"></i> 추가</button>
+            </div>
+          </div>
+        </div>
+        <div class="grid-auto" id="worker-grid">
+          <div style="grid-column:1/-1;text-align:center;color:var(--text3);padding:40px;font-size:13px">등록된 작업자가 없습니다</div>
+        </div>
+      </div>
+      <div id="worker-work" style="display:none;max-width:700px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div id="w-avatar" style="width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff"></div>
+            <div>
+              <div id="w-name" style="font-size:16px;font-weight:800;color:var(--text)"></div>
+              <div id="w-date" style="font-size:11px;color:var(--text3)"></div>
+            </div>
+          </div>
+          <button class="btn btn-secondary" onclick="backToWorkers()"><i class="ti ti-arrow-left"></i> 목록으로</button>
+        </div>
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-title"><i class="ti ti-plus"></i> 작업 선택</div>
+          <div style="margin-bottom:10px">
+            <label style="font-size:10px;font-weight:700;color:var(--text3);display:block;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase">생산계획에서 선택</label>
+            <div style="display:flex;gap:8px">
+              <select id="plan-select" class="input" style="flex:1">
+                <option value="">— 오늘 계획 선택 —</option>
+              </select>
+              <button class="btn btn-primary" onclick="addCodeFromPlan()"><i class="ti ti-plus"></i> 추가</button>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:10px">
+            <label style="font-size:10px;font-weight:700;color:var(--text3);display:block;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase">직접 입력</label>
+            <div style="display:flex;gap:8px">
+              <input id="code-inp" class="input" type="text" placeholder="작업코드 직접 입력 (Enter)" autocapitalize="characters" onkeydown="if(event.key==='Enter')addCode()">
+              <button class="btn btn-secondary" onclick="addCode()"><i class="ti ti-plus"></i> 추가</button>
+            </div>
+          </div>
+        </div>
+        <div id="job-list"></div>
+        <div class="card" style="margin-top:12px">
+          <div class="card-title"><i class="ti ti-history"></i> 오늘 작업 기록 <span id="log-cnt" style="color:var(--text3);font-weight:400;font-size:11px;text-transform:none;letter-spacing:0">0건</span></div>
+          <div id="log-list"><div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">기록이 없습니다</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 대시보드 ══ -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header">
+        <div class="ph-left"><div class="page-title">대시보드</div><div class="page-desc">금일 생산 현황 종합</div></div>
+        <div class="ph-right"><div class="chip chip-live"><i class="ti ti-wifi" style="font-size:11px"></i> 실시간</div></div>
+      </div>
+      <div class="metrics">
+        <div class="metric blue"><div class="metric-icon"><i class="ti ti-clipboard-list"></i></div><div class="metric-label">금일 작업지시</div><div class="metric-value" id="d-plan">—</div><div class="metric-sub">건</div></div>
+        <div class="metric green"><div class="metric-icon"><i class="ti ti-player-play"></i></div><div class="metric-label">현재 작업중</div><div class="metric-value" id="d-running">—</div><div class="metric-sub">명</div></div>
+        <div class="metric amber"><div class="metric-icon"><i class="ti ti-target"></i></div><div class="metric-label">금일 달성률</div><div class="metric-value" id="d-rate">—</div><div class="metric-sub">%</div></div>
+        <div class="metric cyan"><div class="metric-icon"><i class="ti ti-clock"></i></div><div class="metric-label">총 작업시간</div><div class="metric-value" id="d-hours">—</div><div class="metric-sub">hr</div></div>
+        <div class="metric purple"><div class="metric-icon"><i class="ti ti-package"></i></div><div class="metric-label">금일 생산수량</div><div class="metric-value" id="d-qty">—</div><div class="metric-sub">EA</div></div>
+        <div class="metric red"><div class="metric-icon"><i class="ti ti-alert-triangle"></i></div><div class="metric-label">불량 건수</div><div class="metric-value" id="d-defect">—</div><div class="metric-sub">건</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-chart-line"></i> 작업코드별 진행현황</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>작업코드</th><th>투입</th><th>계획</th><th>실적</th><th>달성률</th><th>상태</th></tr></thead>
+              <tbody id="d-progress-tbl"><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-users"></i> 작업자 현재 상태</div>
+          <div id="d-worker-status">
+            <div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">데이터 없음</div>
+          </div>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:14px">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-bell"></i> 알림·이슈</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">지연 작업</div><div class="kpi-val">0건</div></div><span class="badge badge-amber" style="margin-left:auto">확인필요</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="ti ti-bug"></i></div><div><div class="kpi-label">불량 발생</div><div class="kpi-val">0건</div></div><span class="badge badge-red" style="margin-left:auto">오늘</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div class="kpi-val">0건</div></div><span class="badge badge-green" style="margin-left:auto">금일</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-clock-hour-3"></i> 최근 작업 활동</div>
+          <div id="d-recent" style="max-height:200px;overflow-y:auto">
+            <div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">활동 없음</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 생산계획 ══ -->
+    <div class="page" id="page-prodplan">
+      <div class="page-header">
+        <div class="ph-left"><div class="page-title">생산계획</div><div class="page-desc">작업지시 등록 및 계획 관리</div></div>
+        <div class="ph-right">
+          <button class="btn btn-secondary btn-sm"><i class="ti ti-download"></i> CSV</button>
+          <button class="btn btn-primary" onclick="openModal('plan-modal')"><i class="ti ti-plus"></i> 신규 등록</button>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric blue"><div class="metric-label">총 계획 건수</div><div class="metric-value">—</div></div>
+        <div class="metric"><div class="metric-label">계획수량 합계</div><div class="metric-value">—</div><div class="metric-sub">EA</div></div>
+        <div class="metric green"><div class="metric-label">실적수량 합계</div><div class="metric-value">—</div><div class="metric-sub">EA</div></div>
+        <div class="metric amber"><div class="metric-label">전체 달성률</div><div class="metric-value">—</div><div class="metric-sub">%</div></div>
+      </div>
+      <!-- 목록 먼저 -->
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="card-title" style="margin:0"><i class="ti ti-list-details"></i> 생산계획 목록</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="plan-filter-date" type="month" class="input" style="width:auto;font-size:12px;padding:5px 10px" onchange="filterPlanTable()">
+            <input id="plan-filter-code" class="input" style="width:120px;font-size:12px" placeholder="작업코드 검색" oninput="filterPlanTable()">
+            <input id="plan-filter-customer" class="input" style="width:100px;font-size:12px" placeholder="고객사 검색" oninput="filterPlanTable()">
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>등록일</th><th>생산계획일</th><th>작업코드</th><th>제품코드</th><th>스펙</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
+            <tbody id="plan-tbl"><tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- 달력 -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="card-title" style="margin:0"><i class="ti ti-calendar-month"></i> 생산계획 달력</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button class="btn btn-secondary btn-sm" onclick="calPrev()">◀</button>
+            <span style="font-size:13px;font-weight:700;min-width:80px;text-align:center" id="cal-label"></span>
+            <button class="btn btn-secondary btn-sm" onclick="calNext()">▶</button>
+            <button class="btn btn-secondary btn-sm" onclick="calToday()">오늘</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
+          <div style="text-align:center;font-size:10px;font-weight:700;color:var(--red);padding:5px">일</div>
+          <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:5px">월</div>
+          <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:5px">화</div>
+          <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:5px">수</div>
+          <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:5px">목</div>
+          <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:5px">금</div>
+          <div style="text-align:center;font-size:10px;font-weight:700;color:var(--accent);padding:5px">토</div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div style="display:flex;align-items:center;gap:16px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap">
+          <span style="font-size:10px;color:var(--text3);font-weight:700">상태:</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:2px;background:rgba(34,197,94,.3);display:inline-block"></span>완료</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:2px;background:rgba(59,130,246,.3);display:inline-block"></span>진행중</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:2px;background:var(--bg4);display:inline-block"></span>예정</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:2px;background:rgba(239,68,68,.3);display:inline-block"></span>미달성</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 진행현황 ══ -->
+    <div class="page" id="page-progress">
+      <div class="page-header">
+        <div class="ph-left"><div class="page-title">생산 진행현황</div><div class="page-desc">실시간 작업 모니터링</div></div>
+        <div class="ph-right"><div class="chip chip-live">실시간</div></div>
+      </div>
+      <div class="metrics">
+        <div class="metric green"><div class="metric-label">진행중 코드</div><div class="metric-value">—</div></div>
+        <div class="metric blue"><div class="metric-label">투입 인원</div><div class="metric-value">—</div><div class="metric-sub">명</div></div>
+        <div class="metric"><div class="metric-label">오늘 완료</div><div class="metric-value">—</div><div class="metric-sub">코드</div></div>
+        <div class="metric amber"><div class="metric-label">지연 작업</div><div class="metric-value">—</div><div class="metric-sub">건</div></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title"><i class="ti ti-activity"></i> 실시간 작업현황</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>작업코드</th><th>제품코드</th><th>고객사</th><th>투입인원</th><th>작업시간</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>최근액션</th></tr></thead>
+            <tbody><tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">진행중인 작업이 없습니다</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-users"></i> 작업자별 현재 상태</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>작업자</th><th>현재 코드</th><th>상태</th><th>시작시각</th><th>투입시간</th></tr></thead>
+              <tbody><tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-timeline"></i> 오늘 작업 타임라인</div>
+          <div style="max-height:260px;overflow-y:auto">
+            <div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">기록 없음</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 실적분석 ══ -->
+    <div class="page" id="page-performance">
+      <div class="page-header">
+        <div class="ph-left"><div class="page-title">실적분석</div><div class="page-desc">기간별 생산 실적 및 효율 분석</div></div>
+        <div class="ph-right">
+          <select class="input" style="width:auto;font-size:12px;padding:6px 10px">
+            <option>이번달</option><option>지난달</option><option>최근 3개월</option><option>올해</option>
+          </select>
+          <button class="btn btn-secondary btn-sm"><i class="ti ti-download"></i> 엑셀</button>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric blue"><div class="metric-label">완료 코드 수</div><div class="metric-value">—</div></div>
+        <div class="metric green"><div class="metric-label">총 생산수량</div><div class="metric-value">—</div><div class="metric-sub">EA</div></div>
+        <div class="metric amber"><div class="metric-label">평균 달성률</div><div class="metric-value">—</div><div class="metric-sub">%</div></div>
+        <div class="metric cyan"><div class="metric-label">총 작업시간</div><div class="metric-value">—</div><div class="metric-sub">hr</div></div>
+        <div class="metric purple"><div class="metric-label">1인당 생산성</div><div class="metric-value">—</div><div class="metric-sub">EA/hr</div></div>
+        <div class="metric red"><div class="metric-label">불량률</div><div class="metric-value">—</div><div class="metric-sub">%</div></div>
+      </div>
+      <div class="grid-2" style="margin-bottom:14px">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-chart-bar"></i> 일별 생산수량 추이</div>
+          <div style="height:160px;display:flex;align-items:flex-end;gap:4px;padding:10px 0" id="chart-daily">
+            <div style="text-align:center;width:100%;color:var(--text3);font-size:12px;align-self:center">데이터 없음</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-users"></i> 작업자별 투입시간</div>
+          <div style="height:160px;display:flex;align-items:flex-end;gap:4px;padding:10px 0" id="chart-worker">
+            <div style="text-align:center;width:100%;color:var(--text3);font-size:12px;align-self:center">데이터 없음</div>
+          </div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-building"></i> 고객사별 생산실적</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>고객사</th><th>수주건수</th><th>생산수량</th><th>달성률</th><th>비율</th></tr></thead>
+              <tbody><tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-package"></i> 작업코드별 실적 요약</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>작업코드</th><th>계획</th><th>실적</th><th>달성률</th><th>상태</th></tr></thead>
+              <tbody><tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 품질관리 ══ -->
+    
+
+    <!-- ══ 자재관리 ══ -->
+    
+
+    <!-- ══ 설비관리 ══ -->
+    
+
+    <!-- ══ 작업자 현황 ══ -->
+    <div class="page" id="page-workers">
+      <div class="page-header">
+        <div class="ph-left"><div class="page-title">작업자 현황</div><div class="page-desc">작업자 투입시간 및 실적 현황</div></div>
+        <div class="ph-right">
+          <button class="btn btn-primary" onclick="openModal('worker-add-modal')"><i class="ti ti-user-plus"></i> 작업자 추가</button>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric blue"><div class="metric-label">전체 작업자</div><div class="metric-value">—</div><div class="metric-sub">명</div></div>
+        <div class="metric green"><div class="metric-label">현재 작업중</div><div class="metric-value">—</div><div class="metric-sub">명</div></div>
+        <div class="metric"><div class="metric-label">오늘 투입</div><div class="metric-value">—</div><div class="metric-sub">명</div></div>
+        <div class="metric cyan"><div class="metric-label">평균 투입시간</div><div class="metric-value">—</div><div class="metric-sub">hr</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-users"></i> 작업자 목록</div>
+          <div id="worker-list-page">
+            <div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">등록된 작업자가 없습니다</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+            <input id="new-worker-inp" class="input" placeholder="이름 입력 (최대 8자)" maxlength="8" onkeydown="if(event.key==='Enter')addWorker()">
+            <button class="btn btn-primary" onclick="addWorker()"><i class="ti ti-plus"></i></button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-chart-bar"></i> 작업자별 투입시간 (오늘)</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>작업자</th><th>작업코드수</th><th>투입시간</th><th>생산수량</th><th>상태</th></tr></thead>
+              <tbody id="worker-stats-tbl"><tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 수주관리 ══ -->
+    <div class="page" id="page-orders">
+  <div class="page-header">
+    <div class="ph-left">
+      <div class="page-title">수주관리</div>
+      <div class="page-desc">생산계획에 등록된 작업을 일별·월별로 조회합니다</div>
+    </div>
+  </div>
+  <!-- KPI -->
+  <div class="metrics">
+    <div class="metric blue"><div class="metric-label">총 계획건수</div><div class="metric-value" id="or-cnt">—</div></div>
+    <div class="metric green"><div class="metric-label">총 계획수량</div><div class="metric-value" id="or-planqty">—</div><div class="metric-sub">EA</div></div>
+    <div class="metric amber"><div class="metric-label">총 실적수량</div><div class="metric-value" id="or-actqty">—</div><div class="metric-sub">EA</div></div>
+    <div class="metric red"><div class="metric-label">전체 달성률</div><div class="metric-value" id="or-rate">—</div><div class="metric-sub">%</div></div>
+  </div>
+  <!-- 탭 버튼 -->
+  <div style="display:flex;gap:3px;margin-bottom:16px;background:var(--bg3);padding:4px;border-radius:10px;width:fit-content;border:1px solid var(--border)">
+    <button id="or-tab-btn-daily" onclick="switchOrderTab('daily')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);background:var(--accent);color:#fff;transition:all .2s">일별 조회</button>
+    <button id="or-tab-btn-monthly" onclick="switchOrderTab('monthly')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--text3);transition:all .2s">월별 조회</button>
+    <button id="or-tab-btn-all" onclick="switchOrderTab('all')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--text3);transition:all .2s">전체 목록</button>
+  </div>
+
+  <!-- 일별 탭 -->
+  <div id="or-tab-daily">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0"><i class="ti ti-calendar-day"></i> 일별 생산계획</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="orChDay(-1)">◀</button>
+          <input type="date" id="or-day-picker" onchange="renderOrDay()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);outline:none;background:var(--bg2);color:var(--text)">
+          <button class="btn btn-secondary btn-sm" onclick="orChDay(1)">▶</button>
+          <button class="btn btn-secondary btn-sm" onclick="orGoToday()">오늘</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px">
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">계획건수</div><div style="font-size:20px;font-weight:800;color:var(--accent)" id="dk-cnt">—</div></div>
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">계획수량</div><div style="font-size:20px;font-weight:800;color:var(--green)" id="dk-plan">—</div></div>
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">실적수량</div><div style="font-size:20px;font-weight:800;color:var(--amber)" id="dk-act">—</div></div>
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">달성률</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="dk-rate">—</div></div>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>스펙</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
+        <tbody id="or-day-tbody"><tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- 월별 탭 -->
+  <div id="or-tab-monthly" style="display:none">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0"><i class="ti ti-calendar-month"></i> 월별 생산계획</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="orChMonth(-1)">◀</button>
+          <input type="month" id="or-month-picker" onchange="renderOrMonth()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);outline:none;background:var(--bg2);color:var(--text)">
+          <button class="btn btn-secondary btn-sm" onclick="orChMonth(1)">▶</button>
+          <button class="btn btn-secondary btn-sm" onclick="orGoThisMonth()">이번달</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px">
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">총 계획건수</div><div style="font-size:20px;font-weight:800;color:var(--accent)" id="mk-cnt">—</div></div>
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">총 계획수량</div><div style="font-size:20px;font-weight:800;color:var(--green)" id="mk-plan">—</div></div>
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">총 실적수량</div><div style="font-size:20px;font-weight:800;color:var(--amber)" id="mk-act">—</div></div>
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">달성률</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="mk-rate">—</div></div>
+      </div>
+      <div id="or-month-wrap"><div style="text-align:center;color:var(--text3);padding:24px">해당 월 계획이 없습니다</div></div>
+    </div>
+  </div>
+
+  <!-- 전체 탭 -->
+  <div id="or-tab-all" style="display:none">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0"><i class="ti ti-list-details"></i> 전체 생산계획 목록</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <input id="or-search" placeholder="🔍 작업코드/고객사 검색" oninput="renderOrAll()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);outline:none;width:180px;background:var(--bg2);color:var(--text)">
+          <select id="or-status-f" onchange="renderOrAll()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);background:var(--bg2);color:var(--text)">
+            <option value="">전체 상태</option>
+            <option value="planned">예정</option>
+            <option value="running">진행중</option>
+            <option value="done">완료</option>
+            <option value="failed">미달성</option>
+          </select>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
+        <tbody id="or-all-tbody"><tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+    <!-- ══ 작업일보 ══ -->
+    <div class="page" id="page-daily">
+      <div class="page-header">
+        <div class="ph-left"><div class="page-title">작업일보</div><div class="page-desc">일일 작업 내역 확인 및 출력</div></div>
+        <div class="ph-right">
+          <input type="date" id="daily-date" class="input" style="width:auto;font-size:12px">
+          <button class="btn btn-secondary btn-sm"><i class="ti ti-printer"></i> 인쇄</button>
+          <button class="btn btn-secondary btn-sm"><i class="ti ti-file-spreadsheet"></i> 엑셀</button>
+        </div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:18px 22px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:10px;letter-spacing:.15em;color:var(--text3);text-transform:uppercase;margin-bottom:6px">Daily Work Report</div>
+          <div style="font-size:18px;font-weight:900;color:var(--text)" id="daily-title">작업 일보</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px" id="daily-sub">날짜를 선택하세요</div>
+        </div>
+        <div style="text-align:right"><div style="font-size:10px;color:var(--text3)">출력일시</div><div style="font-size:12px;color:var(--text2);font-family:var(--mono)" id="daily-print"></div></div>
+      </div>
+      <div class="metrics">
+        <div class="metric blue"><div class="metric-label">작업 코드 수</div><div class="metric-value">—</div></div>
+        <div class="metric green"><div class="metric-label">투입 인원</div><div class="metric-value">—</div></div>
+        <div class="metric cyan"><div class="metric-label">총 작업시간</div><div class="metric-value">—</div></div>
+        <div class="metric"><div class="metric-label">총 생산수량</div><div class="metric-value">—</div><div class="metric-sub">EA</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-package"></i> 작업코드별 현황</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>작업코드</th><th>고객사</th><th>계획</th><th>실적</th><th>달성률</th><th>작업시간</th><th>상태</th></tr></thead>
+              <tbody><tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-users"></i> 작업자별 활동</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>작업자</th><th>담당코드</th><th>시작</th><th>종료</th><th>투입시간</th><th>생산수량</th></tr></thead>
+              <tbody><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 설정 ══ -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div class="ph-left"><div class="page-title">설정</div><div class="page-desc">시스템 환경 설정</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-building-factory"></i> 회사 정보</div>
+          <div class="form-group"><label class="label">회사명</label><input class="input" value="CTNS" placeholder="회사명"></div>
+          <div class="form-group"><label class="label">사업장명</label><input class="input" placeholder="사업장명"></div>
+          <div class="form-group"><label class="label">담당자 연락처</label><input class="input" placeholder="010-0000-0000"></div>
+          <button class="btn btn-primary btn-sm">저장</button>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-bell"></i> 알림 설정</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="stat-row"><span class="stat-label">납기 임박 알림 (일수)</span><input class="input" type="number" value="7" style="width:70px;text-align:center"></div>
+            <div class="stat-row"><span class="stat-label">불량률 경고 기준 (%)</span><input class="input" type="number" value="5" style="width:70px;text-align:center"></div>
+            <div class="stat-row"><span class="stat-label">재고 부족 알림</span><input type="checkbox" checked style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent)"></div>
+            <div class="stat-row"><span class="stat-label">작업 지연 알림</span><input type="checkbox" checked style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent)"></div>
+          </div>
+          <button class="btn btn-primary btn-sm" style="margin-top:14px">저장</button>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-database"></i> 데이터 관리</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-secondary" style="justify-content:flex-start"><i class="ti ti-download"></i> 전체 데이터 내보내기 (CSV)</button>
+            <button class="btn btn-secondary" style="justify-content:flex-start"><i class="ti ti-download"></i> 작업 로그 내보내기</button>
+            <button class="btn btn-secondary" style="justify-content:flex-start"><i class="ti ti-download"></i> 생산계획 내보내기</button>
+            <button class="btn btn-danger" style="justify-content:flex-start;margin-top:4px"><i class="ti ti-trash"></i> 전체 기록 삭제</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-info-circle"></i> 시스템 정보</div>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <div class="stat-row"><span class="stat-label">시스템 버전</span><span class="stat-value" style="font-family:var(--mono)">v2.0.0</span></div>
+            <div class="stat-row"><span class="stat-label">데이터베이스</span><span class="stat-value">NeonDB</span></div>
+            <div class="stat-row"><span class="stat-label">배포 환경</span><span class="stat-value">Vercel</span></div>
+            <div class="stat-row"><span class="stat-label">인증</span><span class="stat-value">MS Azure AD</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- content -->
+</div><!-- main-wrap -->
+
+<!-- 생산계획 등록 모달 -->
+<div class="modal-overlay" id="plan-modal">
+  <div class="modal">
+    <div class="modal-title">신규 생산계획 등록 <button class="modal-close" onclick="closeModal('plan-modal')"><i class="ti ti-x"></i></button></div>
+    <div class="form-grid">
+      <div><label class="label">작업코드 *</label><input id="pf-code" class="input" placeholder="예) B26-0172"></div>
+      <div><label class="label">등록일자</label><input id="pf-date" class="input" type="date" readonly style="background:var(--bg3);color:var(--text3);cursor:default"></div>
+      <div><label class="label">제품코드</label><input id="pf-pcode" class="input" placeholder="예) P-2024-001"></div>
+      <div><label class="label">계획수량 (EA) *</label><input id="pf-qty" class="input" type="number" placeholder="0" min="1"></div>
+      <div class="full"><label class="label">스펙</label><input id="pf-spec" class="input" placeholder="예) 200x300x50mm, SUS304"></div>
+      <div><label class="label">고객사</label><input id="pf-customer" class="input" placeholder="예) 현대자동차"></div>
+      <div><label class="label">비고</label><input id="pf-remark" class="input" placeholder="특이사항"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closeModal('plan-modal')">취소</button>
+      <button class="btn btn-primary" onclick="submitPlan()"><i class="ti ti-check"></i> 등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- 생산계획 수정 모달 -->
+<div class="modal-overlay" id="plan-edit-modal">
+  <div class="modal">
+    <div class="modal-title">생산계획 수정 <button class="modal-close" onclick="closeModal('plan-edit-modal')"><i class="ti ti-x"></i></button></div>
+    <div style="background:#f0f6ff;border:1px solid #dbeafe;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#1d4ed8">
+      <i class="ti ti-info-circle"></i> 수정 중: <strong id="edit-plan-id-label"></strong>
+    </div>
+    <div class="form-grid">
+      <div><label class="label">작업코드</label><input id="ef-code" class="input" placeholder="예) B26-0172"></div>
+      <div><label class="label">작업일자 *</label><input id="ef-date" class="input" type="date"></div>
+      <div><label class="label">제품코드</label><input id="ef-pcode" class="input" placeholder="예) P-2024-001"></div>
+      <div><label class="label">계획수량 (EA) *</label><input id="ef-qty" class="input" type="number" placeholder="0" min="1"></div>
+      <div class="full"><label class="label">스펙</label><input id="ef-spec" class="input" placeholder="예) 200x300x50mm, SUS304"></div>
+      <div><label class="label">고객사</label><input id="ef-customer" class="input" placeholder="예) 현대자동차"></div>
+      <div><label class="label">상태</label>
+        <select id="ef-status" class="input">
+          <option value="planned">예정</option>
+          <option value="running">진행중</option>
+          <option value="done">완료</option>
+          <option value="failed">미달성</option>
+        </select>
+      </div>
+      <div><label class="label">비고</label><input id="ef-remark" class="input" placeholder="특이사항"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closeModal('plan-edit-modal')">취소</button>
+      <button class="btn btn-primary" onclick="submitEditPlan()"><i class="ti ti-check"></i> 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 수주 등록 모달 -->
+<div class="modal-overlay" id="order-modal">
+  <div class="modal">
+    <div class="modal-title">수주 등록 <button class="modal-close" onclick="closeModal('order-modal')"><i class="ti ti-x"></i></button></div>
+    <div class="form-grid">
+      <div><label class="label">고객사 *</label><input class="input" placeholder="고객사명"></div>
+      <div><label class="label">수주일 *</label><input class="input" type="date"></div>
+      <div><label class="label">품목명 *</label><input class="input" placeholder="품목명"></div>
+      <div><label class="label">수주수량 *</label><input class="input" type="number" placeholder="0"></div>
+      <div><label class="label">납기일 *</label><input class="input" type="date"></div>
+      <div><label class="label">담당자</label><input class="input" placeholder="담당자명"></div>
+      <div class="full"><label class="label">비고</label><input class="input" placeholder="특이사항"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closeModal('order-modal')">취소</button>
+      <button class="btn btn-primary" onclick="closeModal('order-modal')"><i class="ti ti-check"></i> 등록</button>
+    </div>
+  </div>
+</div>
+<!-- 수량 모달 -->
+<div class="modal-overlay" id="qty-modal">
+  <div class="qty-box">
+    <div class="qty-title">작업 종료</div>
+    <div class="qty-sub" id="qty-sub">생산 수량을 입력하세요</div>
+    <div id="qty-max-hint" style="font-size:11px;color:var(--amber);margin-bottom:6px;min-height:16px"></div>
+    <input class="qty-input" id="qty-inp" type="number" min="0" placeholder="0">
+    <div class="qty-hint">0 입력 시 수량 없이 종료됩니다</div>
+    <div class="qty-btns">
+      <button onclick="closeModal('qty-modal')" style="background:var(--bg4);color:var(--text2)">취소</button>
+      <button onclick="confirmEnd()" style="background:var(--red);color:#fff">■ 종료</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.32.2/lib/msal-browser.min.js"></script>
+<script>
+/* ══ MSAL ══ */
+const msalConfig = {
+  auth: {
+    clientId: '27e80c16-3ec5-45de-bc0a-137d168e23d7',
+    authority: 'https://login.microsoftonline.com/b95b87cb-eeba-4927-90d3-9cca18360110',
+    redirectUri: 'https://ctns-mes-lite.vercel.app',
+  },
+  cache: { cacheLocation: 'sessionStorage' }
+};
+const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+async function initAuth() {
   try {
-    await ensureTable();
+    const resp = await msalInstance.handleRedirectPromise();
+    if(resp) { setUser(resp.account); return; }
+  } catch(e) { document.getElementById('login-err').textContent = '오류: ' + e.message; }
+  const accounts = msalInstance.getAllAccounts();
+  if(accounts.length > 0) setUser(accounts[0]);
+}
 
-    if (req.method === 'GET') {
-      const rows = await sql`SELECT * FROM plans ORDER BY created_at ASC`;
-      const result = {};
-      for (const row of rows) result[row.id] = rowToObj(row);
-      return res.status(200).json(result);
+function setUser(account) {
+  const name = account.name || account.username.split('@')[0];
+  const email = account.username;
+  const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('sb-avatar').textContent = initials;
+  document.getElementById('sb-uname').textContent = name;
+  document.getElementById('sb-uemail').textContent = email;
+  document.getElementById('tb-av').textContent = initials;
+}
+
+window.msLogin = async function() {
+  document.getElementById('login-err').textContent = '';
+  try { await msalInstance.loginRedirect({ scopes: ['User.Read'] }); }
+  catch(e) { document.getElementById('login-err').textContent = '로그인 실패: ' + e.message; }
+};
+window.msLogout = function() {
+  if(!confirm('로그아웃 하시겠습니까?')) return;
+  msalInstance.logoutRedirect({ postLogoutRedirectUri: window.location.href });
+};
+initAuth();
+
+/* ══ API ══ */
+const API = {
+  async get(p) { try { const r=await fetch(p); return r.json(); } catch(e) { return null; } },
+  async post(p,b) { try { const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); return r.json(); } catch(e) { return null; } },
+  async put(p,b) { try { const r=await fetch(p,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); return r.json(); } catch(e) { return null; } },
+  async del(p,b) { try { const r=await fetch(p,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); return r.json(); } catch(e) { return null; } }
+};
+
+let cachedNames=[], cachedStates={}, cachedPlans={}, cachedLogs={};
+let pollingTimer=null;
+
+async function loadAll() {
+  try {
+    const [n,s,p] = await Promise.all([API.get('/api/names'),API.get('/api/states'),API.get('/api/plans')]);
+    if(n) cachedNames=n;
+    if(s) cachedStates=s;
+    if(p) cachedPlans=p;
+    renderWorkerGrid();
+    renderWorkerListPage();
+    renderPlanTable();
+    renderCalendar();
+    renderAllLinked();
+    renderOrKPIs();
+    updatePlanSelect();
+    if(typeof curOrderTab!=="undefined"){
+      if(curOrderTab==="daily") renderOrDay();
+      else if(curOrderTab==="monthly") renderOrMonth();
+      else if(curOrderTab==="all") renderOrAll();
     }
+  } catch(e) {}
+}
+function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,3000); }
+loadAll().then(startPolling);
 
-    if (req.method === 'POST') {
-      const p = req.body;
-      const id = p.id || `plan_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
-      const createdAtDate = p.createdAt || new Date().toISOString().slice(0,10);
-      await sql`
-        INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, status, created_at_date)
-        VALUES (
-          ${id}, ${p.code||''}, ${p.date||''},
-          ${Number(p.planQty)||0}, ${Number(p.actQty)||0},
-          ${p.productCode||''}, ${p.spec||''},
-          ${p.customer||''}, ${p.remark||''}, ${p.status||'planned'},
-          ${createdAtDate}
-        )
-        ON CONFLICT (id) DO UPDATE SET
-          code = EXCLUDED.code, date = EXCLUDED.date,
-          plan_qty = EXCLUDED.plan_qty, act_qty = EXCLUDED.act_qty,
-          product_code = EXCLUDED.product_code, spec = EXCLUDED.spec,
-          customer = EXCLUDED.customer, remark = EXCLUDED.remark,
-          status = EXCLUDED.status
-      `;
-      const rows = await sql`SELECT * FROM plans ORDER BY created_at ASC`;
-      const result = {};
-      for (const row of rows) result[row.id] = rowToObj(row);
-      return res.status(200).json(result);
-    }
+// 생산계획 필터 초기화
+(function(){
+  const now = new Date();
+  const mp = document.getElementById('plan-filter-date');
+  if(mp) mp.value = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+})();
 
-    if (req.method === 'PUT') {
-      const p = req.body;
-      const id = p.id;
-      if (!id) return res.status(400).json({ error: 'id required' });
-      await sql`
-        INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, status, created_at_date)
-        VALUES (
-          ${id}, ${p.code||''}, ${p.date||''},
-          ${Number(p.planQty)||0}, ${Number(p.actQty)||0},
-          ${p.productCode||''}, ${p.spec||''},
-          ${p.customer||''}, ${p.remark||''}, ${p.status||'planned'},
-          ${p.createdAt||''}
-        )
-        ON CONFLICT (id) DO UPDATE SET
-          code = EXCLUDED.code, date = EXCLUDED.date,
-          plan_qty = EXCLUDED.plan_qty, act_qty = EXCLUDED.act_qty,
-          product_code = EXCLUDED.product_code, spec = EXCLUDED.spec,
-          customer = EXCLUDED.customer, remark = EXCLUDED.remark,
-          status = EXCLUDED.status
-      `;
-      const rows = await sql`SELECT * FROM plans ORDER BY created_at ASC`;
-      const result = {};
-      for (const row of rows) result[row.id] = rowToObj(row);
-      return res.status(200).json(result);
-    }
 
-    if (req.method === 'DELETE') {
-      const { id } = req.body;
-      if (!id) return res.status(400).json({ error: 'id required' });
-      await sql`DELETE FROM plans WHERE id = ${id}`;
-      const rows = await sql`SELECT * FROM plans ORDER BY created_at ASC`;
-      const result = {};
-      for (const row of rows) result[row.id] = rowToObj(row);
-      return res.status(200).json(result);
-    }
+/* ══ 네비게이션 ══ */
+const PAGE_INFO = {
+  worker:{title:'작업 관리',parent:'작업'},
+  dashboard:{title:'대시보드',parent:'생산'},
+  prodplan:{title:'생산계획',parent:'생산'},
+  progress:{title:'진행현황',parent:'생산'},
+  performance:{title:'실적분석',parent:'생산'},
+  workers:{title:'작업자 현황',parent:'관리'},
+  orders:{title:'수주관리',parent:'관리'},
+  daily:{title:'작업일보',parent:'관리'},
+  settings:{title:'설정',parent:'관리'},
+};
 
-    return res.status(405).json({ error: 'Method not allowed' });
-  } catch (e) {
-    console.error('plans error:', e);
-    return res.status(500).json({ error: e.message });
+function go(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id)?.classList.add('active');
+  document.getElementById('sb-'+id)?.classList.add('active');
+  const info = PAGE_INFO[id]||{};
+  document.getElementById('tb-title').textContent = info.title||id;
+  document.getElementById('tb-page').textContent = info.parent||'CTNS MES Lite';
+  closeSidebar();
+}
+
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sb-overlay').classList.toggle('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sb-overlay').classList.remove('open');}
+
+/* ══ 시계 ══ */
+setInterval(()=>{
+  const n=new Date();
+  document.getElementById('clock').textContent=n.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+},1000);
+
+/* ══ 모달 ══ */
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='plan-modal'){
+    const today = new Date().toISOString().slice(0,10);
+    const df = document.getElementById('pf-date');
+    if(df) df.value = today;
+    const cf = document.getElementById('pf-code');
+    if(cf) cf.value='';
+    const qf = document.getElementById('pf-qty');
+    if(qf) qf.value='';
+    const pf = document.getElementById('pf-pcode');
+    if(pf) pf.value='';
+    const sf = document.getElementById('pf-spec');
+    if(sf) sf.value='';
+    const cuf = document.getElementById('pf-customer');
+    if(cuf) cuf.value='';
+    const rf = document.getElementById('pf-remark');
+    if(rf) rf.value='';
+    setTimeout(()=>document.getElementById('pf-code')?.focus(),150);
   }
 }
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+/* ══ 작업 관리 ══ */
+const COLORS=['#3b82f6','#22c55e','#a78bfa','#f59e0b','#ec4899','#22d3ee','#f97316','#84cc16'];
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function initial(n){return n.trim().slice(0,2).toUpperCase()||'?';}
+
+let currentUser=null, jobs={}, logs=[], qtyTarget=null;
+
+function renderWorkerGrid() {
+  const g = document.getElementById('worker-grid');
+  if(!g) return;
+  if(!cachedNames.length) {
+    g.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text3);padding:40px;font-size:13px">등록된 작업자가 없습니다<br><small style="margin-top:6px;display:block">작업자 현황에서 추가해주세요</small></div>';
+    return;
+  }
+  g.innerHTML = cachedNames.map((n,i)=>{
+    const st=cachedStates[n]||{};
+    let run=0,pause=0;
+    Object.values(st).forEach(v=>{if(v?.action==='start')run++;else if(v?.action==='pause')pause++;});
+    let cls='',stxt='대기중',scol='var(--text3)';
+    if(run>0){cls='running';stxt=`● ${run}개 작업중`;scol='var(--green)';}
+    else if(pause>0){cls='paused';stxt=`⏸ ${pause}개 정지`;scol='var(--amber)';}
+    return `<div class="worker-card ${cls}" style="position:relative">
+      <button onclick="event.stopPropagation();deleteWorker('${esc(n)}')" style="position:absolute;top:6px;right:6px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:4px;line-height:1" title="삭제">✕</button>
+      <div onclick="selectWorker(${i})" style="cursor:pointer">
+        <div class="wc-avatar" style="background:${COLORS[i%COLORS.length]}">${esc(initial(n))}</div>
+        <div class="wc-name">${esc(n)}</div>
+        <div class="wc-status" style="color:${scol}">${stxt}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.selectWorker = async function(idx) {
+  currentUser=cachedNames[idx]; jobs={}; logs=[];
+  const color=COLORS[idx%COLORS.length];
+  document.getElementById('w-avatar').style.background=color;
+  document.getElementById('w-avatar').textContent=initial(currentUser);
+  document.getElementById('w-name').textContent=currentUser;
+  document.getElementById('w-date').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  document.getElementById('worker-select').style.display='none';
+  document.getElementById('worker-work').style.display='block';
+  const myState=cachedStates[currentUser]||{};
+  Object.entries(myState).forEach(([c,s])=>{if(s.action&&s.action!=='end')jobs[c]={action:s.action,since:s.since||'',open:s.action==='start'};});
+  try{const ml=await API.get(`/api/logs?worker=${encodeURIComponent(currentUser)}`);if(ml){const wl=ml[currentUser]||{};logs=Object.values(wl).sort((a,b)=>b.ts-a.ts);}}catch(e){logs=[];}
+  renderJobs(); renderLogs();
+  updatePlanSelect();
+};
+
+window.backToWorkers = function(){
+  document.getElementById('worker-select').style.display='block';
+  document.getElementById('worker-work').style.display='none';
+  currentUser=null;
+};
+
+window.addCode = function(){
+  const inp=document.getElementById('code-inp');
+  const val=inp.value.trim().toUpperCase();
+  if(!val){showToast('작업코드를 입력하세요');return;}
+  if(jobs[val]!==undefined){showToast('이미 추가된 코드입니다');return;}
+  jobs[val]={action:'idle',since:'',open:true};
+  renderJobs(); inp.value=''; inp.focus();
+};
+
+function renderJobs(){
+  const list=document.getElementById('job-list');
+  const codes=Object.keys(jobs);
+  if(!codes.length){list.innerHTML='';return;}
+  list.innerHTML=codes.map(c=>{
+    const s=jobs[c],a=s.action;
+    const dotCls=a==='start'?'dot-run':a==='pause'?'dot-pause':a==='end'?'dot-done':'dot-idle';
+    const badgeCls=a==='start'?'badge-green':a==='pause'?'badge-amber':a==='end'?'badge-gray':'badge-gray';
+    const badgeTxt=a==='start'?'작업중':a==='pause'?'일시정지':a==='end'?'완료':'대기';
+    const cardCls=a==='start'?'running':a==='pause'?'paused':'';
+    const since=a==='start'&&s.since?`<div style="font-size:11px;color:var(--text3);margin:8px 0 10px">${s.since} 부터 작업중</div>`:a==='pause'&&s.since?`<div style="font-size:11px;color:var(--text3);margin:8px 0 10px">${s.since} 일시정지됨</div>`:'<div style="margin-top:8px"></div>';
+    return `<div class="job-card ${cardCls}">
+      <div class="job-head" onclick="toggleJob('${esc(c)}')">
+        <div class="job-dot ${dotCls}"></div>
+        <div class="job-code">${esc(c)}</div>
+        <span class="badge ${badgeCls}">${badgeTxt}</span>
+        <span style="font-size:11px;color:var(--text3);margin-left:4px;transition:transform .2s" id="jchv-${esc(c)}">${s.open?'▴':'▾'}</span>
+        <button onclick="event.stopPropagation();removeJob('${esc(c)}')" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 6px;margin-left:4px;font-size:12px">✕</button>
+      </div>
+      <div class="job-body ${s.open?'open':''}" id="jbody-${esc(c)}">
+        ${since}
+        <div class="job-btns">
+          <button class="jbtn jbtn-start" onclick="doAction('${esc(c)}','start')" ${a==='start'?'disabled':''}><i class="ti ti-player-play"></i> 시작</button>
+          <button class="jbtn jbtn-pause" onclick="doAction('${esc(c)}','pause')" ${a!=='start'?'disabled':''}><i class="ti ti-player-pause"></i> 정지</button>
+          <button class="jbtn jbtn-end" onclick="openQty('${esc(c)}')" ${a==='idle'||a==='end'?'disabled':''}><i class="ti ti-player-stop"></i> 종료</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.toggleJob=function(c){if(!jobs[c])return;jobs[c].open=!jobs[c].open;document.getElementById('jbody-'+c)?.classList.toggle('open',jobs[c].open);const chv=document.getElementById('jchv-'+c);if(chv)chv.textContent=jobs[c].open?'▴':'▾';};
+window.removeJob=function(c){delete jobs[c];renderJobs();};
+
+window.doAction=async function(code,action,qty=0,partialEnd=false){
+  const t=new Date();
+  const timeStr=t.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  const dateStr=t.toLocaleDateString('ko-KR');
+  const isoDate=t.toISOString().slice(0,10);
+  await API.post('/api/logs',{worker:currentUser,code,action,date:dateStr,time:timeStr,qty:qty||0,ts:t.getTime()});
+  if(action==='end'){
+    await API.del('/api/states',{worker:currentUser,code});
+    if(partialEnd){
+      // 부분 완료 - 작업코드 유지, 잔여 작업 가능
+      jobs[code]={...jobs[code],action:'idle',since:timeStr,open:true};
+      showToast(`[${code}] 부분 완료 (${qty}EA) - 이어서 작업 가능`);
+    } else {
+      jobs[code]={...jobs[code],action:'end',since:timeStr,open:false};
+    }
+    if(qty>0){const match=Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase()&&p.date===isoDate);if(match){const[pid,plan]=match;await API.put('/api/plans',{...plan,id:pid,actQty:(Number(plan.actQty)||0)+qty});}}
+  } else {
+    await API.post('/api/states',{worker:currentUser,code,action,since:timeStr,date:dateStr});
+    jobs[code]={...jobs[code],action,since:timeStr,open:action==='start'};
+  }
+  const ml=await API.get(`/api/logs?worker=${encodeURIComponent(currentUser)}`);
+  if(ml){const wl=ml[currentUser]||{};logs=Object.values(wl).sort((a,b)=>b.ts-a.ts);}
+  renderJobs(); renderLogs();
+  const lbls={start:'▶ 시작',pause:'⏸ 정지',end:'■ 종료'};
+  showToast(`[${code}] ${lbls[action]}${qty>0?' ('+qty+'EA)':''}`);
+};
+
+window.openQty=function(c){
+  qtyTarget=c;
+  document.getElementById('qty-sub').textContent='작업코드: '+c;
+  document.getElementById('qty-inp').value='';
+  // 잔여수량 표시
+  const today=todayISO();
+  const plan=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase()&&(p.date===today||p.status==='running'));
+  const hintEl=document.getElementById('qty-max-hint');
+  if(plan && hintEl){
+    const already=Number(plan.actQty)||0;
+    const remaining=(plan.planQty||0)-already;
+    hintEl.textContent=`계획: ${plan.planQty}EA / 기완료: ${already}EA / 잔여: ${remaining}EA`;
+    hintEl.style.color=remaining>0?'var(--amber)':'var(--green)';
+    document.getElementById('qty-inp').max=remaining;
+  } else if(hintEl){
+    hintEl.textContent='';
+  }
+  openModal('qty-modal');
+  setTimeout(()=>document.getElementById('qty-inp').focus(),150);
+};
+window.confirmEnd=function(){
+  const qty=Number(document.getElementById('qty-inp').value)||0;
+  const c=qtyTarget;
+  if(!c) return;
+  // 계획수량 초과 체크
+  const today=todayISO();
+  const plan=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase()&&(p.date===today||p.status==='running'));
+  if(plan && qty > 0){
+    const already=Number(plan.actQty)||0;
+    const maxQty=(plan.planQty||0)-already;
+    if(qty > maxQty){
+      showToast(`최대 ${maxQty}EA까지 입력 가능합니다 (계획: ${plan.planQty}, 기완료: ${already})`);
+      return;
+    }
+    // 잔여량 체크 - 계획수량 미달이면 작업 이어서 가능
+    if(already+qty < (plan.planQty||0)){
+      // 완전 종료 아님 - pause 상태로 전환
+      closeModal('qty-modal');
+      doAction(c,'end',qty,true); // partialEnd
+      return;
+    }
+  }
+  closeModal('qty-modal');
+  if(c)doAction(c,'end',qty);
+};
+document.getElementById('qty-inp').addEventListener('keydown',e=>{if(e.key==='Enter')confirmEnd();if(e.key==='Escape')closeModal('qty-modal');});
+
+function renderLogs(){
+  document.getElementById('log-cnt').textContent=logs.length+'건';
+  const list=document.getElementById('log-list');
+  if(!logs.length){list.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">기록이 없습니다</div>';return;}
+  const icons={start:'▶',pause:'⏸',end:'■'};
+  const lbls={start:'작업시작',pause:'일시정지',end:'작업종료'};
+  const cols={start:'rgba(34,197,94,.15)',pause:'rgba(245,158,11,.12)',end:'rgba(239,68,68,.1)'};
+  const tcols={start:'#4ade80',pause:'#fbbf24',end:'#f87171'};
+  list.innerHTML=logs.map(l=>`<div class="timeline-item">
+    <div class="tl-dot" style="background:${cols[l.action]};color:${tcols[l.action]}">${icons[l.action]||'●'}</div>
+    <div style="flex:1;min-width:0">
+      <div class="tl-code">${esc(l.code)}</div>
+      <div class="tl-action" style="color:${tcols[l.action]}">${lbls[l.action]||l.action}${l.qty>0?' · '+l.qty+'EA':''}</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div class="tl-time">${l.time}</div>
+      <div style="font-size:10px;color:var(--text3)">${l.date}</div>
+    </div>
+  </div>`).join('');
+}
+
+/* ══ 작업자 현황 페이지 ══ */
+function renderWorkerListPage(){
+  const g=document.getElementById('worker-list-page');
+  if(!g)return;
+  if(!cachedNames.length){g.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">등록된 작업자가 없습니다</div>';return;}
+  g.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px">`+cachedNames.map((n,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:${COLORS[i%COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff">${esc(initial(n))}</div>
+        <span style="font-size:13px;font-weight:600">${esc(n)}</span>
+      </div>
+      <button onclick="deleteWorker('${esc(n)}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">✕</button>
+    </div>`).join('')+'</div>';
+}
+
+window.addWorker=async function(){
+  const inp=document.getElementById('new-worker-inp');
+  const val=inp.value.trim();
+  if(!val){showToast('이름을 입력하세요');return;}
+  if(cachedNames.includes(val)){showToast('이미 등록된 이름입니다');return;}
+  const res=await API.post('/api/names',{name:val});
+  if(res){cachedNames=res;renderWorkerGrid();renderWorkerListPage();inp.value='';showToast(`[${val}] 추가됨`);}
+};
+window.deleteWorker=async function(name){
+  if(!confirm(`[${name}] 작업자를 삭제하시겠습니까?`))return;
+  const res=await API.del('/api/names',{name});
+  if(res){cachedNames=res;renderWorkerGrid();renderWorkerListPage();showToast('삭제됨');}
+};
+
+/* ══ 생산계획 ══ */
+window.submitPlan=async function(){
+  const code=document.getElementById('pf-code').value.trim();
+  const date=document.getElementById('pf-date').value;
+  const qty=Number(document.getElementById('pf-qty').value)||0;
+  if(!code){showToast('작업코드 입력');return;}
+  if(qty<=0){showToast('계획수량 입력');return;}
+  const today=new Date().toISOString().slice(0,10);
+  const res=await API.post('/api/plans',{code,date:'',planDate:'',planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',createdAt:today,status:'planned'});
+  if(res){
+    cachedPlans=res;
+    closeModal('plan-modal');
+    filterPlanTable();
+    renderCalendar();
+    renderOrKPIs();
+    if(typeof curPlanTab!=='undefined'){
+      if(curPlanTab==='daily')renderOrDayPlans();
+      else if(curPlanTab==='monthly')renderOrMonthPlans();
+      else if(curPlanTab==='all')renderOrAllPlans();
+    }
+    showToast(`[${code}] 등록됨`);
+    renderOrKPIs();
+    if(typeof curOrderTab!=="undefined"){
+      if(curOrderTab==="daily") renderOrDay();
+      else if(curOrderTab==="monthly") renderOrMonth();
+      else if(curOrderTab==="all") renderOrAll();
+    }
+  }
+};
+
+function renderPlanTable(filterFn){
+  const tbody=document.getElementById('plan-tbl');
+  if(!tbody)return;
+  let plans=Object.values(cachedPlans).map(p=>({...p, id: p.id || Object.keys(cachedPlans).find(k=>cachedPlans[k]===p) || p.code}));
+  if(filterFn)plans=plans.filter(filterFn);
+  plans.sort((a,b)=>a.date>b.date?1:-1);
+  if(!plans.length){tbody.innerHTML='<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
+  const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
+  const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+  // 작업자 투입 정보 계산
+  function getWorkerCount(code){
+    let cnt=new Set();
+    Object.entries(cachedStates).forEach(([worker,codes])=>{if(codes[code])cnt.add(worker);});
+    Object.entries(cachedLogs||{}).forEach(([worker,logs])=>{Object.values(logs||{}).forEach(l=>{if(l.code===code)cnt.add(worker);});});
+    return cnt.size||'—';
+  }
+  function getWorkHours(code){
+    let total=0;
+    Object.values(cachedLogs||{}).forEach(wlogs=>{
+      const entries=Object.values(wlogs||{}).filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
+      let startTs=null;
+      entries.forEach(l=>{if(l.action==='start')startTs=l.ts;else if((l.action==='end'||l.action==='pause')&&startTs){total+=l.ts-startTs;startTs=null;}});
+    });
+    if(!total)return '—';
+    const h=Math.floor(total/3600000),m=Math.floor((total%3600000)/60000);
+    return h>0?`${h}h ${m}m`:`${m}m`;
+  }
+  tbody.innerHTML=plans.map(p=>{
+    const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
+    const wCnt=getWorkerCount(p.code);
+    const wHrs=getWorkHours(p.code);
+    const isToday=p.date===new Date().toISOString().slice(0,10);
+    return `<tr style="${isToday?'background:rgba(59,130,246,.04)':''}" draggable="true" ondragstart="onPlanRowDrag(event,'${esc(p.id)}')" style="cursor:grab">
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.createdAt||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700">${p.date||'—'}</td>
+      <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
+      <td style="color:var(--text2)">${esc(p.productCode||'—')}</td>
+      <td style="color:var(--text2);font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.spec||'')}">${esc(p.spec||'—')}</td>
+      <td>${esc(p.customer||'—')}</td>
+      <td style="font-family:var(--mono);text-align:right">${(p.planQty||0).toLocaleString()} EA</td>
+      <td style="font-family:var(--mono);text-align:right;color:${(p.actQty||0)>0?'var(--green)':'var(--text3)'}">${(p.actQty||0).toLocaleString()} EA</td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div class="prog-bar" style="width:50px"><div class="prog-fill ${pct>=100?'green':pct>=50?'':'red'}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-family:var(--mono);font-weight:700;color:${pct>=100?'var(--green)':pct>=50?'var(--text)':'var(--red)'}">${pct}%</span></div></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${wCnt}명</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${wHrs}</td>
+      <td><span class="badge ${sc[p.status]||'badge-gray'}">${sm[p.status]||'예정'}</span></td>
+      <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" style="margin-right:4px" onclick="openEditPlanModal('${esc(p.id)}')" title="수정"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-secondary btn-sm" style="color:#dc2626" onclick="deletePlan('${esc(p.id)}')" title="삭제"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+  // 요약 KPI 업데이트
+  updatePlanKPI(plans);
+}
+
+function filterPlanTable(){
+  const dateVal=document.getElementById('plan-filter-date')?.value||'';
+  const codeVal=(document.getElementById('plan-filter-code')?.value||'').toLowerCase();
+  const custVal=(document.getElementById('plan-filter-customer')?.value||'').toLowerCase();
+  renderPlanTable(p=>{
+    if(dateVal&&!p.date?.startsWith(dateVal))return false;
+    if(codeVal&&!p.code?.toLowerCase().includes(codeVal))return false;
+    if(custVal&&!p.customer?.toLowerCase().includes(custVal))return false;
+    return true;
+  });
+}
+
+function updatePlanKPI(plans){
+  const totalPlan=plans.reduce((s,p)=>s+(p.planQty||0),0);
+  const totalAct=plans.reduce((s,p)=>s+(p.actQty||0),0);
+  const rate=totalPlan>0?Math.round(totalAct/totalPlan*100):0;
+  // prodplan 메트릭
+  const mvs=document.querySelectorAll('#page-prodplan .metric-value');
+  if(mvs[0])mvs[0].textContent=plans.length;
+  if(mvs[1])mvs[1].textContent=totalPlan.toLocaleString();
+  if(mvs[2])mvs[2].textContent=totalAct.toLocaleString();
+  if(mvs[3])mvs[3].textContent=rate;
+}
+
+window.deletePlan=async function(id){
+  if(!id||id==='undefined'){showToast('삭제할 계획 ID가 없습니다');return;}
+  if(!confirm('삭제하시겠습니까?'))return;
+  // id 찾기: 직접키 → p.id 매칭 → p.code 매칭
+  let realId = id;
+  if(!cachedPlans[id]){
+    const found = Object.entries(cachedPlans).find(([k,p]) => k===id || p.id===id || p.code===id);
+    realId = found ? found[0] : id;
+  }
+  const res = await API.del('/api/plans', {id: realId});
+  if(res && !res.error){
+    cachedPlans = res;
+    filterPlanTable();
+    renderCalendar();
+    renderOrKPIs();
+    if(typeof curOrderTab!=='undefined'){
+      if(curOrderTab==='daily') renderOrDay();
+      else if(curOrderTab==='monthly') renderOrMonth();
+      else if(curOrderTab==='all') renderOrAll();
+    }
+    showToast('삭제됨');
+  } else {
+    console.error('삭제 실패:', res);
+    showToast('삭제 실패 - 콘솔 확인');
+  }
+};
+
+/* ══ 달력 ══ */
+const CAL_COLORS=[{bg:'rgba(59,130,246,.2)',text:'var(--accent2)'},{bg:'rgba(34,197,94,.15)',text:'#4ade80'},{bg:'rgba(167,139,250,.15)',text:'var(--purple)'},{bg:'rgba(245,158,11,.15)',text:'#fbbf24'}];
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+const codeColorMap={};let cIdx=0;
+function getCalColor(c){if(!codeColorMap[c])codeColorMap[c]=CAL_COLORS[(cIdx++)%CAL_COLORS.length];return codeColorMap[c];}
+
+function renderCalendar(){
+  const lbl=document.getElementById('cal-label');
+  if(lbl)lbl.textContent=`${calYear}년 ${calMonth+1}월`;
+  const grid=document.getElementById('cal-grid');
+  if(!grid)return;
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const lastDate=new Date(calYear,calMonth+1,0).getDate();
+  const today=new Date().toISOString().slice(0,10);
+  let html='';
+  for(let i=0;i<firstDay;i++)html+=`<div class="cal-day" style="background:var(--bg2);opacity:.3"></div>`;
+  for(let d=1;d<=lastDate;d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=ds===today;
+    const dow=new Date(calYear,calMonth,d).getDay();
+    const dc=dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text2)';
+    const dp=Object.values(cachedPlans).filter(p=>p.date&&p.date===ds);
+    const ph=dp.slice(0,2).map(p=>{const c=getCalColor(p.code);return `<div class="cal-chip" style="background:${c.bg};color:${c.text}" title="${p.code} | ${p.customer||''} | ${p.planQty||0}EA">${p.code}</div>`;}).join('');
+    html+=`<div class="cal-day${isToday?' today':''}"
+      ondragover="event.preventDefault();event.currentTarget.style.background='rgba(59,130,246,.15)'"
+      ondragleave="event.currentTarget.style.background=''"
+      ondrop="onCalDrop(event,'${ds}');event.currentTarget.style.background=''">
+      <div class="cal-num" style="color:${isToday?'var(--accent)':dc};${isToday?'font-weight:900':''}">${d}</div>
+      ${ph}${dp.length>2?`<div style="font-size:9px;color:var(--text3)">+${dp.length-2}</div>`:''}
+    </div>`;
+  }
+  const rem=(firstDay+lastDate)%7===0?0:7-((firstDay+lastDate)%7);
+  for(let i=0;i<rem;i++)html+=`<div class="cal-day" style="background:var(--bg2);opacity:.3"></div>`;
+  grid.innerHTML=html;
+}
+window.calPrev=function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();};
+window.calNext=function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();};
+window.calToday=function(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();};
+
+/* ══ 작업일보 초기화 ══ */
+const todayDate=new Date().toISOString().slice(0,10);
+const dailyDateEl=document.getElementById('daily-date');
+if(dailyDateEl){dailyDateEl.value=todayDate;dailyDateEl.addEventListener('change',e=>renderDailyReport(e.target.value));}
+const dn=new Date();
+const wds=['일','월','화','수','목','금','토'];
+const dtEl=document.getElementById('daily-title');
+if(dtEl)dtEl.textContent=`${dn.getFullYear()}년 ${dn.getMonth()+1}월 ${dn.getDate()}일 (${wds[dn.getDay()]}) 작업일보`;
+const dsEl=document.getElementById('daily-sub');
+if(dsEl)dsEl.textContent='작성일시: '+dn.toLocaleString('ko-KR',{hour12:false});
+const dpEl=document.getElementById('daily-print');
+if(dpEl)dpEl.textContent=dn.toLocaleString('ko-KR',{hour12:false});
+
+/* ══ 토스트 ══ */
+/* ══ 연계 메뉴 렌더링 ══ */
+
+// 공통: 상태 계산
+function getPlanStatus(p){
+  const today=new Date().toISOString().slice(0,10);
+  if(p.status==='done')return 'done';
+  if(p.actQty>0&&p.actQty<p.planQty&&p.date<today)return 'failed';
+  if(p.date===today)return 'running';
+  if(p.date<today&&(!p.actQty||p.actQty<p.planQty))return 'failed';
+  return p.status||'planned';
+}
+
+function getWorkerCountForCode(code){
+  const workers=new Set();
+  Object.entries(cachedStates).forEach(([w,codes])=>{if(codes[code])workers.add(w);});
+  return workers.size;
+}
+
+function getLogsForCode(code){
+  const result=[];
+  Object.entries(cachedLogs||{}).forEach(([worker,logs])=>{
+    Object.values(logs||{}).forEach(l=>{if(l.code===code)result.push({...l,worker});});
+  });
+  return result.sort((a,b)=>a.ts-b.ts);
+}
+
+function calcWorkHours(code){
+  let total=0;
+  Object.values(cachedLogs||{}).forEach(wlogs=>{
+    const entries=Object.values(wlogs||{}).filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
+    let st=null;
+    entries.forEach(l=>{
+      if(l.action==='start')st=l.ts;
+      else if((l.action==='end'||l.action==='pause')&&st){total+=l.ts-st;st=null;}
+    });
+  });
+  const h=Math.floor(total/3600000),m=Math.floor((total%3600000)/60000);
+  return {ms:total,str:total?h>0?`${h}h ${m}m`:`${m}m`:'—'};
+}
+
+// ── 대시보드 ──
+function renderDashboard(){
+  const today=new Date().toISOString().slice(0,10);
+  const plans=Object.values(cachedPlans);
+  const todayPlans=plans.filter(p=>p.date===today);
+  const totalPlanQty=todayPlans.reduce((s,p)=>s+(p.planQty||0),0);
+  const totalActQty=todayPlans.reduce((s,p)=>s+(p.actQty||0),0);
+  const rate=totalPlanQty>0?Math.round(totalActQty/totalPlanQty*100):0;
+  // 현재 작업중인 작업자
+  const runningWorkers=new Set();
+  Object.entries(cachedStates).forEach(([w,codes])=>{
+    Object.values(codes).forEach(s=>{if(s.action==='start')runningWorkers.add(w);});
+  });
+  // 총 작업시간 (오늘)
+  let totalMs=0;
+  Object.values(cachedLogs||{}).forEach(wlogs=>{
+    Object.values(wlogs||{}).filter(l=>l.date===new Date().toLocaleDateString('ko-KR')).forEach(l=>{
+      // approximate
+    });
+  });
+
+  const el=id=>document.getElementById(id);
+  if(el('d-plan'))el('d-plan').textContent=todayPlans.length||'0';
+  if(el('d-running'))el('d-running').textContent=runningWorkers.size||'0';
+  if(el('d-rate'))el('d-rate').textContent=rate||'0';
+  if(el('d-qty'))el('d-qty').textContent=totalActQty.toLocaleString()||'0';
+
+  // 작업코드별 진행현황 테이블
+  const ptbl=document.getElementById('d-progress-tbl');
+  if(ptbl){
+    if(!todayPlans.length){ptbl.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">오늘 등록된 계획이 없습니다</td></tr>';
+    }else{
+      const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
+      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+      ptbl.innerHTML=todayPlans.map(p=>{
+        const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
+        const wCnt=getWorkerCountForCode(p.code);
+        const st=getPlanStatus(p);
+        return `<tr>
+          <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.createdAt||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700">${p.date||'—'}</td>
+      <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
+          <td style="font-size:11px">${wCnt}명</td>
+          <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()}</td>
+          <td style="font-family:var(--mono);color:var(--green)">${(p.actQty||0).toLocaleString()}</td>
+          <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-family:var(--mono)">${pct}%</span></div></td>
+          <td><span class="badge ${sc[st]}">${sm[st]}</span></td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  // 작업자 현재 상태
+  const wstEl=document.getElementById('d-worker-status');
+  if(wstEl){
+    if(!cachedNames.length){wstEl.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">등록된 작업자 없음</div>';}
+    else{
+      wstEl.innerHTML='<div style="display:flex;flex-direction:column;gap:6px">'+cachedNames.map((n,i)=>{
+        const st=cachedStates[n]||{};
+        const runCodes=Object.entries(st).filter(([,v])=>v.action==='start').map(([c])=>c);
+        const pauseCodes=Object.entries(st).filter(([,v])=>v.action==='pause').map(([c])=>c);
+        let statusTxt='대기중',statusColor='var(--text3)',dotColor='var(--text3)';
+        if(runCodes.length){statusTxt=runCodes.slice(0,2).join(', ')+(runCodes.length>2?` 외 ${runCodes.length-2}`:'')+' 작업중';statusColor='var(--green)';dotColor='var(--green)';}
+        else if(pauseCodes.length){statusTxt='일시정지';statusColor='var(--amber)';dotColor='var(--amber)';}
+        return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)">
+          <div style="width:7px;height:7px;border-radius:50%;background:${dotColor};flex-shrink:0;${runCodes.length?'animation:pulse 1.4s infinite':''}"></div>
+          <div style="width:26px;height:26px;border-radius:50%;background:${COLORS[i%COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0">${esc(initial(n))}</div>
+          <span style="font-size:12px;font-weight:600;color:var(--text)">${esc(n)}</span>
+          <span style="font-size:11px;color:${statusColor};margin-left:auto;text-align:right;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${statusTxt}</span>
+        </div>`;
+      }).join('')+'</div>';
+    }
+  }
+
+  // 최근 활동
+  const recentEl=document.getElementById('d-recent');
+  if(recentEl){
+    const allLogs=[];
+    Object.entries(cachedLogs||{}).forEach(([w,wlogs])=>{
+      Object.values(wlogs||{}).forEach(l=>allLogs.push({...l,worker:w}));
+    });
+    allLogs.sort((a,b)=>b.ts-a.ts);
+    const recent=allLogs.slice(0,10);
+    if(!recent.length){recentEl.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">활동 없음</div>';}
+    else{
+      const icons={start:'▶',pause:'⏸',end:'■'};
+      const cols={start:'var(--green)',pause:'var(--amber)',end:'var(--text3)'};
+      recentEl.innerHTML=recent.map(l=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:11px;color:${cols[l.action]};width:14px;text-align:center">${icons[l.action]||'●'}</span>
+          <div style="flex:1;min-width:0">
+            <span style="font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text)">${esc(l.code)}</span>
+            <span style="font-size:11px;color:var(--text3);margin-left:6px">${esc(l.worker)}</span>
+            ${l.qty>0?`<span style="font-size:11px;color:var(--green);margin-left:4px">${l.qty}EA</span>`:''}
+          </div>
+          <span style="font-size:10px;color:var(--text3);font-family:var(--mono);flex-shrink:0">${l.time}</span>
+        </div>`).join('');
+    }
+  }
+}
+
+// ── 진행현황 ──
+function renderProgress(){
+  const today=new Date().toISOString().slice(0,10);
+  const plans=Object.values(cachedPlans);
+  // 진행중 작업코드 (오늘 작업중인 것)
+  const runningCodes=new Set();
+  const runningWorkers=new Set();
+  Object.entries(cachedStates).forEach(([w,codes])=>{
+    Object.entries(codes).forEach(([c,s])=>{if(s.action==='start'){runningCodes.add(c);runningWorkers.add(w);}});
+  });
+
+  // 메트릭
+  const mels=document.querySelectorAll('#page-progress .metric-value');
+  if(mels[0])mels[0].textContent=runningCodes.size||'0';
+  if(mels[1])mels[1].textContent=runningWorkers.size||'0';
+  const donePlans=plans.filter(p=>p.date===today&&p.status==='done');
+  if(mels[2])mels[2].textContent=donePlans.length||'0';
+
+  // 실시간 진행현황 테이블
+  const ptbl=document.querySelector('#page-progress .tbl-wrap tbody');
+  if(ptbl){
+    const runPlans=plans.filter(p=>{
+      const codes=Object.values(cachedStates).flatMap(c=>Object.keys(c));
+      return codes.includes(p.code)||runningCodes.has(p.code);
+    });
+    if(!runPlans.length&&!runningCodes.size){
+      ptbl.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">진행중인 작업이 없습니다</td></tr>';
+    }else{
+      const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
+      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+      // Collect all active codes from states
+      const activeCodes=new Map();
+      Object.entries(cachedStates).forEach(([w,codes])=>{
+        Object.entries(codes).forEach(([c,s])=>{
+          if(!activeCodes.has(c))activeCodes.set(c,{workers:[],action:s.action,since:s.since});
+          else activeCodes.get(c).workers.push(w);
+          activeCodes.get(c).workers.push(w);
+        });
+      });
+      const rows=[];
+      activeCodes.forEach((info,code)=>{
+        const plan=plans.find(p=>p.code===code)||{code,planQty:0,actQty:0,customer:'—',productCode:'—',spec:'—'};
+        const pct=plan.planQty>0?Math.round((plan.actQty||0)/plan.planQty*100):0;
+        const hrs=calcWorkHours(code);
+        const wSet=new Set(info.workers);
+        const recentLog=Object.values(cachedLogs||{}).flatMap(wl=>Object.values(wl||{})).filter(l=>l.code===code).sort((a,b)=>b.ts-a.ts)[0];
+        rows.push(`<tr>
+          <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(code)}</td>
+          <td style="font-size:11px">${esc(plan.productCode||'—')}</td>
+          <td style="font-size:11px">${esc(plan.customer||'—')}</td>
+          <td>${wSet.size}명</td>
+          <td style="font-family:var(--mono);font-size:11px">${hrs.str}</td>
+          <td style="font-family:var(--mono)">${(plan.planQty||0).toLocaleString()}</td>
+          <td style="font-family:var(--mono);color:var(--green)">${(plan.actQty||0).toLocaleString()}</td>
+          <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-family:var(--mono)">${pct}%</span></div></td>
+          <td><span class="badge badge-blue" style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite;display:inline-block"></span>작업중</span></td>
+          <td style="font-size:11px;color:var(--text3)">${recentLog?recentLog.time:'—'}</td>
+        </tr>`);
+      });
+      ptbl.innerHTML=rows.join('')||'<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">진행중인 작업이 없습니다</td></tr>';
+    }
+  }
+
+  // 작업자별 현재 상태
+  const wtbl=document.querySelectorAll('#page-progress .tbl-wrap')[1]?.querySelector('tbody');
+  if(wtbl){
+    if(!cachedNames.length){wtbl.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr>';}
+    else{
+      wtbl.innerHTML=cachedNames.map(n=>{
+        const st=cachedStates[n]||{};
+        const runEntries=Object.entries(st).filter(([,v])=>v.action==='start');
+        const pauseEntries=Object.entries(st).filter(([,v])=>v.action==='pause');
+        const code=runEntries[0]?.[0]||pauseEntries[0]?.[0]||'—';
+        const action=runEntries.length?'start':pauseEntries.length?'pause':'idle';
+        const since=runEntries[0]?.[1]?.since||pauseEntries[0]?.[1]?.since||'—';
+        const plan=Object.values(cachedPlans).find(p=>p.code===code)||{};
+        return `<tr>
+          <td style="font-weight:600">${esc(n)}</td>
+          <td style="font-family:var(--mono);font-weight:700">${code==='—'?'<span style="color:var(--text3)">대기중</span>':esc(code)}</td>
+          <td><span class="badge ${action==='start'?'badge-green':action==='pause'?'badge-amber':'badge-gray'}">${action==='start'?'작업중':action==='pause'?'정지':'대기'}</span></td>
+          <td style="font-family:var(--mono);font-size:11px">${since}</td>
+          <td style="font-family:var(--mono);font-size:11px">${calcWorkHours(code).str}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+}
+
+// ── 실적분석 ──
+function renderPerformance(){
+  const plans=Object.values(cachedPlans);
+  const now=new Date();
+  const monthStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const monthPlans=plans.filter(p=>p.date?.startsWith(monthStr));
+  const totalPlan=monthPlans.reduce((s,p)=>s+(p.planQty||0),0);
+  const totalAct=monthPlans.reduce((s,p)=>s+(p.actQty||0),0);
+  const rate=totalPlan>0?Math.round(totalAct/totalPlan*100):0;
+  const donePlans=monthPlans.filter(p=>p.status==='done');
+
+  const mels=document.querySelectorAll('#page-performance .metric-value');
+  if(mels[0])mels[0].textContent=donePlans.length;
+  if(mels[1])mels[1].textContent=totalAct.toLocaleString();
+  if(mels[2])mels[2].textContent=rate;
+
+  // 고객사별 현황
+  const custTbl=document.querySelectorAll('#page-performance .tbl-wrap')[0]?.querySelector('tbody');
+  if(custTbl){
+    const custMap={};
+    monthPlans.forEach(p=>{
+      const c=p.customer||'미지정';
+      if(!custMap[c])custMap[c]={count:0,plan:0,act:0};
+      custMap[c].count++;custMap[c].plan+=p.planQty||0;custMap[c].act+=p.actQty||0;
+    });
+    const entries=Object.entries(custMap).sort((a,b)=>b[1].act-a[1].act);
+    if(!entries.length)custTbl.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr>';
+    else{
+      const totalAct2=entries.reduce((s,[,v])=>s+v.act,0)||1;
+      custTbl.innerHTML=entries.map(([c,v])=>{
+        const r=v.plan>0?Math.round(v.act/v.plan*100):0;
+        const ratio=Math.round(v.act/totalAct2*100);
+        return `<tr>
+          <td style="font-weight:600">${esc(c)}</td>
+          <td style="font-family:var(--mono)">${v.count}</td>
+          <td style="font-family:var(--mono);color:var(--green)">${v.act.toLocaleString()} EA</td>
+          <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${r>=100?'green':''}" style="width:${Math.min(r,100)}%"></div></div><span style="font-size:11px">${r}%</span></div></td>
+          <td style="font-size:11px;font-family:var(--mono)">${ratio}%</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  // 작업코드별 실적
+  const codeTbl=document.querySelectorAll('#page-performance .tbl-wrap')[1]?.querySelector('tbody');
+  if(codeTbl){
+    const sorted=[...monthPlans].sort((a,b)=>(b.actQty||0)-(a.actQty||0));
+    if(!sorted.length)codeTbl.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr>';
+    else{
+      const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
+      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+      codeTbl.innerHTML=sorted.map(p=>{
+        const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
+        const st=getPlanStatus(p);
+        return `<tr>
+          <td style="font-weight:700;font-family:var(--mono)">${esc(p.code)}</td>
+          <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()}</td>
+          <td style="font-family:var(--mono);color:var(--green)">${(p.actQty||0).toLocaleString()}</td>
+          <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px">${pct}%</span></div></td>
+          <td><span class="badge ${sc[st]}">${sm[st]}</span></td>
+        </tr>`;
+      }).join('');
+    }
+  }
+}
+
+// ── 작업자 현황 페이지 통계 ──
+function renderWorkerStats(){
+  const tbl=document.getElementById('worker-stats-tbl');
+  if(!tbl)return;
+  if(!cachedNames.length){tbl.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr>';return;}
+  tbl.innerHTML=cachedNames.map(n=>{
+    const st=cachedStates[n]||{};
+    const activeCodes=Object.keys(st).filter(c=>st[c].action&&st[c].action!=='end');
+    const allLogs=Object.values(cachedLogs?.[n]||{});
+    const todayStr=new Date().toLocaleDateString('ko-KR');
+    const todayLogs=allLogs.filter(l=>l.date===todayStr);
+    const codeSet=new Set(todayLogs.map(l=>l.code));
+    const totalQty=todayLogs.filter(l=>l.action==='end').reduce((s,l)=>s+(l.qty||0),0);
+    const isWorking=Object.values(st).some(s=>s.action==='start');
+    return `<tr>
+      <td style="font-weight:600">${esc(n)}</td>
+      <td style="font-family:var(--mono)">${codeSet.size}</td>
+      <td style="font-family:var(--mono)">${calcWorkHours(activeCodes[0]||'').str}</td>
+      <td style="font-family:var(--mono);color:var(--green)">${totalQty>0?totalQty.toLocaleString()+' EA':'—'}</td>
+      <td><span class="badge ${isWorking?'badge-green':activeCodes.length?'badge-amber':'badge-gray'}">${isWorking?'작업중':activeCodes.length?'정지':'대기'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── 작업일보 ──
+function renderDailyReport(dateStr){
+  if(!dateStr)return;
+  const plans=Object.values(cachedPlans).filter(p=>p.date===dateStr);
+  const wds=['일','월','화','수','목','금','토'];
+  const d=new Date(dateStr);
+  const titleEl=document.getElementById('daily-title');
+  const subEl=document.getElementById('daily-sub');
+  if(titleEl)titleEl.textContent=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${wds[d.getDay()]}) 작업일보`;
+  if(subEl)subEl.textContent='작성일시: '+new Date().toLocaleString('ko-KR',{hour12:false});
+
+  // 메트릭
+  const workers=new Set();
+  let totalQty=0;
+  plans.forEach(p=>{totalQty+=p.actQty||0;});
+  Object.entries(cachedStates).forEach(([w])=>workers.add(w));
+  const mels=document.querySelectorAll('#page-daily .metric-value');
+  if(mels[0])mels[0].textContent=plans.length||'0';
+  if(mels[1])mels[1].textContent=workers.size||'0';
+  if(mels[3])mels[3].textContent=totalQty>0?totalQty.toLocaleString()+' EA':'—';
+
+  // 작업코드별 현황
+  const ctbl=document.querySelectorAll('#page-daily .tbl-wrap')[0]?.querySelector('tbody');
+  if(ctbl){
+    const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
+    const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+    if(!plans.length)ctbl.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr>';
+    else ctbl.innerHTML=plans.map(p=>{
+      const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
+      const hrs=calcWorkHours(p.code);
+      const st=getPlanStatus(p);
+      return `<tr>
+        <td style="font-weight:700;font-family:var(--mono)">${esc(p.code)}</td>
+        <td style="font-size:11px">${esc(p.customer||'—')}</td>
+        <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()}</td>
+        <td style="font-family:var(--mono);color:var(--green)">${(p.actQty||0).toLocaleString()}</td>
+        <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px">${pct}%</span></div></td>
+        <td style="font-size:11px;font-family:var(--mono)">${hrs.str}</td>
+        <td><span class="badge ${sc[st]}">${sm[st]}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // 작업자별 활동
+  const wtbl=document.querySelectorAll('#page-daily .tbl-wrap')[1]?.querySelector('tbody');
+  if(wtbl){
+    const allRows=[];
+    const todayLocalStr=new Date(dateStr).toLocaleDateString('ko-KR');
+    Object.entries(cachedLogs||{}).forEach(([worker,wlogs])=>{
+      const dayLogs=Object.values(wlogs||{}).filter(l=>l.date===todayLocalStr).sort((a,b)=>a.ts-b.ts);
+      const codes=new Set(dayLogs.map(l=>l.code));
+      codes.forEach(code=>{
+        const codeLogs=dayLogs.filter(l=>l.code===code);
+        const startLog=codeLogs.find(l=>l.action==='start');
+        const endLog=[...codeLogs].reverse().find(l=>l.action==='end');
+        const qty=codeLogs.filter(l=>l.action==='end').reduce((s,l)=>s+(l.qty||0),0);
+        allRows.push(`<tr>
+          <td style="font-weight:600">${esc(worker)}</td>
+          <td style="font-family:var(--mono);font-weight:700">${esc(code)}</td>
+          <td style="font-family:var(--mono);font-size:11px">${startLog?.time||'—'}</td>
+          <td style="font-family:var(--mono);font-size:11px">${endLog?.time||'진행중'}</td>
+          <td style="font-family:var(--mono);font-size:11px">${calcWorkHours(code).str}</td>
+          <td style="font-family:var(--mono);color:var(--green)">${qty>0?qty.toLocaleString()+' EA':'—'}</td>
+        </tr>`);
+      });
+    });
+    wtbl.innerHTML=allRows.join('')||'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr>';
+  }
+}
+
+// ── loadAll 후 전체 연계 렌더 ──
+function renderAllLinked(){
+  renderDashboard();
+  renderProgress();
+  renderPerformance();
+  renderWorkerStats();
+  const dailyDate=document.getElementById('daily-date')?.value;
+  if(dailyDate)renderDailyReport(dailyDate);
+}
+
+
+/* ══ 생산계획 수정 ══ */
+let editingPlanId = null;
+
+window.openEditPlanModal = function(id) {
+  const p = cachedPlans[id] || Object.values(cachedPlans).find(x => x.id === id) || Object.entries(cachedPlans).find(([k])=>k===id)?.[1];
+  if(!p) { showToast('계획 정보를 찾을 수 없습니다'); return; }
+  editingPlanId = p.id || id;
+  document.getElementById('edit-plan-id-label').textContent = p.code + ' / ' + (p.date||'');
+  document.getElementById('ef-code').value = p.code||'';
+  document.getElementById('ef-date').value = p.date||'';
+  document.getElementById('ef-pcode').value = p.productCode||'';
+  document.getElementById('ef-qty').value = p.planQty||'';
+  document.getElementById('ef-spec').value = p.spec||'';
+  document.getElementById('ef-customer').value = p.customer||'';
+  document.getElementById('ef-status').value = p.status||'planned';
+  document.getElementById('ef-remark').value = p.remark||'';
+  openModal('plan-edit-modal');
+  setTimeout(() => document.getElementById('ef-date').focus(), 150);
+};
+
+window.submitEditPlan = async function() {
+  if(!editingPlanId) { showToast('계획 ID 없음'); return; }
+  const date = document.getElementById('ef-date').value;
+  const qty = Number(document.getElementById('ef-qty').value)||0;
+  if(!date) { showToast('작업일자를 선택하세요'); return; }
+  if(qty <= 0) { showToast('계획수량을 입력하세요'); return; }
+  const p = cachedPlans[editingPlanId] || Object.values(cachedPlans).find(x => x.id === editingPlanId);
+  const data = {
+    ...p,
+    id: editingPlanId,
+    code: document.getElementById('ef-code').value.trim(),
+    date,
+    planQty: qty,
+    productCode: document.getElementById('ef-pcode').value.trim(),
+    spec: document.getElementById('ef-spec').value.trim(),
+    customer: document.getElementById('ef-customer').value.trim(),
+    status: document.getElementById('ef-status').value,
+    remark: document.getElementById('ef-remark').value.trim(),
+  };
+  const res = await API.put('/api/plans', data);
+  if(res && !res.error) {
+    cachedPlans = res;
+    closeModal('plan-edit-modal');
+    editingPlanId = null;
+    renderPlanTable();
+    renderCalendar();
+    renderOrKPIs();
+    if(typeof curPlanTab !== 'undefined') {
+      if(curPlanTab === 'daily') renderOrDayPlans();
+      else if(curPlanTab === 'monthly') renderOrMonthPlans();
+      else if(curPlanTab === 'all') renderOrAllPlans();
+    }
+    showToast('수정 완료');
+    renderOrKPIs();
+    if(typeof curOrderTab!=="undefined"){
+      if(curOrderTab==="daily") renderOrDay();
+      else if(curOrderTab==="monthly") renderOrMonth();
+      else if(curOrderTab==="all") renderOrAll();
+    }
+  } else {
+    showToast('수정 실패: ' + (res?.error || '오류'));
+  }
+};
+
+/* ══ 수주관리 탭 (생산계획 조회 전용) ══ */
+let curOrderTab = 'daily';
+
+window.switchOrderTab = function(tab) {
+  curOrderTab = tab;
+  ['daily','monthly','all'].forEach(t => {
+    const el = document.getElementById('or-tab-'+t);
+    const btn = document.getElementById('or-tab-btn-'+t);
+    if(el) el.style.display = t===tab ? 'block' : 'none';
+    if(btn) {
+      if(t===tab) {
+        btn.style.background = 'var(--accent)';
+        btn.style.color = '#fff';
+        btn.style.fontWeight = '700';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text3)';
+        btn.style.fontWeight = '600';
+      }
+    }
+  });
+  if(tab==='daily') renderOrDay();
+  if(tab==='monthly') renderOrMonth();
+  if(tab==='all') renderOrAll();
+};
+
+function renderOrKPIs() {
+  const plans = Object.values(cachedPlans);
+  const tp = plans.reduce((s,p)=>s+(p.planQty||0),0);
+  const ta = plans.reduce((s,p)=>s+(p.actQty||0),0);
+  const rate = tp>0 ? Math.round(ta/tp*100) : 0;
+  const el = id => document.getElementById(id);
+  if(el('or-cnt')) el('or-cnt').textContent = plans.length;
+  if(el('or-planqty')) el('or-planqty').textContent = tp.toLocaleString();
+  if(el('or-actqty')) el('or-actqty').textContent = ta.toLocaleString();
+  if(el('or-rate')) el('or-rate').textContent = rate;
+}
+
+const OR_SM = {done:'완료',running:'진행중',planned:'예정',failed:'미달성'};
+const OR_SC = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red'};
+
+function orPlanRow(p) {
+  const pct = p.planQty>0 ? Math.round((p.actQty||0)/p.planQty*100) : 0;
+  const st = p.status||'planned';
+  return `<tr>
+    <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
+    <td>${esc(p.customer||'—')}</td>
+    <td style="font-size:11px;color:var(--text3)">${esc(p.productCode||'—')}</td>
+    <td style="font-size:11px;color:var(--text3)">${esc(p.spec||'—')}</td>
+    <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()} EA</td>
+    <td style="font-family:var(--mono);color:${(p.actQty||0)>0?'var(--green)':'var(--text3)'}">${(p.actQty||0).toLocaleString()} EA</td>
+    <td><div style="display:flex;align-items:center;gap:6px">
+      <div style="height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;width:55px">
+        <div style="height:100%;border-radius:3px;background:${pct>=100?'var(--green)':'var(--accent)'};width:${Math.min(pct,100)}%"></div>
+      </div>
+      <span style="font-size:12px">${pct}%</span>
+    </div></td>
+    <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span></td>
+    <td style="font-size:12px;color:var(--text3)">${esc(p.remark||'—')}</td>
+  </tr>`;
+}
+
+window.orChDay = function(d) {
+  const p = document.getElementById('or-day-picker'); if(!p) return;
+  const dt = new Date(p.value||todayISO()); dt.setDate(dt.getDate()+d);
+  p.value = dt.toISOString().slice(0,10); renderOrDay();
+};
+window.orGoToday = function() {
+  const p = document.getElementById('or-day-picker');
+  if(p) { p.value = todayISO(); renderOrDay(); }
+};
+
+window.renderOrDay = function() {
+  const p = document.getElementById('or-day-picker');
+  const ds = p?.value || todayISO();
+  const plans = Object.values(cachedPlans).filter(x=>x.date===ds);
+  const tp=plans.reduce((s,x)=>s+(x.planQty||0),0);
+  const ta=plans.reduce((s,x)=>s+(x.actQty||0),0);
+  const rate=tp>0?Math.round(ta/tp*100):0;
+  const el = id => document.getElementById(id);
+  if(el('dk-cnt')) el('dk-cnt').textContent = plans.length;
+  if(el('dk-plan')) el('dk-plan').textContent = tp.toLocaleString();
+  if(el('dk-act')) el('dk-act').textContent = ta.toLocaleString();
+  if(el('dk-rate')) el('dk-rate').textContent = rate+'%';
+  const tbody = el('or-day-tbody'); if(!tbody) return;
+  tbody.innerHTML = plans.length
+    ? plans.map(orPlanRow).join('')
+    : '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr>';
+};
+
+window.orChMonth = function(d) {
+  const p = document.getElementById('or-month-picker'); if(!p) return;
+  const [y,m] = (p.value||new Date().toISOString().slice(0,7)).split('-').map(Number);
+  const dt = new Date(y,m-1+d,1);
+  p.value = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`; renderOrMonth();
+};
+window.orGoThisMonth = function() {
+  const p = document.getElementById('or-month-picker');
+  const n = new Date();
+  if(p) { p.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; renderOrMonth(); }
+};
+
+window.renderOrMonth = function() {
+  const p = document.getElementById('or-month-picker');
+  const ms = p?.value || new Date().toISOString().slice(0,7);
+  const plans = Object.values(cachedPlans).filter(x=>x.date?.startsWith(ms));
+  plans.sort((a,b)=>a.date>b.date?1:-1);
+  const tp=plans.reduce((s,x)=>s+(x.planQty||0),0);
+  const ta=plans.reduce((s,x)=>s+(x.actQty||0),0);
+  const rate=tp>0?Math.round(ta/tp*100):0;
+  const el = id => document.getElementById(id);
+  if(el('mk-cnt')) el('mk-cnt').textContent = plans.length;
+  if(el('mk-plan')) el('mk-plan').textContent = tp.toLocaleString();
+  if(el('mk-act')) el('mk-act').textContent = ta.toLocaleString();
+  if(el('mk-rate')) el('mk-rate').textContent = rate+'%';
+  const wrap = el('or-month-wrap'); if(!wrap) return;
+  if(!plans.length) { wrap.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px">해당 월 계획이 없습니다</div>'; return; }
+  const byDate = {};
+  plans.forEach(p=>{if(!byDate[p.date])byDate[p.date]=[];byDate[p.date].push(p);});
+  const wds = ['일','월','화','수','목','금','토'];
+  wrap.innerHTML = Object.entries(byDate).map(([date,dp])=>{
+    const dow = new Date(date).getDay();
+    const dc = dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text)';
+    const dtp=dp.reduce((s,x)=>s+(x.planQty||0),0);
+    const dta=dp.reduce((s,x)=>s+(x.actQty||0),0);
+    const dr=dtp>0?Math.round(dta/dtp*100):0;
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--bg3);border-radius:8px;border-left:3px solid ${dc};margin-bottom:6px">
+        <span style="font-size:14px;font-weight:800;color:${dc}">${date}</span>
+        <span style="font-size:12px;color:var(--text3)">(${wds[dow]})</span>
+        <span style="font-size:11px;background:var(--accent-bg,rgba(59,130,246,.1));color:var(--accent);padding:2px 8px;border-radius:4px;font-weight:600;margin-left:auto">${dp.length}건</span>
+        <span style="font-size:11px;color:var(--text3)">${dtp.toLocaleString()} EA</span>
+        <span style="font-size:11px;font-weight:700;color:${dr>=100?'var(--green)':dr>0?'var(--amber)':'var(--text3)'}">${dr}%</span>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>스펙</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
+        <tbody>${dp.map(orPlanRow).join('')}</tbody>
+      </table></div>
+    </div>`;
+  }).join('');
+};
+
+window.renderOrAll = function() {
+  const search = (document.getElementById('or-search')?.value||'').toLowerCase();
+  const sf = document.getElementById('or-status-f')?.value||'';
+  let plans = Object.values(cachedPlans);
+  if(search) plans = plans.filter(p=>p.code?.toLowerCase().includes(search)||p.customer?.toLowerCase().includes(search));
+  if(sf) plans = plans.filter(p=>(p.status||'planned')===sf);
+  plans.sort((a,b)=>a.date>b.date?1:-1);
+  const tbody = document.getElementById('or-all-tbody'); if(!tbody) return;
+  if(!plans.length) { tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>'; return; }
+  tbody.innerHTML = plans.map(p=>{
+    const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
+    const st=p.status||'planned';
+    return `<tr>
+      <td style="font-size:12px;color:var(--text3)">${p.date||'—'}</td>
+      <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
+      <td>${esc(p.customer||'—')}</td>
+      <td style="font-size:11px">${esc(p.productCode||'—')}</td>
+      <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()} EA</td>
+      <td style="font-family:var(--mono);color:${(p.actQty||0)>0?'var(--green)':'var(--text3)'}">${(p.actQty||0).toLocaleString()} EA</td>
+      <td><div style="display:flex;align-items:center;gap:5px">
+        <div style="height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;width:50px">
+          <div style="height:100%;border-radius:3px;background:${pct>=100?'var(--green)':'var(--accent)'};width:${Math.min(pct,100)}%"></div>
+        </div>
+        <span style="font-size:11px">${pct}%</span>
+      </div></td>
+      <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span></td>
+      <td style="font-size:11px;color:var(--text3)">${esc(p.remark||'—')}</td>
+    </tr>`;
+  }).join('');
+};
+
+/* 초기화 */
+(function(){
+  const now = new Date();
+  setTimeout(()=>{
+    const dp = document.getElementById('or-day-picker');
+    const mp = document.getElementById('or-month-picker');
+    if(dp) dp.value = now.toISOString().slice(0,10);
+    if(mp) mp.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  }, 200);
+})();
+
+/* ══ 작업자 이름 추가 ══ */
+window.addWorkerName = async function() {
+  const inp = document.getElementById('new-worker-name');
+  const val = inp?.value.trim();
+  if(!val) { showToast('이름을 입력하세요'); return; }
+  if(cachedNames.includes(val)) { showToast('이미 등록된 작업자입니다'); return; }
+  const res = await API.post('/api/names', {name: val});
+  if(res) {
+    cachedNames = res;
+    renderWorkerGrid();
+    if(inp) inp.value = '';
+    showToast(`[${val}] 작업자 추가됨`);
+  } else {
+    showToast('추가 실패');
+  }
+};
+
+window.deleteWorker = async function(name) {
+  if(!confirm(`[${name}] 작업자를 삭제하시겠습니까?`)) return;
+  const res = await API.del('/api/names', {name});
+  if(res) {
+    cachedNames = res;
+    renderWorkerGrid();
+    showToast(`[${name}] 삭제됨`);
+  } else {
+    showToast('삭제 실패');
+  }
+};
+
+/* ══ 생산계획 선택 드롭다운 갱신 ══ */
+function updatePlanSelect() {
+  const sel = document.getElementById('plan-select');
+  if(!sel) return;
+  const today = todayISO();
+  // 오늘 계획 + 미완료 계획 모두 표시
+  const plans = Object.values(cachedPlans)
+    .filter(p => {
+      const remaining = (p.planQty||0) - (p.actQty||0);
+      return remaining > 0 && p.status !== 'done';
+    })
+    .sort((a,b) => a.date > b.date ? 1 : -1);
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">— 계획 선택 —</option>' +
+    plans.map(p => {
+      const remaining = (p.planQty||0) - (p.actQty||0);
+      const label = `[${p.date}] ${p.code}${p.customer?' ('+p.customer+')':''} - 잔여 ${remaining}EA`;
+      return `<option value="${esc(p.code)}" data-plan-id="${esc(p.id||p.code)}" data-remaining="${remaining}">${label}</option>`;
+    }).join('');
+  if(currentVal) sel.value = currentVal;
+}
+
+/* ══ 생산계획에서 작업코드 추가 ══ */
+window.addCodeFromPlan = function() {
+  const sel = document.getElementById('plan-select');
+  if(!sel || !sel.value) { showToast('계획을 선택하세요'); return; }
+  const code = sel.value;
+  const remaining = Number(sel.options[sel.selectedIndex]?.dataset.remaining || 0);
+  if(remaining <= 0) { showToast('이미 완료된 계획입니다'); return; }
+  if(jobs[code] !== undefined) { showToast('이미 추가된 작업코드'); return; }
+  jobs[code] = {action:'idle', since:'', open:true, planRemaining: remaining};
+  renderJobCards();
+  sel.value = '';
+  showToast(`[${code}] 작업 추가됨 (잔여 ${remaining}EA)`);
+};
+
+/* selectWorker에 updatePlanSelect 직접 통합됨 */
+
+/* ══ 생산계획 달력 드래그앤드롭 ══ */
+
+
+
+
+/* ══ 달력 칩에 작업일자 표시 ══ */
+// getCalColor 오버라이드해서 칩에 날짜 포함
+const _origRenderCal = renderCalendar;
+renderCalendar = function() {
+  _origRenderCal();
+  // 칩 클릭으로 계획 정보 보기
+};
+
+/* ══ 생산계획 달력 드래그앤드롭 ══ */
+let _dragPlanId = null;
+
+window.onPlanRowDrag = function(e, planId) {
+  _dragPlanId = planId;
+  e.dataTransfer.setData('text/plain', planId);
+  e.dataTransfer.effectAllowed = 'move';
+};
+
+window.onCalDrop = function(e, dateStr) {
+  e.preventDefault();
+  e.stopPropagation();
+  const planId = _dragPlanId || e.dataTransfer.getData('text/plain');
+  _dragPlanId = null;
+  if(!planId) return;
+
+  const plan = cachedPlans[planId] || Object.values(cachedPlans).find(p => p.id === planId) || Object.entries(cachedPlans).find(([k])=>k===planId)?.[1];
+  if(!plan) { showToast('계획을 찾을 수 없습니다'); return; }
+  if(plan.date === dateStr) { showToast('이미 같은 날짜입니다'); return; }
+
+  if(!confirm(`[${plan.code}] 생산계획일을 ${dateStr}로 변경하시겠습니까?`)) return;
+
+  API.put('/api/plans', {...plan, id: planId, date: dateStr}).then(res => {
+    if(res && !res.error) {
+      cachedPlans = res;
+      filterPlanTable();
+      renderCalendar();
+      renderOrKPIs();
+      if(typeof curOrderTab !== 'undefined') {
+        if(curOrderTab==='daily') renderOrDay();
+        else if(curOrderTab==='monthly') renderOrMonth();
+        else if(curOrderTab==='all') renderOrAll();
+      }
+      showToast(`[${plan.code}] → ${dateStr} 변경됨`);
+    } else {
+      showToast('변경 실패');
+    }
+  });
+};
+function showToast(msg){
+  let t=document.getElementById('g-toast');
+  if(!t){t=document.createElement('div');t.id='g-toast';t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--bg4);color:var(--text);border:1px solid var(--border2);padding:10px 20px;border-radius:30px;font-size:12px;font-weight:700;opacity:0;transition:all .25s;pointer-events:none;z-index:1000;white-space:nowrap;max-width:90vw;text-align:center';document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(14px)';},2500);
+}
+</script>
+</body>
+</html>
