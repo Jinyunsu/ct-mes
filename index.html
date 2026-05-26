@@ -856,7 +856,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
     <div class="modal-title">신규 생산계획 등록 <button class="modal-close" onclick="closeModal('plan-modal')"><i class="ti ti-x"></i></button></div>
     <div class="form-grid">
       <div><label class="label">작업코드 *</label><input id="pf-code" class="input" placeholder="예) B26-0172"></div>
-      <div><label class="label">작업일자 *</label><input id="pf-date" class="input" type="date"></div>
+      <div><label class="label">등록일자</label><input id="pf-date" class="input" type="date" readonly style="background:var(--bg3);color:var(--text3);cursor:default"></div>
       <div><label class="label">제품코드</label><input id="pf-pcode" class="input" placeholder="예) P-2024-001"></div>
       <div><label class="label">계획수량 (EA) *</label><input id="pf-qty" class="input" type="number" placeholder="0" min="1"></div>
       <div class="full"><label class="label">스펙</label><input id="pf-spec" class="input" placeholder="예) 200x300x50mm, SUS304"></div>
@@ -1055,7 +1055,27 @@ setInterval(()=>{
 },1000);
 
 /* ══ 모달 ══ */
-function openModal(id){document.getElementById(id).classList.add('open');}
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='plan-modal'){
+    const today = new Date().toISOString().slice(0,10);
+    const df = document.getElementById('pf-date');
+    if(df) df.value = today;
+    const cf = document.getElementById('pf-code');
+    if(cf) cf.value='';
+    const qf = document.getElementById('pf-qty');
+    if(qf) qf.value='';
+    const pf = document.getElementById('pf-pcode');
+    if(pf) pf.value='';
+    const sf = document.getElementById('pf-spec');
+    if(sf) sf.value='';
+    const cuf = document.getElementById('pf-customer');
+    if(cuf) cuf.value='';
+    const rf = document.getElementById('pf-remark');
+    if(rf) rf.value='';
+    setTimeout(()=>document.getElementById('pf-code')?.focus(),150);
+  }
+}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
 
@@ -1288,7 +1308,8 @@ window.submitPlan=async function(){
   if(!code){showToast('작업코드 입력');return;}
   if(!date){showToast('작업일자 선택');return;}
   if(qty<=0){showToast('계획수량 입력');return;}
-  const res=await API.post('/api/plans',{code,date,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim(),spec:document.getElementById('pf-spec').value.trim(),customer:document.getElementById('pf-customer').value.trim(),remark:document.getElementById('pf-remark').value.trim(),createdAt:new Date().toISOString().slice(0,10)});
+  const today=new Date().toISOString().slice(0,10);
+  const res=await API.post('/api/plans',{code,date:date||today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',createdAt:today,status:'planned'});
   if(res){
     cachedPlans=res;
     closeModal('plan-modal');
@@ -1342,7 +1363,7 @@ function renderPlanTable(filterFn){
     const wCnt=getWorkerCount(p.code);
     const wHrs=getWorkHours(p.code);
     const isToday=p.date===new Date().toISOString().slice(0,10);
-    return `<tr style="${isToday?'background:rgba(59,130,246,.04)':''}">
+    return `<tr style="${isToday?'background:rgba(59,130,246,.04)':''}" draggable="true" ondragstart="onPlanRowDrag(event,'${esc(p.id)}')" style="cursor:grab">
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.createdAt||'—'}</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700">${p.date||'—'}</td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
@@ -1442,7 +1463,10 @@ function renderCalendar(){
     const dc=dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text2)';
     const dp=Object.values(cachedPlans).filter(p=>p.date===ds);
     const ph=dp.slice(0,2).map(p=>{const c=getCalColor(p.code);return `<div class="cal-chip" style="background:${c.bg};color:${c.text}" title="${p.code} | ${p.customer||''} | ${p.planQty||0}EA">${p.code}</div>`;}).join('');
-    html+=`<div class="cal-day${isToday?' today':''}">
+    html+=`<div class="cal-day${isToday?' today':''}"
+      ondragover="event.preventDefault();event.currentTarget.style.background='rgba(59,130,246,.15)'"
+      ondragleave="event.currentTarget.style.background=''"
+      ondrop="onCalDrop(event,'${ds}');event.currentTarget.style.background=''">
       <div class="cal-num" style="color:${isToday?'var(--accent)':dc};${isToday?'font-weight:900':''}">${d}</div>
       ${ph}${dp.length>2?`<div style="font-size:9px;color:var(--text3)">+${dp.length-2}</div>`:''}
     </div>`;
@@ -2195,6 +2219,46 @@ const _origRenderCal = renderCalendar;
 renderCalendar = function() {
   _origRenderCal();
   // 칩 클릭으로 계획 정보 보기
+};
+
+/* ══ 생산계획 달력 드래그앤드롭 ══ */
+let _dragPlanId = null;
+
+window.onPlanRowDrag = function(e, planId) {
+  _dragPlanId = planId;
+  e.dataTransfer.setData('text/plain', planId);
+  e.dataTransfer.effectAllowed = 'move';
+};
+
+window.onCalDrop = function(e, dateStr) {
+  e.preventDefault();
+  e.stopPropagation();
+  const planId = _dragPlanId || e.dataTransfer.getData('text/plain');
+  _dragPlanId = null;
+  if(!planId) return;
+
+  const plan = cachedPlans[planId] || Object.values(cachedPlans).find(p => p.id === planId);
+  if(!plan) { showToast('계획을 찾을 수 없습니다'); return; }
+  if(plan.date === dateStr) { showToast('이미 같은 날짜입니다'); return; }
+
+  if(!confirm(`[${plan.code}] 생산계획일을 ${dateStr}로 변경하시겠습니까?`)) return;
+
+  API.put('/api/plans', {...plan, id: planId, date: dateStr}).then(res => {
+    if(res && !res.error) {
+      cachedPlans = res;
+      filterPlanTable();
+      renderCalendar();
+      renderOrKPIs();
+      if(typeof curOrderTab !== 'undefined') {
+        if(curOrderTab==='daily') renderOrDay();
+        else if(curOrderTab==='monthly') renderOrMonth();
+        else if(curOrderTab==='all') renderOrAll();
+      }
+      showToast(`[${plan.code}] → ${dateStr} 변경됨`);
+    } else {
+      showToast('변경 실패');
+    }
+  });
 };
 function showToast(msg){
   let t=document.getElementById('g-toast');
