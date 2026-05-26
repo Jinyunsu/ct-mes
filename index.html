@@ -1334,7 +1334,7 @@ window.submitPlan=async function(){
 function renderPlanTable(filterFn){
   const tbody=document.getElementById('plan-tbl');
   if(!tbody)return;
-  let plans=Object.values(cachedPlans);
+  let plans=Object.values(cachedPlans).map(p=>({...p, id: p.id || Object.keys(cachedPlans).find(k=>cachedPlans[k]===p) || p.code}));
   if(filterFn)plans=plans.filter(filterFn);
   plans.sort((a,b)=>a.date>b.date?1:-1);
   if(!plans.length){tbody.innerHTML='<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
@@ -1412,16 +1412,14 @@ function updatePlanKPI(plans){
 }
 
 window.deletePlan=async function(id){
-  if(!id){showToast('삭제할 계획 ID가 없습니다');return;}
+  if(!id||id==='undefined'){showToast('삭제할 계획 ID가 없습니다');return;}
   if(!confirm('삭제하시겠습니까?'))return;
-  console.log('deletePlan id:', id);
-  // id가 code인 경우 실제 id 찾기
+  // id 찾기: 직접키 → p.id 매칭 → p.code 매칭
   let realId = id;
   if(!cachedPlans[id]){
-    const found = Object.entries(cachedPlans).find(([k,p]) => p.code===id || p.id===id);
-    if(found) realId = found[0];
+    const found = Object.entries(cachedPlans).find(([k,p]) => k===id || p.id===id || p.code===id);
+    realId = found ? found[0] : id;
   }
-  console.log('realId:', realId);
   const res = await API.del('/api/plans', {id: realId});
   if(res && !res.error){
     cachedPlans = res;
@@ -1897,7 +1895,7 @@ function renderAllLinked(){
 let editingPlanId = null;
 
 window.openEditPlanModal = function(id) {
-  const p = cachedPlans[id] || Object.values(cachedPlans).find(x => x.id === id || x.code === id);
+  const p = cachedPlans[id] || Object.values(cachedPlans).find(x => x.id === id) || Object.entries(cachedPlans).find(([k])=>k===id)?.[1];
   if(!p) { showToast('계획 정보를 찾을 수 없습니다'); return; }
   editingPlanId = p.id || id;
   document.getElementById('edit-plan-id-label').textContent = p.code + ' / ' + (p.date||'');
@@ -2237,7 +2235,7 @@ window.onCalDrop = function(e, dateStr) {
   _dragPlanId = null;
   if(!planId) return;
 
-  const plan = cachedPlans[planId] || Object.values(cachedPlans).find(p => p.id === planId);
+  const plan = cachedPlans[planId] || Object.values(cachedPlans).find(p => p.id === planId) || Object.entries(cachedPlans).find(([k])=>k===planId)?.[1];
   if(!plan) { showToast('계획을 찾을 수 없습니다'); return; }
   if(plan.date === dateStr) { showToast('이미 같은 날짜입니다'); return; }
 
