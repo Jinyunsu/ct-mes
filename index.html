@@ -2178,14 +2178,16 @@ function updatePlanSelect() {
   const plans = Object.values(cachedPlans)
     .filter(p => {
       const remaining = (p.planQty||0) - (p.actQty||0);
-      return remaining > 0 && p.status !== 'done';
+      return remaining > 0 && p.status !== 'done' && p.date === today;
     })
-    .sort((a,b) => a.date > b.date ? 1 : -1);
+    .sort((a,b) => a.code > b.code ? 1 : -1);
   const currentVal = sel.value;
-  sel.innerHTML = '<option value="">— 계획 선택 —</option>' +
-    plans.map(p => {
+  sel.innerHTML = plans.length
+    ? '<option value="">— 오늘 계획 선택 —</option>'
+    : '<option value="">오늘 등록된 계획 없음</option>';
+  sel.innerHTML += plans.map(p => {
       const remaining = (p.planQty||0) - (p.actQty||0);
-      const label = `[${p.date}] ${p.code}${p.customer?' ('+p.customer+')':''} - 잔여 ${remaining}EA`;
+      const label = `${p.code}${p.customer?' ('+p.customer+')':''} - 잔여 ${remaining}EA`;
       return `<option value="${esc(p.code)}" data-plan-id="${esc(p.id||p.code)}" data-remaining="${remaining}">${label}</option>`;
     }).join('');
   if(currentVal) sel.value = currentVal;
