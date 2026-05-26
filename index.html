@@ -1081,6 +1081,7 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 
 /* ══ 작업 관리 ══ */
 const COLORS=['#3b82f6','#22c55e','#a78bfa','#f59e0b','#ec4899','#22d3ee','#f97316','#84cc16'];
+function todayISO(){ return new Date().toISOString().slice(0,10); }
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function initial(n){return n.trim().slice(0,2).toUpperCase()||'?';}
 
