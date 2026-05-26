@@ -525,7 +525,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="display:flex;align-items:center;gap:16px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap">
           <span style="font-size:10px;color:var(--text3);font-weight:700">상태:</span>
           <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:2px;background:rgba(34,197,94,.3);display:inline-block"></span>완료</span>
-          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:2px;background:rgba(59,130,246,.3);display:inline-block"></span>진행중</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:2px;background:rgba(59,130,246,.3);display:inline-block"></span>작업중</span>
           <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:2px;background:var(--bg4);display:inline-block"></span>예정</span>
           <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:2px;background:rgba(239,68,68,.3);display:inline-block"></span>미달성</span>
         </div>
@@ -539,7 +539,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="ph-right"><div class="chip chip-live">실시간</div></div>
       </div>
       <div class="metrics">
-        <div class="metric green"><div class="metric-label">진행중 코드</div><div class="metric-value">—</div></div>
+        <div class="metric green"><div class="metric-label">작업중 코드</div><div class="metric-value">—</div></div>
         <div class="metric blue"><div class="metric-label">투입 인원</div><div class="metric-value">—</div><div class="metric-sub">명</div></div>
         <div class="metric"><div class="metric-label">오늘 완료</div><div class="metric-value">—</div><div class="metric-sub">코드</div></div>
         <div class="metric amber"><div class="metric-label">지연 작업</div><div class="metric-value">—</div><div class="metric-sub">건</div></div>
@@ -752,7 +752,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <select id="or-status-f" onchange="renderOrAll()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);background:var(--bg2);color:var(--text)">
             <option value="">전체 상태</option>
             <option value="planned">예정</option>
-            <option value="running">진행중</option>
+            <option value="running">작업중</option>
             <option value="done">완료</option>
             <option value="failed">미달성</option>
           </select>
@@ -896,7 +896,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       <div><label class="label">상태</label>
         <select id="ef-status" class="input">
           <option value="planned">예정</option>
-          <option value="running">진행중</option>
+          <option value="running">작업중</option>
           <option value="done">완료</option>
           <option value="failed">미달성</option>
         </select>
@@ -1220,17 +1220,38 @@ function fmtElapsed(ms){
   return sec+'s';
 }
 
-// 작업 카드 타이머 - 1초마다 갱신
+// 작업 카드 타이머 - 1초마다 갱신 (대시보드·작업일보 총작업시간 동기화 포함)
 let _jobTimerInterval = null;
+function _calcTotalMsForDate(dateStr){
+  const todayLocalForDate=new Date(dateStr).toLocaleDateString('ko-KR');
+  let allDI=[];
+  Object.values(cachedLogs||{}).forEach(wlogs=>{
+    const de=Object.values(wlogs||{}).filter(l=>{const li=new Date(l.ts).toISOString().slice(0,10);return l.date===todayLocalForDate||li===dateStr;}).sort((a,b)=>a.ts-b.ts);
+    const cm={};
+    de.forEach(l=>{if(!cm[l.code])cm[l.code]=null;if(l.action==='start')cm[l.code]=l.ts;else if((l.action==='end'||l.action==='pause')&&cm[l.code]!=null){allDI.push([cm[l.code],l.ts]);cm[l.code]=null;}});
+    Object.values(cm).forEach(st=>{if(st!=null)allDI.push([st,Date.now()]);});
+  });
+  if(!allDI.length)return 0;
+  allDI.sort((a,b)=>a[0]-b[0]);
+  const mg=[[...allDI[0]]];
+  for(let i=1;i<allDI.length;i++){const l=mg[mg.length-1];if(allDI[i][0]<=l[1])l[1]=Math.max(l[1],allDI[i][1]);else mg.push([...allDI[i]]);}
+  return mg.reduce((s,[a,b])=>s+(b-a),0);
+}
 function startJobTimer(){
   if(_jobTimerInterval) clearInterval(_jobTimerInterval);
   _jobTimerInterval = setInterval(()=>{
-    const hasRunning = Object.values(jobs).some(j=>j.action==='start');
-    if(hasRunning){
+    const anyRunning=Object.values(cachedStates).some(codes=>Object.values(codes).some(s=>s.action==='start'));
+    if(anyRunning){
       renderJobs();
-      // 생산계획 작업시간도 실시간 갱신
+      // 생산계획 작업시간 실시간 갱신
       const tbody=document.querySelector('#plan-tbl');
       if(tbody) filterPlanTable();
+      // 대시보드 총작업시간 실시간 갱신
+      const dh=document.getElementById('d-hours');
+      if(dh){const tMs=_calcTotalMsForDate(new Date().toISOString().slice(0,10));if(tMs>0)dh.textContent=fmtElapsed(tMs);}
+      // 작업일보 총작업시간 실시간 갱신
+      const dlh=document.getElementById('dl-hours');
+      if(dlh){const ds=document.getElementById('daily-date')?.value;if(ds){const dMs=_calcTotalMsForDate(ds);if(dMs>0)dlh.textContent=fmtElapsed(dMs);}}
     }
   }, 1000);
 }
@@ -1461,7 +1482,7 @@ function renderPlanTable(filterFn){
   if(filterFn)plans=plans.filter(filterFn);
   plans.sort((a,b)=>a.date>b.date?1:-1);
   if(!plans.length){tbody.innerHTML='<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
-  const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+  const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기'};
   const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
   // 작업자 투입 정보 계산
   function getWorkerCount(code){
@@ -1803,7 +1824,7 @@ function renderDashboard(){
   if(ptbl){
     if(!todayPlans.length){ptbl.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">오늘 등록된 계획이 없습니다</td></tr>';
     }else{
-      const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+      const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기'};
       const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
       ptbl.innerHTML=todayPlans.map(p=>{
         const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
@@ -1905,7 +1926,7 @@ function renderDashboard(){
 function renderProgress(){
   const today=new Date().toISOString().slice(0,10);
   const plans=Object.values(cachedPlans);
-  // 진행중 작업코드 (오늘 작업중인 것)
+  // 작업중 코드 (오늘 작업중인 것)
   const runningCodes=new Set();
   const runningWorkers=new Set();
   Object.entries(cachedStates).forEach(([w,codes])=>{
@@ -1922,12 +1943,12 @@ function renderProgress(){
   // 실시간 진행현황 테이블
   const ptbl=document.querySelector('#page-progress .tbl-wrap tbody');
   if(ptbl){
-    // 오늘 날짜 계획 + 진행중/완료된 계획 모두 표시
+    // 오늘 날짜 계획 + 작업중/완료된 계획 모두 표시
     const runPlans=plans.filter(p=>p.date===today||(p.actQty>0&&getPlanStatus(p)!=='planned'));
     if(!runPlans.length){
       ptbl.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">오늘 작업 내역이 없습니다</td></tr>';
     }else{
-      const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+      const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기'};
       const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
       // Collect all active codes from states
       const activeCodes=new Map();
@@ -2098,7 +2119,7 @@ function renderPerformance(){
     const sorted=[...monthPlans].sort((a,b)=>(b.actQty||0)-(a.actQty||0));
     if(!sorted.length)codeTbl.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr>';
     else{
-      const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+      const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기'};
       const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
       codeTbl.innerHTML=sorted.map(p=>{
         const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
@@ -2244,7 +2265,7 @@ function renderDailyReport(dateStr){
   // 작업코드별 현황
   const ctbl=document.querySelectorAll('#page-daily .tbl-wrap')[0]?.querySelector('tbody');
   if(ctbl){
-    const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+    const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기'};
     const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
     if(!plans.length)ctbl.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr>';
     else ctbl.innerHTML=plans.map(p=>{
@@ -2286,7 +2307,7 @@ function renderDailyReport(dateStr){
           <td style="font-weight:600">${esc(worker)}</td>
           <td style="font-family:var(--mono);font-weight:700">${esc(code)}</td>
           <td style="font-family:var(--mono);font-size:11px">${startLog?.time||'—'}</td>
-          <td style="font-family:var(--mono);font-size:11px">${endLog?.time||'진행중'}</td>
+          <td style="font-family:var(--mono);font-size:11px">${endLog?.time||'작업중'}</td>
           <td style="font-family:var(--mono);font-size:11px">${fmtElapsed(calcWorkerCodeHours(worker,code))}</td>
           <td style="font-family:var(--mono);color:var(--green)">${qty>0?qty.toLocaleString()+' EA':'—'}</td>
         </tr>`);
@@ -2409,7 +2430,7 @@ function renderOrKPIs() {
   if(el('or-rate')) el('or-rate').textContent = rate;
 }
 
-const OR_SM = {done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+const OR_SM = {done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기'};
 const OR_SC = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
 
 function orPlanRow(p) {
@@ -2721,7 +2742,7 @@ window.exportDailyExcel = function() {
   plans.forEach(p=>{
     const pct = p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
     const hrs = calcWorkHours(p.code);
-    const sm={done:'완료',running:'진행중',planned:'예정',failed:'미달성',waiting:'대기'};
+    const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기'};
     rows.push([
       p.code||'', p.productCode||'', p.spec||'', p.customer||'',
       p.planQty||0, p.actQty||0, pct+'%',
