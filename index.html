@@ -1017,7 +1017,7 @@ async function loadAll() {
     if(l) cachedLogs=l;
     renderWorkerGrid();
     renderWorkerListPage();
-    filterPlanTable();
+    filterPlanTable({fromPolling:true});
     renderCalendar();
     renderAllLinked();
     renderOrKPIs();
@@ -1480,7 +1480,7 @@ window.submitPlan=async function(){
   if(res){
     cachedPlans=res;
     closeModal('plan-modal');
-    filterPlanTable();
+    filterPlanTable({fromPolling:true});
     renderCalendar();
     renderOrKPIs();
     if(typeof curPlanTab!=='undefined'){
@@ -1536,10 +1536,8 @@ function renderPlanTable(filterFn){
       <td style="font-family:var(--mono);font-size:11px">
         <div style="display:flex;align-items:center;gap:4px;position:relative">
           <span style="color:var(--accent);font-weight:700">${p.date||'—'}</span>
-          <span style="position:relative;display:inline-flex;align-items:center;cursor:pointer">
-            <i class="ti ti-calendar" style="font-size:13px;color:var(--accent2);pointer-events:none"></i>
-            <input type="date" value="${p.date||''}" onchange="changePlanDate('${esc(p.id)}',this.value)" style="position:absolute;opacity:0;width:20px;height:20px;cursor:pointer;left:0;top:0;border:none;background:transparent;padding:0">
-          </span>
+          <input type="date" id="pd-${esc(p.id)}" value="${p.date||''}" onchange="changePlanDate('${esc(p.id)}',this.value)" style="position:fixed;opacity:0;pointer-events:none;width:1px;height:1px">
+          <button onclick="event.stopPropagation();var inp=document.getElementById('pd-${esc(p.id)}');inp.style.pointerEvents='auto';if(inp.showPicker)inp.showPicker();else inp.click();inp.style.pointerEvents='none';" style="background:none;border:none;cursor:pointer;padding:2px;display:inline-flex;align-items:center" title="날짜 변경"><i class="ti ti-calendar" style="font-size:13px;color:var(--accent2)"></i></button>
         </div>
       </td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
@@ -1563,10 +1561,17 @@ function renderPlanTable(filterFn){
   updatePlanKPI(plans);
 }
 
-function filterPlanTable(){
+function filterPlanTable({fromPolling=false}={}){
+  const codeInput=document.getElementById('plan-filter-code');
+  const custInput=document.getElementById('plan-filter-customer');
   const dateVal=document.getElementById('plan-filter-date')?.value||'';
-  const codeVal=(document.getElementById('plan-filter-code')?.value||'').toLowerCase();
-  const custVal=(document.getElementById('plan-filter-customer')?.value||'').toLowerCase();
+  const codeVal=(codeInput?.value||'').toLowerCase().trim();
+  const custVal=(custInput?.value||'').toLowerCase().trim();
+  // 폴링 중에 사용자가 검색 입력란에 포커스 중이면 테이블 갱신 스킵
+  if(fromPolling){
+    const active=document.activeElement;
+    if(active===codeInput||active===custInput) return;
+  }
   renderPlanTable(p=>{
     if(dateVal&&p.date&&!p.date.startsWith(dateVal))return false;
     if(codeVal&&!p.code?.toLowerCase().includes(codeVal))return false;
@@ -2713,7 +2718,7 @@ window.changePlanDate = async function(planId, dateStr) {
   const res = await API.put('/api/plans', {...plan, id: planId, date: dateStr});
   if(res && !res.error) {
     cachedPlans = res;
-    filterPlanTable();
+    filterPlanTable({fromPolling:true});
     renderCalendar();
     renderOrKPIs();
     if(typeof curOrderTab !== 'undefined') {
