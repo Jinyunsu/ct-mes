@@ -1225,7 +1225,7 @@ let _jobTimerInterval = null;
 function _calcTotalMsForDate(dateStr){
   const todayLocalForDate=new Date(dateStr).toLocaleDateString('ko-KR');
   let allDI=[];
-  Object.values(cachedLogs||{}).forEach(wlogs=>{
+  Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').map(([,wlogs])=>wlogs).forEach(wlogs=>{
     const de=Object.values(wlogs||{}).filter(l=>{const li=new Date(l.ts).toISOString().slice(0,10);return l.date===todayLocalForDate||li===dateStr;}).sort((a,b)=>a.ts-b.ts);
     const cm={};
     de.forEach(l=>{if(!cm[l.code])cm[l.code]=null;if(l.action==='start')cm[l.code]=l.ts;else if((l.action==='end'||l.action==='pause')&&cm[l.code]!=null){allDI.push([cm[l.code],l.ts]);cm[l.code]=null;}});
@@ -1620,6 +1620,12 @@ window.deletePlan=async function(id){
   renderOrKPIs();
   renderAllLinked(); // 대시보드, 진행현황, 작업일보 등
   updatePlanKPI(Object.values(cachedPlans)); // KPI 즉시 갱신
+  // 총 작업시간 즉시 재계산 (삭제된 로그 반영)
+  const _today=new Date().toISOString().slice(0,10);
+  const _dh=document.getElementById('d-hours');
+  if(_dh){const ms=_calcTotalMsForDate(_today);_dh.textContent=ms>0?fmtElapsed(ms):'—';}
+  const _dlh=document.getElementById('dl-hours');
+  if(_dlh){const ds=document.getElementById('daily-date')?.value;if(ds){const ms=_calcTotalMsForDate(ds);_dlh.textContent=ms>0?fmtElapsed(ms):'—';}}
   if(typeof curOrderTab!=='undefined'){
     if(curOrderTab==='daily') renderOrDay();
     else if(curOrderTab==='monthly') renderOrMonth();
