@@ -496,8 +496,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>등록일</th><th>생산계획일</th><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
-            <tbody id="plan-tbl"><tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
+            <thead><tr><th>등록일</th><th>생산계획일</th><th>납기일</th><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
+            <tbody id="plan-tbl"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -870,6 +870,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       <div><label class="label">계획수량 (EA) *</label><input id="pf-qty" class="input" type="number" placeholder="0" min="1"></div>
       <div class="full"><label class="label">제품사양</label><input id="pf-spec" class="input" placeholder="예) 200x300x50mm, SUS304"></div>
       <div><label class="label">고객사</label><input id="pf-customer" class="input" placeholder="예) 현대자동차"></div>
+      <div><label class="label">납기일자</label><input id="pf-duedate" class="input" type="date"></div>
       <div><label class="label">비고</label><input id="pf-remark" class="input" placeholder="특이사항"></div>
     </div>
     <div class="modal-btns">
@@ -1341,7 +1342,9 @@ window.doAction=async function(code,action,qty=0,partialEnd=false){
   if(action==='end'){
     API.del('/api/states',{worker:currentUser,code});
     if(qty>0){
-      const match=Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase()&&p.date===isoDate);
+      // 날짜 무관 - 해당 코드의 미완료 계획 우선, 없으면 아무 계획
+      const match=Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase()&&getPlanStatus(p)!=='done')
+        || Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase());
       if(match){
         const[pid,plan]=match;
         const newActQty=(Number(plan.actQty)||0)+qty;
@@ -1377,7 +1380,9 @@ window.openQty=function(c){
   document.getElementById('qty-inp').value='';
   // 잔여수량 표시
   const today=todayISO();
-  const plan=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase()&&(p.date===today||p.status==='running'));
+  // 날짜 무관 - 해당 코드의 미완료 계획 찾기
+  const plan=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase()&&getPlanStatus(p)!=='done')
+    || Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase());
   const hintEl=document.getElementById('qty-max-hint');
   if(plan && hintEl){
     const already=Number(plan.actQty)||0;
@@ -1397,7 +1402,9 @@ window.confirmEnd=function(){
   if(!c) return;
   // 계획수량 초과 체크
   const today=todayISO();
-  const plan=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase()&&(p.date===today||p.status==='running'));
+  // 날짜 무관 - 해당 코드의 미완료 계획 찾기
+  const plan=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase()&&getPlanStatus(p)!=='done')
+    || Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase());
   if(plan && qty > 0){
     const already=Number(plan.actQty)||0;
     const maxQty=(plan.planQty||0)-already;
@@ -1476,7 +1483,7 @@ window.submitPlan=async function(){
   if(!code){showToast('작업코드 입력');return;}
   if(qty<=0){showToast('계획수량 입력');return;}
   const today=new Date().toISOString().slice(0,10);
-  const res=await API.post('/api/plans',{code,date:'',createdAt:today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',status:'planned'});
+  const res=await API.post('/api/plans',{code,date:'',createdAt:today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',dueDate:document.getElementById('pf-duedate').value||'',status:'planned',dueDate:document.getElementById('pf-duedate')?.value||''});
   if(res){
     cachedPlans=res;
     closeModal('plan-modal');
@@ -1504,7 +1511,7 @@ function renderPlanTable(filterFn){
   let plans=Object.values(cachedPlans).map(p=>({...p, id: p.id || Object.keys(cachedPlans).find(k=>cachedPlans[k]===p) || p.code}));
   if(filterFn)plans=plans.filter(filterFn);
   plans.sort((a,b)=>a.date>b.date?1:-1);
-  if(!plans.length){tbody.innerHTML='<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
+  if(!plans.length){tbody.innerHTML='<tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
   const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기'};
   const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
   // 작업자 투입 정보 계산
@@ -1540,6 +1547,7 @@ function renderPlanTable(filterFn){
           <button onclick="event.stopPropagation();var inp=document.getElementById('pd-${esc(p.id)}');inp.style.pointerEvents='auto';if(inp.showPicker)inp.showPicker();else inp.click();inp.style.pointerEvents='none';" style="background:none;border:none;cursor:pointer;padding:2px;display:inline-flex;align-items:center" title="날짜 변경"><i class="ti ti-calendar" style="font-size:13px;color:var(--accent2)"></i></button>
         </div>
       </td>
+      <td style="font-family:var(--mono);font-size:11px;color:${p.dueDate&&p.dueDate<new Date().toISOString().slice(0,10)&&getPlanStatus(p)!=='done'?'var(--red)':'var(--text3)'}">${p.dueDate||'—'}</td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
       <td style="color:var(--text2)">${esc(p.productCode||'—')}</td>
       <td style="color:var(--text2);font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.spec||'')}">${esc(p.spec||'—')}</td>
@@ -1762,14 +1770,16 @@ function getPlanStatus(p){
   if(p.planQty>0 && (p.actQty||0)>=p.planQty) return 'done';
   if(p.status==='done') return 'done';
   if(!p.date) return 'planned';
-  if(p.date<today&&(!p.actQty||p.actQty<p.planQty)) return 'failed';
+  // 납기일 초과 or 작업일 지났는데 미완료 → 미달성
+  const dueDate = p.dueDate||'';
+  if(dueDate && dueDate<today && (p.actQty||0)<(p.planQty||0)) return 'failed';
+  if(p.date<today && (p.actQty||0)<(p.planQty||0)) return 'failed';
   if(p.date===today){
     const isRunning=Object.values(cachedStates).some(codes=>
       codes[p.code]&&codes[p.code].action==='start'
     );
     if(isRunning) return 'running';
-    if((p.actQty||0)>0) return 'waiting'; // 일부 완료 후 대기
-    return 'waiting'; // 오늘인데 미시작 = 대기
+    return 'waiting';
   }
   return 'planned';
 }
@@ -1889,6 +1899,7 @@ function renderDashboard(){
         return `<tr>
           <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.createdAt||'—'}</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700">${p.date||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:${p.dueDate&&p.dueDate<new Date().toISOString().slice(0,10)?'var(--red)':'var(--text3)'}">${p.dueDate||'—'}</td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
           <td style="font-size:11px">${wCnt}명</td>
           <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()}</td>
