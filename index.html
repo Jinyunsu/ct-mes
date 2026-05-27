@@ -1483,7 +1483,7 @@ window.submitPlan=async function(){
   if(!code){showToast('작업코드 입력');return;}
   if(qty<=0){showToast('계획수량 입력');return;}
   const today=new Date().toISOString().slice(0,10);
-  const res=await API.post('/api/plans',{code,date:'',createdAt:today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',dueDate:document.getElementById('pf-duedate').value||'',status:'planned',dueDate:document.getElementById('pf-duedate')?.value||''});
+  const res=await API.post('/api/plans',{code,date:'',createdAt:today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',status:'planned',dueDate:document.getElementById('pf-duedate')?.value||''});
   if(res){
     cachedPlans=res;
     closeModal('plan-modal');
@@ -1543,8 +1543,8 @@ function renderPlanTable(filterFn){
       <td style="font-family:var(--mono);font-size:11px">
         <div style="display:flex;align-items:center;gap:4px;position:relative">
           <span style="color:var(--accent);font-weight:700">${p.date||'—'}</span>
-          <input type="date" id="pd-${esc(p.id)}" value="${p.date||''}" onchange="changePlanDate('${esc(p.id)}',this.value)" style="position:fixed;opacity:0;pointer-events:none;width:1px;height:1px">
-          <button onclick="event.stopPropagation();var inp=document.getElementById('pd-${esc(p.id)}');inp.style.pointerEvents='auto';if(inp.showPicker)inp.showPicker();else inp.click();inp.style.pointerEvents='none';" style="background:none;border:none;cursor:pointer;padding:2px;display:inline-flex;align-items:center" title="날짜 변경"><i class="ti ti-calendar" style="font-size:13px;color:var(--accent2)"></i></button>
+          <input type="date" id="pd-${esc(p.id)}" value="${p.date||''}" onchange="changePlanDate('${esc(p.id)}',this.value)" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;top:0;left:0">
+          <button onclick="event.stopPropagation();(function(id){var inp=document.getElementById('pd-'+id);inp.style.pointerEvents='auto';inp.style.position='absolute';if(inp.showPicker){inp.showPicker();}else{inp.click();}setTimeout(function(){inp.style.pointerEvents='none';},500);})('pd-${esc(p.id)}');" style="background:none;border:none;cursor:pointer;padding:2px;display:inline-flex;align-items:center" title="날짜 변경"><i class="ti ti-calendar" style="font-size:13px;color:var(--accent2)"></i></button>
         </div>
       </td>
       <td style="font-family:var(--mono);font-size:11px;color:${p.dueDate&&p.dueDate<new Date().toISOString().slice(0,10)&&getPlanStatus(p)!=='done'?'var(--red)':'var(--text3)'}">${p.dueDate||'—'}</td>
@@ -1633,7 +1633,13 @@ window.deletePlan=async function(id){
     // 3. 해당 코드의 logs 삭제
     await API.del('/api/logs', {code: planCode});
 
-    // 로컬 캐시에서도 삭제
+    // 로컬 캐시 즉시 삭제 → UI 즉시 갱신
+    delete cachedPlans[realId];
+    filterPlanTable();
+    renderCalendar();
+    updatePlanKPI(Object.values(cachedPlans));
+    renderOrKPIs();
+    renderAllLinked();
     Object.keys(cachedStates).forEach(w=>{
       if(cachedStates[w][planCode]) delete cachedStates[w][planCode];
     });
