@@ -15,23 +15,20 @@ async function ensureTable() {
       remark TEXT DEFAULT '',
       status TEXT DEFAULT 'planned',
       created_at_date TEXT DEFAULT '',
+      due_date TEXT DEFAULT '',
       data JSONB,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
   try { await sql`ALTER TABLE plans ADD COLUMN IF NOT EXISTS created_at_date TEXT DEFAULT ''`; } catch(e) {}
+  try { await sql`ALTER TABLE plans ADD COLUMN IF NOT EXISTS due_date TEXT DEFAULT ''`; } catch(e) {}
   try { await sql`ALTER TABLE plans ADD COLUMN IF NOT EXISTS data JSONB`; } catch(e) {}
 }
 
 function rowToObj(row) {
-  // created_at이 Date객체일 수 있으므로 toString 처리
   let createdAt = row.created_at_date || '';
   if(!createdAt && row.created_at) {
-    try {
-      createdAt = new Date(row.created_at).toISOString().slice(0, 10);
-    } catch(e) {
-      createdAt = '';
-    }
+    try { createdAt = new Date(row.created_at).toISOString().slice(0,10); } catch(e) { createdAt=''; }
   }
   return {
     id: row.id,
@@ -45,6 +42,7 @@ function rowToObj(row) {
     remark: row.remark || '',
     status: row.status || 'planned',
     createdAt: createdAt,
+    dueDate: row.due_date || '',
   };
 }
 
@@ -69,20 +67,20 @@ export default async function handler(req, res) {
       const id = p.id || `plan_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
       const createdAtDate = p.createdAt || new Date().toISOString().slice(0,10);
       await sql`
-        INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, status, created_at_date)
+        INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, status, created_at_date, due_date)
         VALUES (
           ${id}, ${p.code||''}, ${p.date||''},
           ${Number(p.planQty)||0}, ${Number(p.actQty)||0},
           ${p.productCode||''}, ${p.spec||''},
           ${p.customer||''}, ${p.remark||''}, ${p.status||'planned'},
-          ${createdAtDate}
+          ${createdAtDate}, ${p.dueDate||''}
         )
         ON CONFLICT (id) DO UPDATE SET
-          code = EXCLUDED.code, date = EXCLUDED.date,
-          plan_qty = EXCLUDED.plan_qty, act_qty = EXCLUDED.act_qty,
-          product_code = EXCLUDED.product_code, spec = EXCLUDED.spec,
-          customer = EXCLUDED.customer, remark = EXCLUDED.remark,
-          status = EXCLUDED.status
+          code=EXCLUDED.code, date=EXCLUDED.date,
+          plan_qty=EXCLUDED.plan_qty, act_qty=EXCLUDED.act_qty,
+          product_code=EXCLUDED.product_code, spec=EXCLUDED.spec,
+          customer=EXCLUDED.customer, remark=EXCLUDED.remark,
+          status=EXCLUDED.status, due_date=EXCLUDED.due_date
       `;
       const rows = await sql`SELECT * FROM plans ORDER BY created_at ASC`;
       const result = {};
@@ -95,20 +93,20 @@ export default async function handler(req, res) {
       const id = p.id;
       if (!id) return res.status(400).json({ error: 'id required' });
       await sql`
-        INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, status, created_at_date)
+        INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, status, created_at_date, due_date)
         VALUES (
           ${id}, ${p.code||''}, ${p.date||''},
           ${Number(p.planQty)||0}, ${Number(p.actQty)||0},
           ${p.productCode||''}, ${p.spec||''},
           ${p.customer||''}, ${p.remark||''}, ${p.status||'planned'},
-          ${p.createdAt||''}
+          ${p.createdAt||''}, ${p.dueDate||''}
         )
         ON CONFLICT (id) DO UPDATE SET
-          code = EXCLUDED.code, date = EXCLUDED.date,
-          plan_qty = EXCLUDED.plan_qty, act_qty = EXCLUDED.act_qty,
-          product_code = EXCLUDED.product_code, spec = EXCLUDED.spec,
-          customer = EXCLUDED.customer, remark = EXCLUDED.remark,
-          status = EXCLUDED.status
+          code=EXCLUDED.code, date=EXCLUDED.date,
+          plan_qty=EXCLUDED.plan_qty, act_qty=EXCLUDED.act_qty,
+          product_code=EXCLUDED.product_code, spec=EXCLUDED.spec,
+          customer=EXCLUDED.customer, remark=EXCLUDED.remark,
+          status=EXCLUDED.status, due_date=EXCLUDED.due_date
       `;
       const rows = await sql`SELECT * FROM plans ORDER BY created_at ASC`;
       const result = {};
