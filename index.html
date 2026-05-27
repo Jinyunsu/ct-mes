@@ -894,9 +894,12 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       <div><label class="label">계획수량 (EA) *</label><input id="ef-qty" class="input" type="number" placeholder="0" min="1"></div>
       <div class="full"><label class="label">제품사양</label><input id="ef-spec" class="input" placeholder="예) 200x300x50mm, SUS304"></div>
       <div><label class="label">고객사</label><input id="ef-customer" class="input" placeholder="예) 현대자동차"></div>
+      <div><label class="label">생산계획일</label><input id="ef-date" class="input" type="date"></div>
+      <div><label class="label">납기일자</label><input id="ef-duedate" class="input" type="date"></div>
       <div><label class="label">상태</label>
         <select id="ef-status" class="input">
           <option value="planned">예정</option>
+          <option value="waiting">대기</option>
           <option value="running">작업중</option>
           <option value="done">완료</option>
           <option value="failed">미달성</option>
@@ -1541,11 +1544,11 @@ function renderPlanTable(filterFn){
     return `<tr style="${isToday?'background:rgba(59,130,246,.04)':''}">
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.createdAt||'—'}</td>
       <td style="font-family:var(--mono);font-size:11px">
-        <div style="display:flex;align-items:center;gap:4px;position:relative">
-          <span style="color:var(--accent);font-weight:700">${p.date||'—'}</span>
-          <input type="date" id="pd-${esc(p.id)}" value="${p.date||''}" onchange="changePlanDate('${esc(p.id)}',this.value)" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;top:0;left:0">
-          <button onclick="event.stopPropagation();(function(id){var inp=document.getElementById('pd-'+id);inp.style.pointerEvents='auto';inp.style.position='absolute';if(inp.showPicker){inp.showPicker();}else{inp.click();}setTimeout(function(){inp.style.pointerEvents='none';},500);})('pd-${esc(p.id)}');" style="background:none;border:none;cursor:pointer;padding:2px;display:inline-flex;align-items:center" title="날짜 변경"><i class="ti ti-calendar" style="font-size:13px;color:var(--accent2)"></i></button>
-        </div>
+        <input type="date" value="${p.date||''}" onchange="changePlanDate('${esc(p.id)}',this.value)"
+          style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700;border:1px solid transparent;background:transparent;cursor:pointer;padding:2px 4px;border-radius:4px;outline:none;width:120px"
+          onmouseover="this.style.borderColor='var(--border)'"
+          onmouseout="this.style.borderColor='transparent'"
+          title="클릭하여 생산계획일 변경">
       </td>
       <td style="font-family:var(--mono);font-size:11px;color:${p.dueDate&&p.dueDate<new Date().toISOString().slice(0,10)&&getPlanStatus(p)!=='done'?'var(--red)':'var(--text3)'}">${p.dueDate||'—'}</td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
@@ -2423,6 +2426,7 @@ window.openEditPlanModal = function(id) {
   document.getElementById('ef-customer').value = p.customer||'';
   document.getElementById('ef-status').value = p.status||'planned';
   document.getElementById('ef-remark').value = p.remark||'';
+  document.getElementById('ef-duedate').value = p.dueDate||'';
   openModal('plan-edit-modal');
   setTimeout(() => document.getElementById('ef-date').focus(), 150);
 };
@@ -2445,6 +2449,7 @@ window.submitEditPlan = async function() {
     customer: document.getElementById('ef-customer').value.trim(),
     status: document.getElementById('ef-status').value,
     remark: document.getElementById('ef-remark').value.trim(),
+    dueDate: document.getElementById('ef-duedate')?.value||'',
   };
   const res = await API.put('/api/plans', data);
   if(res && !res.error) {
