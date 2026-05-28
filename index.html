@@ -270,13 +270,10 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   .sb-overlay.open{display:block}
   .main-wrap{margin-left:0}
   .menu-toggle{display:block}
-  .content{padding:16px}
+  .content{padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch}
   .tb-clock{display:none}
   .metrics{grid-template-columns:repeat(2,1fr)}
   .page-header{flex-direction:column;align-items:flex-start}
-  .jbtn{padding:7px 6px;font-size:11px;gap:3px}
-  .jbtn i{font-size:12px}
-  .job-btns{gap:4px}
 }
 
 
@@ -378,7 +375,6 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   <div class="topbar">
     <div class="tb-left">
       <button class="menu-toggle" onclick="toggleSidebar()"><i class="ti ti-menu-2"></i></button>
-      <button id="tb-home-btn" onclick="location.reload()" style="display:none;background:none;border:none;color:var(--text);font-size:18px;cursor:pointer;padding:4px 8px 4px 0"><i class="ti ti-home"></i></button>
       <span class="tb-title" id="tb-title">작업 관리</span>
       <span class="tb-sep">·</span>
       <span class="tb-page" id="tb-page">CTNS MES Lite</span>
@@ -3056,9 +3052,11 @@ window.printDailyReport = function() {
   .wc-avatar { width: 44px !important; height: 44px !important; font-size: 18px !important; }
   .job-card { padding: 12px !important; }
   .job-btns { grid-template-columns: 1fr 1fr 1fr !important; gap: 4px !important; }
-  .job-btns button { padding: 7px 3px !important; font-size: 11px !important; gap: 2px !important; }
-  #tb-home-btn { display: inline-flex !important; align-items: center !important; }
+  .job-btns button { padding: 6px 4px !important; font-size: 10px !important; gap: 2px !important; white-space: nowrap !important; }
+  .job-btns button i { font-size: 10px !important; }
   .worker-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important; gap: 8px !important; }
+  #worker-select { overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; height: auto !important; }
+  #page-worker { overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; }
   .metric-value { font-size: 22px !important; }
   input, select, .input { font-size: 16px !important; } /* iOS 줌 방지 */
 }
