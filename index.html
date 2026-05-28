@@ -1134,6 +1134,24 @@ async function loadAll() {
     if(p) cachedPlans=p;
     if(l) cachedLogs=l;
     if(o) cachedOffdays=o;
+    // 현재 작업자가 선택된 상태면 jobs를 states 기준으로 동기화
+    if(currentUser){
+      const stKey=Object.keys(cachedStates).find(k=>k.toLowerCase()===currentUser.toLowerCase())||currentUser;
+      const myState=cachedStates[stKey]||{};
+      Object.entries(myState).forEach(([c,s])=>{
+        if(s.action&&s.action!=='end'){
+          if(!jobs[c]){
+            let startTs=null;
+            if(s.action==='start'&&s.since){
+              const parts=s.since.split(':').map(Number);
+              if(parts.length===3){const d=new Date();d.setHours(parts[0],parts[1],parts[2],0);startTs=d.getTime();}
+            }
+            jobs[c]={action:s.action,since:s.since||'',open:true,startTs};
+          }
+        }
+      });
+      renderJobs();
+    }
     renderWorkerGrid();
     renderWorkerListPage();
     filterPlanTable({fromPolling:true});
