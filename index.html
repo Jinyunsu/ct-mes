@@ -1948,7 +1948,7 @@ function renderCalendar(){
     }).join('');
     // 해당 날짜 휴무 작업자
     const offWorkers=Object.values(cachedOffdays||{}).filter(o=>o.date===ds);
-    const offHtml=offWorkers.map(o=>`<div style="font-size:9px;background:rgba(239,68,68,.12);color:var(--red);border-radius:3px;padding:1px 4px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o.worker}${o.reason?' ('+o.reason+')':''}">🏖 ${o.worker}</div>`).join('');
+    const offHtml=offWorkers.map(o=>`<div style="font-size:9px;background:rgba(239,68,68,.12);color:var(--red);border-radius:3px;padding:1px 4px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o.worker}${o.reason?' ('+o.reason+')':''}">🏖 ${o.worker}${o.reason?` (${o.reason})`:''}</div>`).join('');
     html+=`<div class="cal-day${isToday?' today':''}"
       ondragover="event.preventDefault();event.currentTarget.style.background='rgba(59,130,246,.18)'"
       ondragleave="event.currentTarget.style.background=''"
@@ -2605,6 +2605,14 @@ function renderDailyReport(dateStr){
   const wtbl=document.querySelectorAll('#page-daily .tbl-wrap')[1]?.querySelector('tbody');
   if(wtbl){
     const allRows=[];
+    // 해당 날짜 휴무 작업자 맨 위에 표시
+    const offWorkers=Object.values(cachedOffdays||{}).filter(o=>o.date===dateStr);
+    offWorkers.forEach(o=>{
+      allRows.push(`<tr style="background:rgba(239,68,68,.05)">
+        <td style="font-weight:600;color:var(--red)">${esc(o.worker)}</td>
+        <td colspan="5" style="font-size:12px;color:var(--red)">🏖 휴무${o.reason?' ('+esc(o.reason)+')':''}</td>
+      </tr>`);
+    });
     const todayLocalStr=new Date(dateStr).toLocaleDateString('ko-KR');
     Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').forEach(([worker,wlogs])=>{
       const dayLogs=Object.values(wlogs||{}).filter(l=>{
