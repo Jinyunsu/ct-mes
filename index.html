@@ -1725,8 +1725,18 @@ function renderPlanTable(filterFn){
   // 작업자 투입 정보 계산
   function getWorkerCount(code){
     const cnt=new Set();
+    const lc=(code||'').toLowerCase().trim();
     Object.entries(cachedStates).forEach(([w,codes])=>{
-      if(codes[code]&&(codes[code].action==='start'||codes[code].action==='pause')) cnt.add(w);
+      Object.entries(codes||{}).forEach(([c,s])=>{
+        if(c.toLowerCase().trim()===lc&&(s.action==='start'||s.action==='pause')) cnt.add(w);
+      });
+    });
+    // 오늘 로그 기반 작업자도 포함
+    const today=new Date().toISOString().slice(0,10);
+    Object.entries(cachedLogs||{}).forEach(([worker,wlogs])=>{
+      Object.values(wlogs||{}).forEach(l=>{
+        if((l.code||'').toLowerCase().trim()===lc&&new Date(l.ts).toISOString().slice(0,10)===today) cnt.add(worker);
+      });
     });
     return cnt.size||'—';
   }
