@@ -1573,19 +1573,20 @@ window.openQty=function(c){
   if(plan && hintEl){
     const already=Number(plan.actQty)||0;
     const remaining=(plan.planQty||0)-already;
-    // 잔여수량이 0이면 이미 달성 - 수량 입력 불가
+    // 잔여수량이 0이면 달성완료 - 0으로 종료 가능
     if(remaining<=0){
-      showToast(`계획수량(${plan.planQty}EA)이 이미 달성됐습니다. 수량을 입력할 수 없습니다`);
-      // 종료만 처리 (수량 0으로)
-      closeModal('qty-modal');
-      doAction(c,'end',0);
-      return;
+      hintEl.textContent=`계획: ${plan.planQty}EA / 기완료: ${already}EA / 잔여: 0EA (달성완료)`;
+      hintEl.style.color='var(--green)';
+      const inp=document.getElementById('qty-inp');
+      inp.max=0; inp.value='0'; inp.placeholder='0';
+    } else {
+    } else {
+      hintEl.textContent=`계획: ${plan.planQty}EA / 기완료: ${already}EA / 잔여: ${remaining}EA`;
+      hintEl.style.color='var(--amber)';
+      const inp=document.getElementById('qty-inp');
+      inp.max=remaining;
+      inp.placeholder=`0 ~ ${remaining}`;
     }
-    hintEl.textContent=`계획: ${plan.planQty}EA / 기완료: ${already}EA / 잔여: ${remaining}EA`;
-    hintEl.style.color='var(--amber)';
-    const inp=document.getElementById('qty-inp');
-    inp.max=remaining;
-    inp.placeholder=`1 ~ ${remaining}`;
   } else if(hintEl){
     hintEl.textContent='';
   }
@@ -1593,22 +1594,25 @@ window.openQty=function(c){
   setTimeout(()=>document.getElementById('qty-inp').focus(),150);
 };
 window.confirmEnd=function(){
-  const qty=Number(document.getElementById('qty-inp').value)||0;
+  const qtyStr=document.getElementById('qty-inp').value;
+  const qty=qtyStr===''?null:Number(qtyStr);
   const c=qtyTarget;
   if(!c) return;
+  // 수량 미입력 시 안내
+  if(qty===null){
+    showToast('수량을 입력해주세요 (0 포함)');
+    return;
+  }
   const plan=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase()&&getPlanStatus(p)!=='done')
     || Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase());
-  if(plan){
+  if(plan && qty>0){
     const already=Number(plan.actQty)||0;
     const planQty=Number(plan.planQty)||0;
     const remaining=planQty-already;
     if(remaining<=0){
-      showToast(`계획수량(${planQty}EA)이 이미 달성됐습니다`);
+      // 이미 달성 - 0으로 종료 허용
       closeModal('qty-modal');
-      return;
-    }
-    if(qty<=0){
-      showToast('수량을 입력해주세요');
+      doAction(c,'end',0);
       return;
     }
     if(qty>remaining){
