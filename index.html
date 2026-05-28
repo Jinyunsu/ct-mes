@@ -1667,10 +1667,14 @@ function renderPlanTable(filterFn){
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${typeof wHrs==='object'?wHrs.str:wHrs}</td>
       <td><span class="badge ${sc[getPlanStatus(p)]||'badge-gray'}">${sm[getPlanStatus(p)]||'예정'}</span></td>
       <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-secondary btn-sm" style="margin-right:4px" onclick="planAction('edit','${esc(p.id)}')" title="수정"><i class="ti ti-edit"></i></button>
-        <button class="btn btn-secondary btn-sm" style="color:#dc2626" onclick="planAction('delete','${esc(p.id)}')" title="삭제"><i class="ti ti-trash"></i></button>
-      </td>
+      <td style="white-space:nowrap">${(()=>{
+        const _st=getPlanStatus(p);
+        const _can=_st==='planned'||_st==='waiting';
+        const _dis=';opacity:.3;cursor:not-allowed';
+        return `
+        <button class="btn btn-secondary btn-sm" style="margin-right:4px${_can?'':_dis}" onclick="planAction('edit','${esc(p.id)}')" title="${_can?'수정':_st==='running'?'작업중인 계획은 수정할 수 없습니다':'완료된 계획은 수정할 수 없습니다'}"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-secondary btn-sm" style="color:#dc2626${_can?'':_dis}" onclick="planAction('delete','${esc(p.id)}')" title="${_can?'삭제':_st==='running'?'작업중인 계획은 삭제할 수 없습니다':'완료된 계획은 삭제할 수 없습니다'}"><i class="ti ti-trash"></i></button>`;
+      })()}</td>
     </tr>`;
   }).join('');
   // 요약 KPI 업데이트
@@ -1712,10 +1716,12 @@ function updatePlanKPI(plans){
 window.planAction = function(type, id) {
   const st = getPlanStatus(cachedPlans[id] || Object.values(cachedPlans).find(p=>p.id===id) || {});
   if(type === 'edit') {
+    if(st === 'running') { showToast('작업중인 계획은 수정할 수 없습니다'); return; }
     if(st === 'done') { showToast('완료된 계획은 수정할 수 없습니다'); return; }
     openEditPlanModal(id);
   } else if(type === 'delete') {
     if(st === 'running') { showToast('작업중인 계획은 삭제할 수 없습니다'); return; }
+    if(st === 'done') { showToast('완료된 계획은 삭제할 수 없습니다'); return; }
     deletePlan(id);
   }
 };
