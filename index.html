@@ -1015,13 +1015,12 @@ function setUser(account) {
   document.getElementById('sb-uname').textContent = name;
   document.getElementById('sb-uemail').textContent = email;
   document.getElementById('tb-av').textContent = initials;
-  // 데이터 즉시 로드 후 페이지 렌더링
+  // 화면 먼저 띄우고
   const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-  loadAll().then(()=>{
-    startPolling();
-    if(!isMobile) go('dashboard');
-    else go('worker');
-  });
+  if(!isMobile) go('dashboard');
+  else go('worker');
+  // 각 API 오는 대로 즉시 렌더링
+  loadAllFast().then(startPolling);
 }
 
 window._msLogin = async function() {
@@ -1047,8 +1046,32 @@ let cachedNames=[], cachedStates={}, cachedPlans={}, cachedLogs={};
 let pollingTimer=null;
 let _pollingLocked=false; // 작업 중 폴링 잠금
 
+// 각 API 응답 오는 대로 즉시 렌더링 (초기 로딩 속도 최적화)
+async function loadAllFast() {
+  if(_pollingLocked) return;
+  const render = () => {
+    renderWorkerGrid();
+    renderWorkerListPage();
+    filterPlanTable({fromPolling:true});
+    renderCalendar();
+    renderAllLinked();
+    renderOrKPIs();
+    updatePlanSelect();
+    if(typeof curOrderTab!=='undefined'){
+      if(curOrderTab==='daily') renderOrDay();
+      else if(curOrderTab==='monthly') renderOrMonth();
+      else if(curOrderTab==='all') renderOrAll();
+    }
+  };
+  // 각 API 독립적으로 호출 - 오는 대로 바로 반영
+  API.get('/api/names').then(n=>{ if(n){ cachedNames=n; render(); } });
+  API.get('/api/states').then(s=>{ if(s){ cachedStates=s; render(); } });
+  API.get('/api/plans').then(p=>{ if(p){ cachedPlans=p; render(); } });
+  await API.get('/api/logs').then(l=>{ if(l){ cachedLogs=l; render(); } });
+}
+
 async function loadAll() {
-  if(_pollingLocked) return; // 작업 중이면 스킵
+  if(_pollingLocked) return;
   try {
     const [n,s,p,l] = await Promise.all([
       API.get('/api/names'),
