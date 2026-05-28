@@ -1396,7 +1396,7 @@ function renderJobs(){
     return `<div class="job-card ${cardCls}">
       <div class="job-head" onclick="toggleJob('${esc(c)}')">
         <div class="job-dot ${dotCls}"></div>
-        <div class="job-code">${esc(c)}</div>
+        <div class="job-code">${esc(c)}${(()=>{const _p=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase());return _p?.customer?` (${esc(_p.customer)})`:'';})()}</div>
         <span class="badge ${badgeCls}">${badgeTxt}</span>
         <span style="font-size:11px;color:var(--text3);margin-left:4px;transition:transform .2s" id="jchv-${esc(c)}">${s.open?'▴':'▾'}</span>
         <button onclick="event.stopPropagation();removeJob('${esc(c)}')" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 6px;margin-left:4px;font-size:12px">✕</button>
