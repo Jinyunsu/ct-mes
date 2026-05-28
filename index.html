@@ -498,10 +498,10 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
       </div>
       <div class="metrics">
-        <div class="metric blue"><div class="metric-label">총 계획 건수</div><div class="metric-value">—</div></div>
-        <div class="metric"><div class="metric-label">계획수량 합계</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">EA</span></div></div>
-        <div class="metric green"><div class="metric-label">실적수량 합계</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">EA</span></div></div>
-        <div class="metric amber"><div class="metric-label">전체 달성률</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">%</span></div></div>
+        <div class="metric blue"><div class="metric-label">총 계획 건수</div><div class="metric-value" id="kpi-plan-total">—</div></div>
+        <div class="metric"><div class="metric-label">계획수량 합계</div><div class="metric-value-row"><div class="metric-value" id="kpi-plan-qty">—</div><span class="metric-sub">EA</span></div></div>
+        <div class="metric green"><div class="metric-label">실적수량 합계</div><div class="metric-value-row"><div class="metric-value" id="kpi-plan-act">—</div><span class="metric-sub">EA</span></div></div>
+        <div class="metric amber"><div class="metric-label">전체 달성률</div><div class="metric-value-row"><div class="metric-value" id="kpi-plan-rate">—</div><span class="metric-sub">%</span></div></div>
       </div>
       <!-- 목록 먼저 -->
       <div class="card" style="margin-bottom:14px">
@@ -1231,7 +1231,7 @@ function go(id) {
   }
   else if(id==='daily'){
     const dd=document.getElementById('daily-date');
-    if(dd&&!dd.value) dd.value=todayISO();
+    if(dd) dd.value=todayISO(); // 항상 오늘로
     if(dd?.value) renderDailyReport(dd.value);
   }
   // 백그라운드에서 최신 데이터 받아와 재렌더링 (worker 페이지는 loadAllFast로 이미 처리됨)
@@ -1726,9 +1726,29 @@ window.addWorker=async function(){
   if(res){cachedNames=res;renderWorkerGrid();renderWorkerListPage();inp.value='';showToast(`[${val}] 추가됨`);}
 };
 window.deleteWorker=async function(name){
-  if(!confirm(`[${name}] 작업자를 삭제하시겠습니까?`))return;
-  const res=await API.del('/api/names',{name});
-  if(res){cachedNames=res;renderWorkerGrid();renderWorkerListPage();renderWorkerStats();showToast('삭제됨');}
+  if(!confirm(`[${name}] 작업자를 삭제하시겠습니까?\n해당 작업자의 상태, 작업 기록, 휴무 데이터도 모두 삭제됩니다.`))return;
+  if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
+  _pollingLocked=true;
+  try {
+    // 1. 이름 삭제
+    const res=await API.del('/api/names',{name});
+    if(res) cachedNames=res;
+    // 2. states 삭제
+    await fetch('/api/states',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({worker:name,deleteAll:true})}).catch(()=>{});
+    delete cachedStates[name];
+    // 3. logs 삭제
+    await fetch('/api/logs',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({worker:name,deleteAll:true})}).catch(()=>{});
+    delete cachedLogs[name];
+    // 4. offdays 삭제
+    const workerOffdays=Object.entries(cachedOffdays||{}).filter(([,o])=>o.worker===name);
+    for(const [id] of workerOffdays){
+      await fetch('/api/offdays',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).catch(()=>{});
+      delete cachedOffdays[id];
+    }
+    refreshUI();
+    showToast(`[${name}] 삭제됨`);
+  } catch(e){ showToast('삭제 중 오류'); }
+  restartPollingDelayed(1000);
 };
 
 /* ══ 생산계획 ══ */
@@ -1869,12 +1889,11 @@ function updatePlanKPI(plans){
   const totalPlan=plans.reduce((s,p)=>s+(p.planQty||0),0);
   const totalAct=plans.reduce((s,p)=>s+(p.actQty||0),0);
   const rate=totalPlan>0?Math.round(totalAct/totalPlan*100):0;
-  // prodplan 메트릭
-  const mvs=document.querySelectorAll('#page-prodplan .metric-value');
-  if(mvs[0])mvs[0].textContent=plans.length;
-  if(mvs[1])mvs[1].textContent=totalPlan.toLocaleString();
-  if(mvs[2])mvs[2].textContent=totalAct.toLocaleString();
-  if(mvs[3])mvs[3].textContent=rate;
+  const el=id=>document.getElementById(id);
+  if(el('kpi-plan-total')) el('kpi-plan-total').textContent=plans.length;
+  if(el('kpi-plan-qty')) el('kpi-plan-qty').textContent=totalPlan.toLocaleString();
+  if(el('kpi-plan-act')) el('kpi-plan-act').textContent=totalAct.toLocaleString();
+  if(el('kpi-plan-rate')) el('kpi-plan-rate').textContent=rate;
 }
 
 
@@ -3335,13 +3354,34 @@ window.deleteAllPlans = async function() {
   _pollingLocked = true;
   showToast('전체 데이터 삭제 중...');
   try {
+    // 1. plans 전체 삭제
     const planIds = Object.keys(cachedPlans);
     for(const id of planIds) {
-      await fetch('/api/plans', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})});
+      await fetch('/api/plans', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})}).catch(()=>{});
     }
     cachedPlans = {};
+
+    // 2. states 전체 삭제 (작업자별)
+    const stateWorkers = Object.keys(cachedStates);
+    for(const worker of stateWorkers) {
+      await fetch('/api/states', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({worker, deleteAll:true})}).catch(()=>{});
+    }
     cachedStates = {};
+
+    // 3. logs 전체 삭제 (작업자별)
+    const logWorkers = Object.keys(cachedLogs||{}).filter(w=>w!=='__system__');
+    for(const worker of logWorkers) {
+      await fetch('/api/logs', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({worker, deleteAll:true})}).catch(()=>{});
+    }
     cachedLogs = {};
+
+    // 4. offdays 전체 삭제
+    const offdayIds = Object.keys(cachedOffdays||{});
+    for(const id of offdayIds) {
+      await fetch('/api/offdays', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})}).catch(()=>{});
+    }
+    cachedOffdays = {};
+
     refreshUI();
     showToast('✅ 모든 데이터가 삭제되었습니다');
   } catch(e) {
