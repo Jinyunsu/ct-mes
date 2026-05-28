@@ -3120,10 +3120,9 @@ window.changePlanDate = async function(planId, dateStr) {
 
 /* ══ 작업일보 인쇄 ══ */
 window.printDailyReport = function() {
-  const dateVal = document.getElementById('daily-date')?.value;
-  if(!dateVal){ showToast('날짜를 선택하세요'); return; }
-  const printArea = document.getElementById('daily-report-area');
-  if(!printArea){ showToast('작업일보를 먼저 조회하세요'); return; }
+  const printArea = document.getElementById('page-daily');
+  if(!printArea){ showToast('작업일보 화면을 찾을 수 없습니다'); return; }
+  const dateVal = document.getElementById('daily-date')?.value || '';
   const w = window.open('', '_blank');
   w.document.write(`<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
@@ -3140,7 +3139,20 @@ window.printDailyReport = function() {
       .badge-blue{background:#dbeafe;color:#1d4ed8}
       .badge-gray{background:#f3f4f6;color:#6b7280}
       .badge-red{background:#fee2e2;color:#dc2626}
-      .worker-activity-wrap{max-height:none!important;overflow:visible!important;}
+      .badge-amber{background:#fef3c7;color:#d97706}
+      .prog-bar{background:#e5e7eb;border-radius:4px;height:6px;width:60px;display:inline-block}
+      .prog-fill{background:#3b82f6;border-radius:4px;height:6px}
+      .prog-fill.green{background:#22c55e}
+      .metrics{display:flex;gap:12px;margin-bottom:16px}
+      .metric{border:1px solid #e5e7eb;border-radius:8px;padding:12px 16px;flex:1}
+      .metric-label{font-size:10px;color:#6b7280;margin-bottom:4px}
+      .metric-value{font-size:20px;font-weight:900}
+      .card{border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:16px}
+      .card-title{font-size:13px;font-weight:700;margin-bottom:12px}
+      .tbl-wrap,.worker-activity-wrap{max-height:none!important;overflow:visible!important}
+      button{display:none}
+      input[type=date]{display:none}
+      .page-header{display:none}
       @media print{body{margin:0}}
     </style>
   </head><body>
