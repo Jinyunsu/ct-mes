@@ -271,6 +271,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   .main-wrap{margin-left:0}
   .menu-toggle{display:block}
   .content{padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #worker-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
+  .main-wrap{overflow:visible!important;height:auto!important}
   .tb-clock{display:none}
   .metrics{grid-template-columns:repeat(2,1fr)}
   .page-header{flex-direction:column;align-items:flex-start}
@@ -3055,6 +3057,7 @@ window.printDailyReport = function() {
   .job-btns button { padding: 6px 4px !important; font-size: 10px !important; gap: 2px !important; white-space: nowrap !important; }
   .job-btns button i { font-size: 10px !important; }
   .worker-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+  div#worker-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
   #worker-select { overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; }
   #page-worker { overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; }
   .metric-value { font-size: 22px !important; }
