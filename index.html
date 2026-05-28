@@ -1442,37 +1442,34 @@ window.doAction=async function(code,action,qty=0,partialEnd=false){
   renderJobs(); renderLogs();
   startJobTimer();
   // API 비동기 처리
-  API.post('/api/logs',newLog);
+  _pollingLocked=true;
+  API.post('/api/logs',newLog).finally(()=>{});
   if(action==='end'){
-    API.del('/api/states',{worker:currentUser,code});
+    await API.del('/api/states',{worker:currentUser,code});
     if(qty>0){
-      // 날짜 무관 - 해당 코드의 미완료 계획 우선, 없으면 아무 계획
       const match=Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase()&&getPlanStatus(p)!=='done')
         || Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase());
       if(match){
         const[pid,plan]=match;
-        const newActQty=(Number(plan.actQty)||0)+qty;
-        const isDone=newActQty>=(plan.planQty||0);
+        // 실적수량이 절대 계획수량 초과 불가
+        const already=Number(plan.actQty)||0;
+        const planQty=Number(plan.planQty)||0;
+        const safeQty=Math.min(qty, planQty-already);
+        if(safeQty<=0){ _pollingLocked=false; return; }
+        const newActQty=already+safeQty;
+        const isDone=newActQty>=planQty;
         const updated={...plan,id:pid,actQty:newActQty,status:isDone?'done':plan.status};
-        // 로컬 즉시 반영
         cachedPlans[pid]={...updated};
-        API.put('/api/plans',updated).then(res=>{
-          if(res){
-            cachedPlans=res;
-            filterPlanTable();
-            renderCalendar();
-            renderOrKPIs();
-            if(typeof curOrderTab!=='undefined'){
-              if(curOrderTab==='daily')renderOrDay();
-              else if(curOrderTab==='monthly')renderOrMonth();
-              else if(curOrderTab==='all')renderOrAll();
-            }
-          }
-        });
+        const res=await API.put('/api/plans',updated);
+        if(res) cachedPlans=res;
+        refreshUI();
       }
     }
+    _pollingLocked=false;
   } else {
-    API.post('/api/states',{worker:currentUser,code,action,since:timeStr,date:dateStr});
+    const res=await API.post('/api/states',{worker:currentUser,code,action,since:timeStr,date:dateStr});
+    if(res) cachedStates=res;
+    _pollingLocked=false;
   }
   const lbls={start:'▶ 시작',pause:'⏸ 정지',end:'■ 종료'};
   showToast(`[${code}] ${lbls[action]}${qty>0?' ('+qty+'EA)':''}`);
@@ -1482,18 +1479,25 @@ window.openQty=function(c){
   qtyTarget=c;
   document.getElementById('qty-sub').textContent='작업코드: '+c;
   document.getElementById('qty-inp').value='';
-  // 잔여수량 표시
-  const today=todayISO();
-  // 날짜 무관 - 해당 코드의 미완료 계획 찾기
   const plan=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase()&&getPlanStatus(p)!=='done')
     || Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase());
   const hintEl=document.getElementById('qty-max-hint');
   if(plan && hintEl){
     const already=Number(plan.actQty)||0;
     const remaining=(plan.planQty||0)-already;
+    // 잔여수량이 0이면 이미 달성 - 수량 입력 불가
+    if(remaining<=0){
+      showToast(`계획수량(${plan.planQty}EA)이 이미 달성됐습니다. 수량을 입력할 수 없습니다`);
+      // 종료만 처리 (수량 0으로)
+      closeModal('qty-modal');
+      doAction(c,'end',0);
+      return;
+    }
     hintEl.textContent=`계획: ${plan.planQty}EA / 기완료: ${already}EA / 잔여: ${remaining}EA`;
-    hintEl.style.color=remaining>0?'var(--amber)':'var(--green)';
-    document.getElementById('qty-inp').max=remaining;
+    hintEl.style.color='var(--amber)';
+    const inp=document.getElementById('qty-inp');
+    inp.max=remaining;
+    inp.placeholder=`1 ~ ${remaining}`;
   } else if(hintEl){
     hintEl.textContent='';
   }
@@ -1504,28 +1508,35 @@ window.confirmEnd=function(){
   const qty=Number(document.getElementById('qty-inp').value)||0;
   const c=qtyTarget;
   if(!c) return;
-  // 계획수량 초과 체크
-  const today=todayISO();
-  // 날짜 무관 - 해당 코드의 미완료 계획 찾기
   const plan=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase()&&getPlanStatus(p)!=='done')
     || Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===c.toLowerCase());
-  if(plan && qty > 0){
+  if(plan){
     const already=Number(plan.actQty)||0;
-    const maxQty=(plan.planQty||0)-already;
-    if(qty > maxQty){
-      showToast(`최대 ${maxQty}EA까지 입력 가능합니다 (계획: ${plan.planQty}, 기완료: ${already})`);
+    const planQty=Number(plan.planQty)||0;
+    const remaining=planQty-already;
+    if(remaining<=0){
+      showToast(`계획수량(${planQty}EA)이 이미 달성됐습니다`);
+      closeModal('qty-modal');
       return;
     }
-    // 잔여량 체크 - 계획수량 미달이면 작업 이어서 가능
-    if(already+qty < (plan.planQty||0)){
-      // 완전 종료 아님 - pause 상태로 전환
+    if(qty<=0){
+      showToast('수량을 입력해주세요');
+      return;
+    }
+    if(qty>remaining){
+      showToast(`잔여수량(${remaining}EA)을 초과할 수 없습니다`);
+      document.getElementById('qty-inp').value=remaining;
+      return;
+    }
+    // 부분 종료 (잔여 남음)
+    if(already+qty < planQty){
       closeModal('qty-modal');
-      doAction(c,'end',qty,true); // partialEnd
+      doAction(c,'end',qty,true);
       return;
     }
   }
   closeModal('qty-modal');
-  if(c)doAction(c,'end',qty);
+  if(c) doAction(c,'end',qty);
 };
 document.getElementById('qty-inp').addEventListener('keydown',e=>{if(e.key==='Enter')confirmEnd();if(e.key==='Escape')closeModal('qty-modal');});
 
