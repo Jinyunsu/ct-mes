@@ -2031,19 +2031,19 @@ function getPlanStatus(p){
 
 function getWorkerCountForCode(code){
   const workers=new Set();
-  const lowerCode=code?.toLowerCase();
-  // 현재 states에 있는 작업자 (작업중/정지 포함)
+  const lowerCode=(code||'').toLowerCase().trim();
+  // states에서 해당 코드 작업자 (대소문자/공백 무관)
   Object.entries(cachedStates).forEach(([w,codes])=>{
-    const found=Object.entries(codes).find(([c])=>c.toLowerCase()===lowerCode);
-    if(found) workers.add(w);
+    Object.keys(codes||{}).forEach(c=>{
+      if(c.toLowerCase().trim()===lowerCode) workers.add(w);
+    });
   });
-  // 오늘 날짜 로그가 있는 작업자 (완료 포함)
+  // 오늘 logs에서 해당 코드 작업자
   const today=new Date().toISOString().slice(0,10);
-  Object.entries(cachedLogs||{}).forEach(([worker,logs])=>{
-    Object.values(logs||{}).forEach(l=>{
-      if(l.code?.toLowerCase()===lowerCode){
-        const logDate=new Date(l.ts).toISOString().slice(0,10);
-        if(logDate===today) workers.add(worker);
+  Object.entries(cachedLogs||{}).forEach(([worker,wlogs])=>{
+    Object.values(wlogs||{}).forEach(l=>{
+      if((l.code||'').toLowerCase().trim()===lowerCode){
+        if(new Date(l.ts).toISOString().slice(0,10)===today) workers.add(worker);
       }
     });
   });
