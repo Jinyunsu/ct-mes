@@ -1343,7 +1343,18 @@ window.selectWorker = async function(idx) {
       jobs[c]={action:s.action,since:s.since||'',open:true,startTs};
     }
   });
-  try{const ml=await API.get(`/api/logs?worker=${encodeURIComponent(currentUser)}`);if(ml){const wl=ml[currentUser]||ml[stKey]||{};logs=Object.values(wl).sort((a,b)=>b.ts-a.ts);}}catch(e){logs=[];}
+  try{
+    const ml=await API.get(`/api/logs?worker=${encodeURIComponent(currentUser)}`);
+    if(ml){
+      const wl=ml[currentUser]||ml[stKey]||{};
+      const todayIso=new Date().toISOString().slice(0,10);
+      const todayLocal=new Date().toLocaleDateString('ko-KR');
+      logs=Object.values(wl).filter(l=>{
+        const li=new Date(l.ts).toISOString().slice(0,10);
+        return l.date===todayLocal||li===todayIso;
+      }).sort((a,b)=>b.ts-a.ts);
+    }
+  }catch(e){logs=[];}
   renderJobs(); renderLogs();
   updatePlanSelect();
   startJobTimer();
@@ -2048,7 +2059,7 @@ function renderCalendar(){
     const allDp=[...prevUnfinished.map(p=>({...p,_carry:true})),...dp];
     // 호버 툴팁용 전체 목록
     const tooltipLines=allDp.map(p=>`${p._carry?'↩ ':''}${p.code}${p.customer?' ('+p.customer+')':''} | ${p.planQty||0}EA | ${getPlanStatus(p)==='done'?'완료':getPlanStatus(p)==='running'?'작업중':'예정'}`).join('\n');
-    const offTooltip=Object.values(cachedOffdays||{}).filter(o=>o.date===ds).map(o=>`🏖 ${o.worker}${o.reason?' ('+o.reason+')':''}`).join('\n');
+    const offTooltip=Object.values(cachedOffdays||{}).filter(o=>o.date===ds&&cachedNames.some(n=>n.toLowerCase()===o.worker.toLowerCase())).map(o=>`🏖 ${o.worker}${o.reason?' ('+o.reason+')':''}`).join('\n');
     const fullTooltip=[tooltipLines,offTooltip].filter(Boolean).join('\n');
     const ph=allDp.slice(0,3).map(p=>{
       const c=getCalColor(p.code);
@@ -2060,7 +2071,7 @@ function renderCalendar(){
       return `<div class="cal-chip" style="background:${bg};color:${color};border:${border}" title="${p.code}${p.customer?' ('+p.customer+')':''} | ${p.planQty||0}EA">${prefix}${p.code}${p.customer?` (${p.customer})`:''}</div>`;
     }).join('');
     // 해당 날짜 휴무 작업자
-    const offWorkers=Object.values(cachedOffdays||{}).filter(o=>o.date===ds);
+    const offWorkers=Object.values(cachedOffdays||{}).filter(o=>o.date===ds && cachedNames.some(n=>n.toLowerCase()===o.worker.toLowerCase()));
     const offHtml=offWorkers.map(o=>`<div style="font-size:9px;background:rgba(239,68,68,.12);color:var(--red);border-radius:3px;padding:1px 4px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o.worker}${o.reason?' ('+o.reason+')':''}">🏖 ${o.worker}${o.reason?` (${o.reason})`:''}</div>`).join('');
     html+=`<div class="cal-day${isToday?' today':''}" title="${fullTooltip}"
       ondragover="event.preventDefault();event.currentTarget.style.background='rgba(59,130,246,.18)'"
@@ -2270,7 +2281,7 @@ function renderDashboard(){
   if(wstEl){
     if(!cachedNames.length){wstEl.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">등록된 작업자 없음</div>';}
     else{
-      const todayOffdays=Object.values(cachedOffdays||{}).filter(o=>o.date===today);
+      const todayOffdays=Object.values(cachedOffdays||{}).filter(o=>o.date===today&&cachedNames.some(n=>n.toLowerCase()===o.worker.toLowerCase()));
       const offWorkerNames=new Set(todayOffdays.map(o=>o.worker.toLowerCase()));
       wstEl.innerHTML='<div style="display:flex;flex-direction:column;gap:6px">'+cachedNames.map((n,i)=>{
         const offday=todayOffdays.find(o=>o.worker.toLowerCase()===n.toLowerCase());
@@ -2679,8 +2690,25 @@ function renderWorkerStats(){
       return l.date===todayStr||logIso===today;
     });
   }).length;
-  // 평균 투입시간
-  const workerHours=cachedNames.map(n=>calcWorkerTotalHours(n)).filter(ms=>ms>0);
+  // 평균 투입시간 (오늘 기준)
+  const workerHours=cachedNames.map(n=>{
+    const logs=Object.values(cachedLogs?.[n]||{}).filter(l=>{
+      const li=new Date(l.ts).toISOString().slice(0,10);
+      return l.date===todayStr||li===today;
+    });
+    const codes=new Set(logs.map(l=>l.code));
+    const ivs=[];
+    codes.forEach(c=>{
+      const es=logs.filter(l=>l.code===c).sort((a,b)=>a.ts-b.ts);
+      let st=null;
+      es.forEach(l=>{if(l.action==='start')st=l.ts;else if((l.action==='end'||l.action==='pause')&&st){ivs.push([st,l.ts]);st=null;}});
+      if(st)ivs.push([st,Date.now()]);
+    });
+    ivs.sort((a,b)=>a[0]-b[0]);
+    const mg=ivs.length?[[...ivs[0]]]:[];
+    for(let i=1;i<ivs.length;i++){const l=mg[mg.length-1];if(ivs[i][0]<=l[1])l[1]=Math.max(l[1],ivs[i][1]);else mg.push([...ivs[i]]);}
+    return mg.reduce((s,[a,b])=>s+(b-a),0);
+  }).filter(ms=>ms>0);
   const avgMs=workerHours.length?workerHours.reduce((s,ms)=>s+ms,0)/workerHours.length:0;
   const avgH=avgMs>0?fmtElapsed(avgMs):'0';
 
@@ -2692,31 +2720,52 @@ function renderWorkerStats(){
 
   if(!cachedNames.length){tbl.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr>';return;}
 
-  // 오늘 휴무 작업자 맨 위에 표시
+  // 오늘 휴무 작업자 맨 위에 표시 (cachedNames에 있는 작업자만)
   const todayOffRows = Object.values(cachedOffdays||{})
-    .filter(o=>o.date===today)
+    .filter(o=>o.date===today && cachedNames.some(n=>n.toLowerCase()===o.worker.toLowerCase()))
     .map(o=>`<tr style="background:rgba(239,68,68,.05)">
       <td style="font-weight:600;color:var(--red)">${esc(o.worker)}</td>
       <td colspan="4" style="font-size:12px;color:var(--red)">🏖 휴무${o.reason?' ('+esc(o.reason)+')':''}</td>
     </tr>`);
 
   tbl.innerHTML=todayOffRows.join('')+cachedNames.map(n=>{
-    const st=cachedStates[n]||{};
+    const stKey=Object.keys(cachedStates).find(k=>k.toLowerCase()===n.toLowerCase())||n;
+    const st=cachedStates[stKey]||{};
     const activeCodes=Object.keys(st).filter(c=>st[c].action&&st[c].action!=='end');
     const allLogs=Object.values(cachedLogs?.[n]||{});
-        const todayLogs=allLogs.filter(l=>l.date===todayStr);
+    const todayLogs=allLogs.filter(l=>{
+      const li=new Date(l.ts).toISOString().slice(0,10);
+      return l.date===todayStr||li===today;
+    });
     const codeSet=new Set(todayLogs.map(l=>l.code));
     const totalQty=todayLogs.filter(l=>l.action==='end').reduce((s,l)=>s+(l.qty||0),0);
     const isWorking=Object.values(st).some(s=>s.action==='start');
-    // 작업자별 오늘 투입시간 (병렬 합산)
-    const workerTotalMs = calcWorkerTotalHours(n);
-    const wHrsStr = workerTotalMs>0?fmtElapsed(workerTotalMs):'—';
+    // 오늘 투입시간만 계산
+    const intervals=[];
+    codeSet.forEach(code=>{
+      const entries=todayLogs.filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
+      let startTs=null;
+      entries.forEach(l=>{
+        if(l.action==='start') startTs=l.ts;
+        else if((l.action==='end'||l.action==='pause')&&startTs){intervals.push([startTs,l.ts]);startTs=null;}
+      });
+      if(startTs) intervals.push([startTs,Date.now()]);
+    });
+    intervals.sort((a,b)=>a[0]-b[0]);
+    const merged=intervals.length?[[...intervals[0]]]:[];
+    for(let i=1;i<intervals.length;i++){
+      const last=merged[merged.length-1];
+      if(intervals[i][0]<=last[1]) last[1]=Math.max(last[1],intervals[i][1]);
+      else merged.push([...intervals[i]]);
+    }
+    const workerTotalMs=merged.reduce((s,[a,b])=>s+(b-a),0);
+    const wHrsStr=workerTotalMs>0?fmtElapsed(workerTotalMs):'—';
     return `<tr>
       <td style="font-weight:600">${esc(n)}</td>
       <td style="font-family:var(--mono)">${codeSet.size}</td>
       <td style="font-family:var(--mono)">${wHrsStr}</td>
       <td style="font-family:var(--mono);color:var(--green)">${totalQty>0?totalQty.toLocaleString()+' EA':'—'}</td>
-      <td><span class="badge ${isWorking?'badge-green':activeCodes.length?'badge-amber':'badge-gray'}">${isWorking?'작업중':activeCodes.length?'정지':'대기'}</span></td>
+      <td><span class="badge ${isWorking?'badge-green':activeCodes.length?'badge-blue':'badge-gray'}">${isWorking?'작업중':activeCodes.length?'정지':'대기'}</span></td>
     </tr>`;
   }).join('');
 }
@@ -2814,7 +2863,7 @@ function renderDailyReport(dateStr){
   if(wtbl){
     const allRows=[];
     // 해당 날짜 휴무 작업자 맨 위에 표시
-    const offWorkers=Object.values(cachedOffdays||{}).filter(o=>o.date===dateStr);
+    const offWorkers=Object.values(cachedOffdays||{}).filter(o=>o.date===dateStr&&cachedNames.some(n=>n.toLowerCase()===o.worker.toLowerCase()));
     offWorkers.forEach(o=>{
       allRows.push(`<tr style="background:rgba(239,68,68,.05)">
         <td colspan="4" style="font-size:12px;color:var(--red)">🏖 ${esc(o.worker)} 휴무${o.reason?' ('+esc(o.reason)+')':''}</td>
@@ -3392,21 +3441,16 @@ window.deleteAllPlans = async function() {
     }
     cachedPlans = {};
 
-    // 2. states 전체 삭제 (작업자별)
-    const stateWorkers = Object.keys(cachedStates);
-    for(const worker of stateWorkers) {
+    // 2. states + logs: cachedNames + cachedLogs 키 합집합으로 전체 삭제
+    const allWorkers=[...new Set([...cachedNames, ...Object.keys(cachedStates), ...Object.keys(cachedLogs||{}).filter(w=>w!=='__system__')])];
+    for(const worker of allWorkers) {
       await fetch('/api/states', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({worker})}).catch(()=>{});
-    }
-    cachedStates = {};
-
-    // 3. logs 전체 삭제 (cachedNames 기준 + cachedLogs에 있는 모든 작업자)
-    const logWorkers = [...new Set([...Object.keys(cachedLogs||{}).filter(w=>w!=='__system__'), ...cachedNames])];
-    for(const worker of logWorkers) {
       await fetch('/api/logs', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({worker})}).catch(()=>{});
     }
+    cachedStates = {};
     cachedLogs = {};
 
-    // 4. offdays 전체 삭제
+    // 3. offdays 전체 삭제
     const offdayIds = Object.keys(cachedOffdays||{});
     for(const id of offdayIds) {
       await fetch('/api/offdays', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})}).catch(()=>{});
