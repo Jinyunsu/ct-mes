@@ -848,6 +848,16 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <button class="btn btn-primary btn-sm" style="margin-top:14px">저장</button>
         </div>
         <div class="card">
+          <div class="card-title"><i class="ti ti-lock"></i> 비밀번호 설정</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div><label class="label">현재 비밀번호</label><input class="input" type="password" id="pw-current" placeholder="현재 비밀번호 입력"></div>
+            <div><label class="label">신규 비밀번호</label><input class="input" type="password" id="pw-new" placeholder="신규 비밀번호 입력"></div>
+            <div><label class="label">신규 비밀번호 확인</label><input class="input" type="password" id="pw-confirm" placeholder="신규 비밀번호 재입력"></div>
+            <div id="pw-change-err" style="font-size:12px;color:var(--red);min-height:16px"></div>
+            <button class="btn btn-primary btn-sm" onclick="changeResetPassword()"><i class="ti ti-check"></i> 비밀번호 변경</button>
+          </div>
+        </div>
+        <div class="card">
           <div class="card-title"><i class="ti ti-database"></i> 데이터 관리</div>
           <div style="display:flex;flex-direction:column;gap:8px">
             <button class="btn btn-secondary" style="justify-content:flex-start"><i class="ti ti-download"></i> 전체 데이터 내보내기 (CSV)</button>
@@ -3162,7 +3172,29 @@ window.shipPlan = async function(id) {
 };
 
 /* ══ 전체 기록 삭제 ══ */
-const RESET_PASSWORD = 'ctns2026!'; // 관리자 비밀번호
+const DEFAULT_RESET_PASSWORD = 'ctns0112!';
+function getResetPassword() {
+  return localStorage.getItem('mes_reset_pw') || DEFAULT_RESET_PASSWORD;
+}
+
+window.changeResetPassword = function() {
+  const cur = document.getElementById('pw-current').value;
+  const nw = document.getElementById('pw-new').value;
+  const cf = document.getElementById('pw-confirm').value;
+  const errEl = document.getElementById('pw-change-err');
+  if(cur !== getResetPassword()) { errEl.textContent = '현재 비밀번호가 올바르지 않습니다'; return; }
+  if(!nw) { errEl.textContent = '신규 비밀번호를 입력하세요'; return; }
+  if(nw.length < 4) { errEl.textContent = '비밀번호는 4자 이상이어야 합니다'; return; }
+  if(nw !== cf) { errEl.textContent = '신규 비밀번호가 일치하지 않습니다'; return; }
+  localStorage.setItem('mes_reset_pw', nw);
+  errEl.style.color = 'var(--green)';
+  errEl.textContent = '✅ 비밀번호가 변경되었습니다';
+  document.getElementById('pw-current').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  setTimeout(()=>{ errEl.textContent=''; errEl.style.color='var(--red)'; }, 3000);
+};
+
 window.openResetModal = function() {
   document.getElementById('reset-pw').value = '';
   document.getElementById('reset-pw-err').textContent = '';
@@ -3172,7 +3204,7 @@ window.openResetModal = function() {
 window.confirmResetPw = function() {
   const pw = document.getElementById('reset-pw').value;
   const errEl = document.getElementById('reset-pw-err');
-  if(pw !== RESET_PASSWORD) { errEl.textContent = '비밀번호가 올바르지 않습니다'; return; }
+  if(pw !== getResetPassword()) { errEl.textContent = '비밀번호가 올바르지 않습니다'; return; }
   errEl.textContent = '';
   closeModal('reset-modal');
   if(!confirm('⚠️ 생산계획의 모든 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
@@ -3183,12 +3215,10 @@ window.deleteAllPlans = async function() {
   _pollingLocked = true;
   showToast('전체 데이터 삭제 중...');
   try {
-    // 모든 계획 ID 수집 후 순차 삭제
     const planIds = Object.keys(cachedPlans);
     for(const id of planIds) {
       await fetch('/api/plans', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})});
     }
-    // 전체 재로드
     cachedPlans = {};
     cachedStates = {};
     cachedLogs = {};
