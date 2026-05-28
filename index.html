@@ -490,7 +490,6 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="ph-left"><div class="page-title">생산계획</div><div class="page-desc">작업지시 등록 및 계획 관리</div></div>
         <div class="ph-right">
           <button class="btn btn-secondary btn-sm"><i class="ti ti-download"></i> CSV</button>
-          <button class="btn btn-primary" onclick="openModal('plan-modal')"><i class="ti ti-plus"></i> 신규 등록</button>
         </div>
       </div>
       <div class="metrics">
@@ -504,6 +503,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div class="card-title" style="margin:0"><i class="ti ti-list-details"></i> 생산계획 목록</div>
           <div style="display:flex;align-items:center;gap:8px">
+            <button class="btn btn-primary btn-sm" onclick="openModal('plan-modal')"><i class="ti ti-plus"></i> 신규 등록</button>
             <input id="plan-filter-date" type="month" class="input" style="width:auto;font-size:12px;padding:5px 10px" onchange="filterPlanTable()">
             <input id="plan-filter-code" class="input" style="width:120px;font-size:12px" placeholder="작업코드 검색" oninput="filterPlanTable()">
             <input id="plan-filter-customer" class="input" style="width:100px;font-size:12px" placeholder="고객사 검색" oninput="filterPlanTable()">
@@ -935,23 +935,13 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       <i class="ti ti-info-circle"></i> 수정 중: <strong id="edit-plan-id-label"></strong>
     </div>
     <div class="form-grid">
-      <div><label class="label">작업코드</label><input id="ef-code" class="input" placeholder="예) B26-0172"></div>
-      <div><label class="label">작업일자 *</label><input id="ef-date" class="input" type="date"></div>
+      <div><label class="label">작업코드 *</label><input id="ef-code" class="input" placeholder="예) B26-0172"></div>
+      <div><label class="label">등록일자</label><input id="ef-date" class="input" type="date" readonly style="background:var(--bg3);color:var(--text3);cursor:default"></div>
       <div><label class="label">제품코드</label><input id="ef-pcode" class="input" placeholder="예) P-2024-001"></div>
       <div><label class="label">계획수량 (EA) *</label><input id="ef-qty" class="input" type="number" placeholder="0" min="1"></div>
       <div class="full"><label class="label">제품사양</label><input id="ef-spec" class="input" placeholder="예) 200x300x50mm, SUS304"></div>
       <div><label class="label">고객사</label><input id="ef-customer" class="input" placeholder="예) 현대자동차"></div>
-      <div><label class="label">생산계획일</label><input id="ef-date" class="input" type="date"></div>
       <div><label class="label">납기일자</label><input id="ef-duedate" class="input" type="date"></div>
-      <div><label class="label">상태</label>
-        <select id="ef-status" class="input">
-          <option value="planned">예정</option>
-          <option value="waiting">대기</option>
-          <option value="running">작업중</option>
-          <option value="done">완료</option>
-          <option value="failed">미달성</option>
-        </select>
-      </div>
       <div><label class="label">비고</label><input id="ef-remark" class="input" placeholder="특이사항"></div>
     </div>
     <div class="modal-btns">
@@ -2723,30 +2713,25 @@ window.openEditPlanModal = function(id) {
   document.getElementById('ef-qty').value = p.planQty||'';
   document.getElementById('ef-spec').value = p.spec||'';
   document.getElementById('ef-customer').value = p.customer||'';
-  document.getElementById('ef-status').value = p.status||'planned';
   document.getElementById('ef-remark').value = p.remark||'';
   document.getElementById('ef-duedate').value = p.dueDate||'';
   openModal('plan-edit-modal');
-  setTimeout(() => document.getElementById('ef-date').focus(), 150);
+  setTimeout(() => document.getElementById('ef-code').focus(), 150);
 };
 
 window.submitEditPlan = async function() {
   if(!editingPlanId) { showToast('계획 ID 없음'); return; }
-  const date = document.getElementById('ef-date').value;
   const qty = Number(document.getElementById('ef-qty').value)||0;
-  if(!date) { showToast('작업일자를 선택하세요'); return; }
   if(qty <= 0) { showToast('계획수량을 입력하세요'); return; }
   const p = cachedPlans[editingPlanId] || Object.values(cachedPlans).find(x => x.id === editingPlanId);
   const data = {
     ...p,
     id: editingPlanId,
     code: document.getElementById('ef-code').value.trim(),
-    date,
     planQty: qty,
     productCode: document.getElementById('ef-pcode').value.trim(),
     spec: document.getElementById('ef-spec').value.trim(),
     customer: document.getElementById('ef-customer').value.trim(),
-    status: document.getElementById('ef-status').value,
     remark: document.getElementById('ef-remark').value.trim(),
     dueDate: document.getElementById('ef-duedate')?.value||'',
   };
