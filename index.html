@@ -1517,16 +1517,16 @@ window.doAction=async function(code,action,qty=0,partialEnd=false){
   cachedLogs[currentUser][newLog.ts]=newLog;
   renderJobs(); renderLogs();
   startJobTimer();
-  // 폴링 완전 중단 (작업 완료까지)
-  if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
-  _pollingLocked=true;
 
-  // 1. 로그 저장 먼저 완료
-  await API.post('/api/logs',newLog);
+  // 1. 로그 저장 (폴링 락 없이 바로)
+  fetch('/api/logs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(newLog)}).catch(()=>{});
 
   if(action==='end'){
+    // end만 폴링 중단 (plans 업데이트 때문에)
+    if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
+    _pollingLocked=true;
     // 2. states 삭제
-    await API.del('/api/states',{worker:currentUser,code});
+    await fetch('/api/states',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({worker:currentUser,code})});
     // 3. 계획 실적수량 업데이트
     if(qty>0){
       const match=Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase()&&getPlanStatus(p)!=='done')
@@ -1541,24 +1541,21 @@ window.doAction=async function(code,action,qty=0,partialEnd=false){
           const isDone=newActQty>=planQty;
           const updated={...plan,id:pid,actQty:newActQty,status:isDone?'done':plan.status};
           cachedPlans[pid]={...updated};
-          const res=await API.put('/api/plans',updated);
+          const r=await fetch('/api/plans',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)});
+          const res=await r.json();
           if(res) cachedPlans=res;
         }
       }
     }
+    refreshUI();
+    restartPollingDelayed(2000);
   } else {
-    // start/pause: states 저장 (응답으로 전체 덮어쓰지 않고 해당 작업자만 업데이트)
-    const res=await API.post('/api/states',{worker:currentUser,code,action,since:timeStr,date:dateStr});
-    if(res){
-      const normalized=normalizeStates(res);
-      // 현재 작업자 states만 업데이트
-      Object.assign(cachedStates, normalized);
-    }
+    // start/pause: 폴링 락 없이 바로 저장
+    fetch('/api/states',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({worker:currentUser,code,action,since:timeStr,date:dateStr})})
+      .then(r=>r.json()).then(res=>{
+        if(res){ Object.assign(cachedStates, normalizeStates(res)); renderWorkerGrid(); }
+      }).catch(()=>{});
   }
-
-  refreshUI();
-  // 모든 저장 완료 후 폴링 재시작 (딜레이로 덮어쓰기 방지)
-  restartPollingDelayed(2000);
   const lbls={start:'▶ 시작',pause:'⏸ 정지',end:'■ 종료'};
   showToast(`[${code}] ${lbls[action]}${qty>0?' ('+qty+'EA)':''}`);
 };
