@@ -853,7 +853,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
             <button class="btn btn-secondary" style="justify-content:flex-start"><i class="ti ti-download"></i> 전체 데이터 내보내기 (CSV)</button>
             <button class="btn btn-secondary" style="justify-content:flex-start"><i class="ti ti-download"></i> 작업 로그 내보내기</button>
             <button class="btn btn-secondary" style="justify-content:flex-start"><i class="ti ti-download"></i> 생산계획 내보내기</button>
-            <button class="btn btn-danger" style="justify-content:flex-start;margin-top:4px"><i class="ti ti-trash"></i> 전체 기록 삭제</button>
+            <button class="btn btn-danger" style="justify-content:flex-start;margin-top:4px" onclick="openResetModal()"><i class="ti ti-trash"></i> 전체 기록 삭제</button>
           </div>
         </div>
         <div class="card">
@@ -870,6 +870,23 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 
   </div><!-- content -->
 </div><!-- main-wrap -->
+
+<!-- 전체 기록 삭제 모달 -->
+<div class="modal-overlay" id="reset-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-title" style="color:var(--red)"><i class="ti ti-alert-triangle"></i> 전체 기록 삭제 <button class="modal-close" onclick="closeModal('reset-modal')"><i class="ti ti-x"></i></button></div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">생산계획의 <strong>모든 데이터</strong>가 영구 삭제됩니다.<br>삭제된 데이터는 복구할 수 없습니다.</div>
+    <div class="form-group">
+      <label class="label">관리자 비밀번호</label>
+      <input class="input" type="password" id="reset-pw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')confirmResetPw()">
+    </div>
+    <div id="reset-pw-err" style="font-size:12px;color:var(--red);min-height:16px;margin-top:-8px;margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('reset-modal')">취소</button>
+      <button class="btn btn-danger" onclick="confirmResetPw()"><i class="ti ti-lock-open"></i> 확인</button>
+    </div>
+  </div>
+</div>
 
 <!-- 생산계획 등록 모달 -->
 <div class="modal-overlay" id="plan-modal">
@@ -3141,6 +3158,45 @@ window.shipPlan = async function(id) {
     refreshUI();
     showToast(`[${plan.code}] 출하완료 처리됨 (${shippedAt})`);
   } else showToast('처리 실패');
+  restartPollingDelayed(2000);
+};
+
+/* ══ 전체 기록 삭제 ══ */
+const RESET_PASSWORD = 'ctns2026!'; // 관리자 비밀번호
+window.openResetModal = function() {
+  document.getElementById('reset-pw').value = '';
+  document.getElementById('reset-pw-err').textContent = '';
+  openModal('reset-modal');
+  setTimeout(()=>document.getElementById('reset-pw').focus(), 150);
+};
+window.confirmResetPw = function() {
+  const pw = document.getElementById('reset-pw').value;
+  const errEl = document.getElementById('reset-pw-err');
+  if(pw !== RESET_PASSWORD) { errEl.textContent = '비밀번호가 올바르지 않습니다'; return; }
+  errEl.textContent = '';
+  closeModal('reset-modal');
+  if(!confirm('⚠️ 생산계획의 모든 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+  deleteAllPlans();
+};
+window.deleteAllPlans = async function() {
+  if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
+  _pollingLocked = true;
+  showToast('전체 데이터 삭제 중...');
+  try {
+    // 모든 계획 ID 수집 후 순차 삭제
+    const planIds = Object.keys(cachedPlans);
+    for(const id of planIds) {
+      await fetch('/api/plans', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})});
+    }
+    // 전체 재로드
+    cachedPlans = {};
+    cachedStates = {};
+    cachedLogs = {};
+    refreshUI();
+    showToast('✅ 모든 데이터가 삭제되었습니다');
+  } catch(e) {
+    showToast('삭제 중 오류가 발생했습니다');
+  }
   restartPollingDelayed(2000);
 };
 
