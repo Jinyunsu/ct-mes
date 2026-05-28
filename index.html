@@ -109,6 +109,7 @@ body{display:flex;overflow:hidden}
 
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
 .metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px;position:relative;overflow:hidden}
+.metric-value-row{display:flex;align-items:baseline;gap:4px;margin-top:4px}
 .metric::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .metric.blue::after{background:linear-gradient(90deg,var(--accent),transparent)}
 .metric.green::after{background:linear-gradient(90deg,var(--green),transparent)}
@@ -117,8 +118,8 @@ body{display:flex;overflow:hidden}
 .metric.purple::after{background:linear-gradient(90deg,var(--purple),transparent)}
 .metric.cyan::after{background:linear-gradient(90deg,var(--cyan),transparent)}
 .metric-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
-.metric-value{font-size:22px;font-weight:900;color:var(--text);font-family:var(--mono);line-height:1}
-.metric-sub{font-size:10px;color:var(--text3);margin-top:5px}
+.metric-value{font-size:22px;font-weight:900;color:var(--text);font-family:var(--mono);line-height:1;display:inline}
+.metric-sub{font-size:13px;color:var(--text2);margin-left:4px;font-weight:500;display:inline;font-family:var(--font)}
 .metric-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:28px;opacity:.06}
 
 .btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);display:inline-flex;align-items:center;gap:5px;transition:all .15s;border:none}
@@ -441,12 +442,12 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="ph-right"><div class="chip chip-live"><i class="ti ti-wifi" style="font-size:11px"></i> 실시간</div></div>
       </div>
       <div class="metrics">
-        <div class="metric blue"><div class="metric-icon"><i class="ti ti-clipboard-list"></i></div><div class="metric-label">금일 작업지시</div><div class="metric-value" id="d-plan">—</div><div class="metric-sub">건</div></div>
-        <div class="metric green"><div class="metric-icon"><i class="ti ti-player-play"></i></div><div class="metric-label">현재 작업중</div><div class="metric-value" id="d-running">—</div><div class="metric-sub">명</div></div>
-        <div class="metric amber"><div class="metric-icon"><i class="ti ti-target"></i></div><div class="metric-label">금일 달성률</div><div class="metric-value" id="d-rate">—</div><div class="metric-sub">%</div></div>
-        <div class="metric cyan"><div class="metric-icon"><i class="ti ti-clock"></i></div><div class="metric-label">총 작업시간</div><div class="metric-value" id="d-hours">—</div><div class="metric-sub">hr</div></div>
-        <div class="metric purple"><div class="metric-icon"><i class="ti ti-package"></i></div><div class="metric-label">금일 생산수량</div><div class="metric-value" id="d-qty">—</div><div class="metric-sub">EA</div></div>
-        <div class="metric red"><div class="metric-icon"><i class="ti ti-alert-triangle"></i></div><div class="metric-label">불량 건수</div><div class="metric-value" id="d-defect">—</div><div class="metric-sub">건</div></div>
+        <div class="metric blue"><div class="metric-icon"><i class="ti ti-clipboard-list"></i></div><div class="metric-label">금일 작업지시</div><div class="metric-value-row"><div class="metric-value" id="d-plan">—</div><span class="metric-sub">건</span></div></div>
+        <div class="metric green"><div class="metric-icon"><i class="ti ti-player-play"></i></div><div class="metric-label">현재 작업중</div><div class="metric-value-row"><div class="metric-value" id="d-running">—</div><span class="metric-sub">명</span></div></div>
+        <div class="metric amber"><div class="metric-icon"><i class="ti ti-target"></i></div><div class="metric-label">금일 달성률</div><div class="metric-value-row"><div class="metric-value" id="d-rate">—</div><span class="metric-sub">%</span></div></div>
+        <div class="metric cyan"><div class="metric-icon"><i class="ti ti-clock"></i></div><div class="metric-label">총 작업시간</div><div class="metric-value-row"><div class="metric-value" id="d-hours">—</div><span class="metric-sub">hr</span></div></div>
+        <div class="metric purple"><div class="metric-icon"><i class="ti ti-package"></i></div><div class="metric-label">금일 생산수량</div><div class="metric-value-row"><div class="metric-value" id="d-qty">—</div><span class="metric-sub">EA</span></div></div>
+        <div class="metric red"><div class="metric-icon"><i class="ti ti-alert-triangle"></i></div><div class="metric-label">불량 건수</div><div class="metric-value-row"><div class="metric-value" id="d-defect">—</div><span class="metric-sub">건</span></div></div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -494,9 +495,9 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       </div>
       <div class="metrics">
         <div class="metric blue"><div class="metric-label">총 계획 건수</div><div class="metric-value">—</div></div>
-        <div class="metric"><div class="metric-label">계획수량 합계</div><div class="metric-value">—</div><div class="metric-sub">EA</div></div>
-        <div class="metric green"><div class="metric-label">실적수량 합계</div><div class="metric-value">—</div><div class="metric-sub">EA</div></div>
-        <div class="metric amber"><div class="metric-label">전체 달성률</div><div class="metric-value">—</div><div class="metric-sub">%</div></div>
+        <div class="metric"><div class="metric-label">계획수량 합계</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">EA</span></div></div>
+        <div class="metric green"><div class="metric-label">실적수량 합계</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">EA</span></div></div>
+        <div class="metric amber"><div class="metric-label">전체 달성률</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">%</span></div></div>
       </div>
       <!-- 목록 먼저 -->
       <div class="card" style="margin-bottom:14px">
@@ -554,9 +555,9 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       </div>
       <div class="metrics">
         <div class="metric green"><div class="metric-label">작업중 코드</div><div class="metric-value">—</div></div>
-        <div class="metric blue"><div class="metric-label">투입 인원</div><div class="metric-value">—</div><div class="metric-sub">명</div></div>
-        <div class="metric"><div class="metric-label">오늘 완료</div><div class="metric-value">—</div><div class="metric-sub">코드</div></div>
-        <div class="metric amber"><div class="metric-label">지연 작업</div><div class="metric-value">—</div><div class="metric-sub">건</div></div>
+        <div class="metric blue"><div class="metric-label">투입 인원</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">명</span></div></div>
+        <div class="metric"><div class="metric-label">오늘 완료</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">코드</span></div></div>
+        <div class="metric amber"><div class="metric-label">지연 작업</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">건</span></div></div>
       </div>
       <div class="card" style="margin-bottom:14px">
         <div class="card-title"><i class="ti ti-activity"></i> 실시간 작업현황</div>
@@ -599,11 +600,11 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       </div>
       <div class="metrics">
         <div class="metric blue"><div class="metric-label">완료 코드 수</div><div class="metric-value">—</div></div>
-        <div class="metric green"><div class="metric-label">총 생산수량</div><div class="metric-value">—</div><div class="metric-sub">EA</div></div>
-        <div class="metric amber"><div class="metric-label">평균 달성률</div><div class="metric-value">—</div><div class="metric-sub">%</div></div>
-        <div class="metric cyan"><div class="metric-label">총 작업시간</div><div class="metric-value">—</div><div class="metric-sub">hr</div></div>
-        <div class="metric purple"><div class="metric-label">1인당 생산성</div><div class="metric-value">—</div><div class="metric-sub">EA/hr</div></div>
-        <div class="metric red"><div class="metric-label">불량률</div><div class="metric-value">—</div><div class="metric-sub">%</div></div>
+        <div class="metric green"><div class="metric-label">총 생산수량</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">EA</span></div></div>
+        <div class="metric amber"><div class="metric-label">평균 달성률</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">%</span></div></div>
+        <div class="metric cyan"><div class="metric-label">총 작업시간</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">hr</span></div></div>
+        <div class="metric purple"><div class="metric-label">1인당 생산성</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">EA/hr</span></div></div>
+        <div class="metric red"><div class="metric-label">불량률</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">%</span></div></div>
       </div>
       <div class="grid-2" style="margin-bottom:14px">
         <div class="card">
@@ -656,10 +657,10 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="ph-left"><div class="page-title">작업자 현황</div><div class="page-desc">작업자 투입시간 및 실적 현황</div></div>
       </div>
       <div class="metrics">
-        <div class="metric blue"><div class="metric-label">전체 작업자</div><div class="metric-value" id="wm-total">—</div><div class="metric-sub">명</div></div>
-        <div class="metric green"><div class="metric-label">현재 작업중</div><div class="metric-value" id="wm-running">—</div><div class="metric-sub">명</div></div>
-        <div class="metric"><div class="metric-label">오늘 투입</div><div class="metric-value" id="wm-today">—</div><div class="metric-sub">명</div></div>
-        <div class="metric cyan"><div class="metric-label">평균 투입시간</div><div class="metric-value" id="wm-avg">—</div><div class="metric-sub">hr</div></div>
+        <div class="metric blue"><div class="metric-label">전체 작업자</div><div class="metric-value-row"><div class="metric-value" id="wm-total">—</div><span class="metric-sub">명</span></div></div>
+        <div class="metric green"><div class="metric-label">현재 작업중</div><div class="metric-value-row"><div class="metric-value" id="wm-running">—</div><span class="metric-sub">명</span></div></div>
+        <div class="metric"><div class="metric-label">오늘 투입</div><div class="metric-value-row"><div class="metric-value" id="wm-today">—</div><span class="metric-sub">명</span></div></div>
+        <div class="metric cyan"><div class="metric-label">평균 투입시간</div><div class="metric-value-row"><div class="metric-value" id="wm-avg">—</div><span class="metric-sub">hr</span></div></div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -695,9 +696,9 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   <!-- KPI -->
   <div class="metrics">
     <div class="metric blue"><div class="metric-label">총 계획건수</div><div class="metric-value" id="or-cnt">—</div></div>
-    <div class="metric green"><div class="metric-label">총 계획수량</div><div class="metric-value" id="or-planqty">—</div><div class="metric-sub">EA</div></div>
-    <div class="metric amber"><div class="metric-label">총 실적수량</div><div class="metric-value" id="or-actqty">—</div><div class="metric-sub">EA</div></div>
-    <div class="metric red"><div class="metric-label">전체 달성률</div><div class="metric-value" id="or-rate">—</div><div class="metric-sub">%</div></div>
+    <div class="metric green"><div class="metric-label">총 계획수량</div><div class="metric-value-row"><div class="metric-value" id="or-planqty">—</div><span class="metric-sub">EA</span></div></div>
+    <div class="metric amber"><div class="metric-label">총 실적수량</div><div class="metric-value-row"><div class="metric-value" id="or-actqty">—</div><span class="metric-sub">EA</span></div></div>
+    <div class="metric red"><div class="metric-label">전체 달성률</div><div class="metric-value-row"><div class="metric-value" id="or-rate">—</div><span class="metric-sub">%</span></div></div>
   </div>
   <!-- 탭 버튼 -->
   <div style="display:flex;gap:3px;margin-bottom:16px;background:var(--bg3);padding:4px;border-radius:10px;width:fit-content;border:1px solid var(--border)">
@@ -2274,8 +2275,11 @@ function renderProgress(){
       const rows=[];
       activeCodes.forEach((info,code)=>{
         const plan=plans.find(p=>p.code===code)||{code,planQty:0,actQty:0,customer:'—',productCode:'—',spec:'—'};
-        // 완료된 계획은 activeCodes에서 제외 (아래 완료 섹션에서 처리)
+        // 완료된 계획은 아래 완료 섹션에서 처리
         if(getPlanStatus(plan)==='done'||plan.status==='done') return;
+        // 오늘 날짜 계획이 아니고 실제 로그도 없으면 표시 안 함 (잔존 states 제거)
+        const hasLog=Object.values(cachedLogs||{}).some(wl=>Object.values(wl||{}).some(l=>l.code===code&&new Date(l.ts).toISOString().slice(0,10)===today));
+        if(plan.date!==today && !hasLog) return;
         const pct=plan.planQty>0?Math.round((plan.actQty||0)/plan.planQty*100):0;
         const hrs=calcWorkHours(code);
         const wSet=new Set(info.workers);
