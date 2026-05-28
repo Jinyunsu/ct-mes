@@ -1036,15 +1036,17 @@ initAuth();
 /* ══ API ══ */
 const API = {
   async get(p) { try { const r=await fetch(p); return r.json(); } catch(e) { return null; } },
-  async post(p,b) { try { const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); return r.json(); } catch(e) { return null; } },
-  async put(p,b) { try { const r=await fetch(p,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); return r.json(); } catch(e) { return null; } },
-  async del(p,b) { try { const r=await fetch(p,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); return r.json(); } catch(e) { return null; } }
+  async post(p,b) { _pollingLocked=true; try { const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); const j=await r.json(); _pollingLocked=false; return j; } catch(e) { _pollingLocked=false; return null; } },
+  async put(p,b) { _pollingLocked=true; try { const r=await fetch(p,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); const j=await r.json(); _pollingLocked=false; return j; } catch(e) { _pollingLocked=false; return null; } },
+  async del(p,b) { _pollingLocked=true; try { const r=await fetch(p,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); return r.json(); } catch(e) { return null; } }
 };
 
 let cachedNames=[], cachedStates={}, cachedPlans={}, cachedLogs={};
 let pollingTimer=null;
+let _pollingLocked=false; // 작업 중 폴링 잠금
 
 async function loadAll() {
+  if(_pollingLocked) return; // 작업 중이면 스킵
   try {
     const [n,s,p,l] = await Promise.all([
       API.get('/api/names'),
