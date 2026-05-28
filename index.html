@@ -305,9 +305,9 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   .page-title { font-size: 18px !important; }
   .worker-card { min-height: 80px !important; }
   .wc-avatar { width: 44px !important; height: 44px !important; font-size: 18px !important; }
-  .job-card { padding: 12px !important; }
-  .job-btns { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
-  .job-btns button { padding: 14px 8px !important; font-size: 13px !important; }
+  .job-card { padding: 10px !important; }
+  .job-btns { display: flex !important; flex-direction: row !important; gap: 4px !important; }
+  .job-btns button { flex: 1 !important; padding: 7px 2px !important; font-size: 10px !important; gap: 2px !important; white-space: nowrap !important; min-width: 0 !important; }
   .worker-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important; gap: 8px !important; }
   .metric-value { font-size: 22px !important; }
   input, select, .input { font-size: 16px !important; } /* iOS 줌 방지 */
@@ -3053,8 +3053,8 @@ window.printDailyReport = function() {
   .worker-card { min-height: 80px !important; }
   .wc-avatar { width: 44px !important; height: 44px !important; font-size: 18px !important; }
   .job-card { padding: 12px !important; }
-  .job-btns { grid-template-columns: 1fr 1fr 1fr !important; gap: 4px !important; }
-  .job-btns button { padding: 6px 4px !important; font-size: 10px !important; gap: 2px !important; white-space: nowrap !important; }
+  .job-btns { display: flex !important; flex-direction: row !important; gap: 4px !important; }
+  .job-btns button { flex: 1 !important; padding: 7px 2px !important; font-size: 10px !important; gap: 2px !important; white-space: nowrap !important; min-width: 0 !important; }
   .job-btns button i { font-size: 10px !important; }
   .worker-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
   div#worker-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
