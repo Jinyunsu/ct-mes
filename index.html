@@ -1580,7 +1580,6 @@ window.openQty=function(c){
       const inp=document.getElementById('qty-inp');
       inp.max=0; inp.value='0'; inp.placeholder='0';
     } else {
-    } else {
       hintEl.textContent=`계획: ${plan.planQty}EA / 기완료: ${already}EA / 잔여: ${remaining}EA`;
       hintEl.style.color='var(--amber)';
       const inp=document.getElementById('qty-inp');
