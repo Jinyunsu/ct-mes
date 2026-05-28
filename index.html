@@ -248,7 +248,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 
 /* ══ 달력 ══ */
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cal-day{min-height:80px;padding:5px;background:var(--bg3);border-radius:7px;border:1px solid var(--border);cursor:pointer;transition:background .15s;position:relative;overflow:visible}
+.cal-day{min-height:90px;padding:5px;background:var(--bg3);border-radius:7px;border:1px solid var(--border);cursor:pointer;transition:background .15s;position:relative;overflow:visible}
 .cal-day:hover{background:var(--bg4)}
 .cal-day.today{border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.06)}
 .cal-num{font-size:11px;font-weight:700;margin-bottom:3px}
@@ -2036,8 +2036,19 @@ function renderCalendar(){
     const dow=new Date(calYear,calMonth,d).getDay();
     const dc=dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text2)';
     const offWorkers=Object.values(cachedOffdays||{}).filter(o=>o.date===ds);
-    const offHtml=offWorkers.map(o=>`<div style="font-size:9px;background:rgba(239,68,68,.12);color:var(--red);border-radius:3px;padding:1px 4px;margin-top:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🏖 ${esc(o.worker)}${o.reason?` (${esc(o.reason)})`:''}</div>`).join('');
-    cellsHtml+=`<div class="cal-day${isToday?' today':''}" style="position:relative;min-height:80px"
+    const offHtml=offWorkers.map(o=>`<div style="font-size:9px;background:rgba(239,68,68,.12);color:var(--red);border-radius:3px;padding:1px 4px;margin-top:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🏖 ${esc(o.worker)}${o.reason?` (${esc(o.reason)})`:''}</div>`).join('');
+    // 해당 날짜 포함 계획 툴팁
+    const dayPlans=Object.values(cachedPlans).filter(p=>{
+      if(!p.date||p.status==='shipped') return false;
+      const st=getPlanStatus(p);
+      const eDs=todayDs>p.date?todayDs:p.date;
+      return p.date<=ds&&ds<=eDs;
+    });
+    const tooltipTxt=[
+      ...dayPlans.map(p=>`${p.code}${p.customer?' ('+p.customer+')':''} | ${p.planQty||0}EA | ${getPlanStatus(p)==='done'?'완료':getPlanStatus(p)==='running'?'작업중':getPlanStatus(p)==='waiting'?'대기':getPlanStatus(p)==='failed'?'미달성':'예정'}`),
+      ...offWorkers.map(o=>`🏖 ${o.worker}${o.reason?' ('+o.reason+')':''}`)
+    ].join('\n');
+    cellsHtml+=`<div class="cal-day${isToday?' today':''}" style="position:relative;min-height:90px" title="${tooltipTxt}"
       ondragover="event.preventDefault();event.currentTarget.style.background='rgba(59,130,246,.18)'"
       ondragleave="event.currentTarget.style.background=''"
       ondrop="onCalDrop(event,'${ds}');event.currentTarget.style.background=''">
@@ -2068,38 +2079,57 @@ function renderCalendar(){
     const visEnd=endDs>monthEnd?monthEnd:endDs;
     if(visStart>monthEnd||visEnd<monthStart)return;
 
-    // 주 단위로 바 분할
+  // 날짜별 레인 사용 추적 { 'YYYY-MM-DD': [planCode, ...] }
+  const lanemap={}; // { 'YYYY-MM-DD_lane': planCode }
+  function getLane(ds, code){
+    for(let lane=0;lane<8;lane++){
+      const key=`${ds}_${lane}`;
+      if(!lanemap[key]){ lanemap[key]=code; return lane; }
+    }
+    return 0;
+  }
+
+  plans.forEach((p,pi)=>{
+    const st=getPlanStatus(p);
+    if(st==='shipped') return;
+    const col=statusColor[st]||statusColor.planned;
+    const startDs=p.date;
+    if(!startDs) return;
+    const endDs=todayDs>startDs?todayDs:startDs;
+    const monthStart=`${calYear}-${String(calMonth+1).padStart(2,'0')}-01`;
+    const monthEnd=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(lastDate).padStart(2,'0')}`;
+    const visStart=startDs<monthStart?monthStart:startDs;
+    const visEnd=endDs>monthEnd?monthEnd:endDs;
+    if(visStart>monthEnd||visEnd<monthStart)return;
+
+    // 레인 결정: visStart 기준
+    const lane=getLane(visStart, p.code);
+    if(lane>=3) return; // 최대 3개만 표시
+
     let curDs=visStart;
     while(curDs<=visEnd){
       const curD=parseInt(curDs.slice(8),10);
       const curDow=new Date(calYear,calMonth,curD).getDay();
-      // 이 주 끝
       const daysLeft=6-curDow;
       const endOfWeek=new Date(calYear,calMonth,curD+daysLeft);
       const endOfWeekDs=endOfWeek.getFullYear()+'-'+String(endOfWeek.getMonth()+1).padStart(2,'0')+'-'+String(endOfWeek.getDate()).padStart(2,'0');
       const segEnd=visEnd<endOfWeekDs?visEnd:endOfWeekDs;
       const segEndD=parseInt(segEnd.slice(8),10);
-
-      const colStart=firstDay+curD-1; // grid column (1-based for CSS)
+      const colStart=firstDay+curD-1;
       const colEnd=firstDay+segEndD-1;
-      const row=Math.floor(colStart/7);
-
-      // DOM에 바 삽입
       const startCell=grid.children[colStart];
       if(startCell){
-        // 바 레이어 (절대 위치, overflow visible)
-        const barTrack=startCell.querySelector('.cal-bar-track')||startCell;
         const spanCols=colEnd-colStart+1;
-        const isStart=curDs===startDs;
+        const isStart=curDs===visStart;
         const isEnd=segEnd===visEnd;
         const label=`${p.code}${p.customer?` (${p.customer})`:''}`;
+        const topPx=22+(lane*17);
         const bar=document.createElement('div');
-        bar.style.cssText=`position:absolute;left:${isStart?'2px':'-2px'};right:${isEnd?'2px':'-2px'};top:${22+((pi%3)*17)}px;height:14px;background:${col.bg};border:1px solid ${col.border};border-radius:${isStart?'4px':'0px'} ${isEnd?'4px':'0px'} ${isEnd?'4px':'0px'} ${isStart?'4px':'0px'};z-index:2;overflow:hidden;white-space:nowrap;cursor:default;width:calc(${spanCols*100}% + ${(spanCols-1)*2}px)`;
-        bar.title=`${label} | ${p.planQty||0}EA | ${st}`;
+        bar.style.cssText=`position:absolute;left:${isStart?'2px':'-1px'};right:${isEnd?'2px':'-1px'};top:${topPx}px;height:14px;background:${col.bg};border:1px solid ${col.border};border-radius:${isStart?'4px':'0'} ${isEnd?'4px':'0'} ${isEnd?'4px':'0'} ${isStart?'4px':'0'};z-index:${2+lane};overflow:hidden;white-space:nowrap;cursor:default;width:calc(${spanCols*100}% + ${(spanCols-1)*2}px)`;
+        bar.title=`${label} | ${p.planQty||0}EA | ${st==='done'?'완료':st==='running'?'작업중':st==='waiting'?'대기':st==='failed'?'미달성':'예정'}`;
         bar.innerHTML=`<span style="font-size:9px;font-weight:700;color:${col.text};padding:0 4px;line-height:14px;display:block;overflow:hidden;text-overflow:ellipsis">${label}</span>`;
         startCell.appendChild(bar);
       }
-      // 다음 주 시작
       const nextD=segEndD+1;
       if(nextD>lastDate)break;
       curDs=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(nextD).padStart(2,'0')}`;
