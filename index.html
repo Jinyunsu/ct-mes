@@ -473,9 +473,9 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="card">
           <div class="card-title"><i class="ti ti-bell"></i> 알림·이슈</div>
           <div style="display:flex;flex-direction:column;gap:8px">
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">지연 작업</div><div class="kpi-val">0건</div></div><span class="badge badge-amber" style="margin-left:auto">확인필요</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="ti ti-bug"></i></div><div><div class="kpi-label">불량 발생</div><div class="kpi-val">0건</div></div><span class="badge badge-red" style="margin-left:auto">오늘</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div class="kpi-val">0건</div></div><span class="badge badge-green" style="margin-left:auto">금일</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">지연 작업</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge badge-amber" style="margin-left:auto">확인필요</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="ti ti-bug"></i></div><div><div class="kpi-label">납기 초과</div><div class="kpi-val" id="d-alert-overdue">0건</div></div><span class="badge badge-red" style="margin-left:auto">주의</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div class="kpi-val" id="d-alert-done">0건</div></div><span class="badge badge-green" style="margin-left:auto">금일</span></div>
           </div>
         </div>
         <div class="card">
@@ -988,25 +988,19 @@ const msalConfig = {
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 
 async function initAuth() {
-  // 로그인 화면에 로딩 표시
-  const loginErr = document.getElementById('login-err');
-  const loginBtn = document.querySelector('.login-btn');
   try {
     await msalInstance.initialize();
-    // 이미 로그인된 계정 있으면 즉시 진입
-    const accounts = msalInstance.getAllAccounts();
-    if(accounts.length > 0) {
-      setUser(accounts[0]);
-      return;
-    }
-    // 리다이렉트 응답 처리
-    const resp = await msalInstance.handleRedirectPromise();
+    // 리다이렉트 응답과 캐시된 계정 동시 확인
+    const [resp] = await Promise.all([msalInstance.handleRedirectPromise()]);
     if(resp) { setUser(resp.account); return; }
-    // 로그인 필요
+    const accounts = msalInstance.getAllAccounts();
+    if(accounts.length > 0) { setUser(accounts[0]); return; }
+    // 로그인 버튼 활성화
+    const loginBtn = document.querySelector('.login-btn');
     if(loginBtn) loginBtn.disabled = false;
   } catch(e) {
+    const loginErr = document.getElementById('login-err');
     if(loginErr) loginErr.textContent = '오류: ' + e.message;
-    if(loginBtn) loginBtn.disabled = false;
   }
 }
 
@@ -1058,20 +1052,10 @@ async function loadAll() {
       API.get('/api/plans'),
       API.get('/api/logs')
     ]);
-    // 변경 감지
-    const prevNames = JSON.stringify(cachedNames);
-    const prevStates = JSON.stringify(cachedStates);
-    const prevPlans = JSON.stringify(cachedPlans);
-    const prevLogs = JSON.stringify(cachedLogs);
     if(n) cachedNames=n;
     if(s) cachedStates=s;
     if(p) cachedPlans=p;
     if(l) cachedLogs=l;
-    const namesChanged = JSON.stringify(cachedNames) !== prevNames;
-    const statesChanged = JSON.stringify(cachedStates) !== prevStates;
-    const plansChanged = JSON.stringify(cachedPlans) !== prevPlans;
-    const logsChanged = JSON.stringify(cachedLogs) !== prevLogs;
-    if(!namesChanged && !statesChanged && !plansChanged && !logsChanged) return; // 변경없으면 스킵
     renderWorkerGrid();
     renderWorkerListPage();
     filterPlanTable({fromPolling:true});
@@ -2102,7 +2086,21 @@ function renderDashboard(){
         </div>`).join('');
     }
   }
-}
+
+
+  // 알림/이슈 카운팅
+  const today2 = new Date().toISOString().slice(0,10);
+  const allPlans = Object.values(cachedPlans);
+  // 지연 작업: 작업일 지났는데 미완료
+  const delayedCnt = allPlans.filter(p=>p.date && p.date<today2 && getPlanStatus(p)==='failed').length;
+  // 납기 초과: 납기일 지났는데 완료 안됨
+  const overdueCnt = allPlans.filter(p=>p.dueDate && p.dueDate<today2 && getPlanStatus(p)!=='done' && getPlanStatus(p)!=='shipped').length;
+  // 완료: 오늘 완료된 계획
+  const doneTodayCnt = allPlans.filter(p=>getPlanStatus(p)==='done' && (p.date===today2 || p.createdAt===today2)).length;
+  const el2=id=>document.getElementById(id);
+  if(el2('d-alert-delayed')) el2('d-alert-delayed').textContent=delayedCnt+'건';
+  if(el2('d-alert-overdue')) el2('d-alert-overdue').textContent=overdueCnt+'건';
+  if(el2('d-alert-done')) el2('d-alert-done').textContent=doneTodayCnt+'건';}
 
 // ── 진행현황 ──
 function renderProgress(){
