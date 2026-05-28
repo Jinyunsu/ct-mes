@@ -1667,23 +1667,20 @@ window.submitPlan=async function(){
   if(qty<=0){showToast('계획수량 입력');return;}
   const today=new Date().toISOString().slice(0,10);
   const newPlan={code,date:'',createdAt:today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',status:'planned',dueDate:document.getElementById('pf-duedate')?.value||''};
-  // 로컬 즉시 반영 (낙관적 업데이트)
-  const tempId='__temp__'+Date.now();
-  cachedPlans[tempId]={...newPlan,id:tempId};
   closeModal('plan-modal');
-  showToast(`[${code}] 등록됨`);
-  refreshUI();
-  // 서버 저장 후 실제 ID로 교체
+  // 폴링 중단 후 서버 저장
+  if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
+  _pollingLocked=true;
   const res=await API.post('/api/plans',newPlan);
+  _pollingLocked=false;
   if(res){
-    delete cachedPlans[tempId];
     cachedPlans=res;
+    showToast(`[${code}] 등록됨`);
     refreshUI();
   } else {
-    delete cachedPlans[tempId];
     showToast('등록 실패');
-    refreshUI();
   }
+  startPolling();
 };
 
 function renderPlanTable(filterFn){
