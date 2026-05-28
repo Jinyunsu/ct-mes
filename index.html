@@ -797,9 +797,9 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       </div>
       <div class="metrics">
         <div class="metric blue"><div class="metric-label">작업 코드 수</div><div class="metric-value" id="dl-codes">—</div></div>
-        <div class="metric green"><div class="metric-label">투입 인원</div><div class="metric-value" id="dl-workers">—</div><div class="metric-sub">명</div></div>
+        <div class="metric green"><div class="metric-label">투입 인원 (명)</div><div class="metric-value" id="dl-workers">—</div></div>
         <div class="metric cyan"><div class="metric-label">총 작업시간</div><div class="metric-value" id="dl-hours">—</div></div>
-        <div class="metric"><div class="metric-label">총 생산수량</div><div class="metric-value" id="dl-qty">—</div><div class="metric-sub">EA</div></div>
+        <div class="metric"><div class="metric-label">총 생산수량</div><div class="metric-value" id="dl-qty">—</div></div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -1235,7 +1235,6 @@ function renderWorkerGrid() {
     if(run>0){cls='running';stxt=`● ${run}개 작업중`;scol='var(--green)';}
     else if(pause>0){cls='paused';stxt=`⏸ ${pause}개 정지`;scol='var(--amber)';}
     return `<div class="worker-card ${cls}" style="position:relative">
-      <button onclick="event.stopPropagation();deleteWorker('${esc(n)}')" style="position:absolute;top:6px;right:6px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:4px;line-height:1" title="삭제">✕</button>
       <div onclick="selectWorker(${i})" style="cursor:pointer">
         <div class="wc-avatar" style="background:${COLORS[i%COLORS.length]}">${esc(initial(n))}</div>
         <div class="wc-name">${esc(n)}</div>
@@ -1655,7 +1654,7 @@ window.addWorker=async function(){
 window.deleteWorker=async function(name){
   if(!confirm(`[${name}] 작업자를 삭제하시겠습니까?`))return;
   const res=await API.del('/api/names',{name});
-  if(res){cachedNames=res;renderWorkerGrid();renderWorkerListPage();showToast('삭제됨');}
+  if(res){cachedNames=res;renderWorkerGrid();renderWorkerListPage();renderWorkerStats();showToast('삭제됨');}
 };
 
 /* ══ 생산계획 ══ */
@@ -2909,17 +2908,9 @@ window.renderOrAll = function() {
 
 
 
-window.deleteWorker = async function(name) {
-  if(!confirm(`[${name}] 작업자를 삭제하시겠습니까?`)) return;
-  const res = await API.del('/api/names', {name});
-  if(res) {
-    cachedNames = res;
-    renderWorkerGrid();
-    showToast(`[${name}] 삭제됨`);
-  } else {
-    showToast('삭제 실패');
-  }
-};
+
+
+
 
 /* ══ 생산계획 선택 드롭다운 갱신 ══ */
 function updatePlanSelect() {
