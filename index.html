@@ -2776,8 +2776,9 @@ function renderDailyReport(dateStr){
       const workerData=codeWorkerMap[code];
       const workerEntries=Object.entries(workerData).sort((a,b)=>b[1].ms-a[1].ms);
       workerEntries.forEach(([worker,{ms,qty}],i)=>{
+        const _customer=(()=>{const _p=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===code.toLowerCase());return _p?.customer?` (${esc(_p.customer)})`:''})();
         allRows.push(`<tr${i===0?' style="border-top:2px solid var(--border2)"':''}>
-          ${i===0?`<td style="font-weight:700;font-family:var(--mono);color:var(--accent)" rowspan="${workerEntries.length}">${esc(code)}</td>`:''}
+          ${i===0?`<td style="font-weight:700;font-family:var(--mono);color:var(--accent)" rowspan="${workerEntries.length}">${esc(code)}${_customer}</td>`:''}
           <td style="font-weight:600">${esc(worker)}</td>
           <td style="font-family:var(--mono);font-size:11px">${ms>0?fmtElapsed(ms):'—'}</td>
           <td style="font-family:var(--mono);color:var(--green)">${qty>0?qty.toLocaleString()+' EA':'—'}</td>
