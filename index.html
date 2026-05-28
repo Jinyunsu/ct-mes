@@ -1006,6 +1006,8 @@ function setUser(account) {
   document.getElementById('sb-uname').textContent = name;
   document.getElementById('sb-uemail').textContent = email;
   document.getElementById('tb-av').textContent = initials;
+  // 로그인 직후 즉시 데이터 로드
+  loadAll().then(startPolling);
 }
 
 window._msLogin = async function() {
@@ -1052,8 +1054,6 @@ async function loadAll() {
   } catch(e) {}
 }
 function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,1500); }
-loadAll().then(startPolling);
-
 // 생산계획 필터 초기화
 (function(){
   const now = new Date();
