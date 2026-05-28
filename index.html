@@ -2237,15 +2237,19 @@ function renderDashboard(){
     if(!cachedNames.length){wstEl.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">등록된 작업자 없음</div>';}
     else{
       const todayOffdays=Object.values(cachedOffdays||{}).filter(o=>o.date===today);
-      const offRows=todayOffdays.map(o=>`
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(239,68,68,.06);border-radius:8px;border:1px solid rgba(239,68,68,.2)">
-          <div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0"></div>
-          <div style="width:26px;height:26px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:var(--red);flex-shrink:0">${esc(initial(o.worker))}</div>
-          <span style="font-size:12px;font-weight:600;color:var(--text)">${esc(o.worker)}</span>
-          <span style="font-size:11px;color:var(--red);margin-left:auto">🏖 휴무${o.reason?' ('+esc(o.reason)+')':''}</span>
-        </div>`).join('');
-      wstEl.innerHTML='<div style="display:flex;flex-direction:column;gap:6px">'+offRows+cachedNames.map((n,i)=>{
-        const st=cachedStates[n]||{};
+      const offWorkerNames=new Set(todayOffdays.map(o=>o.worker.toLowerCase()));
+      wstEl.innerHTML='<div style="display:flex;flex-direction:column;gap:6px">'+cachedNames.map((n,i)=>{
+        const offday=todayOffdays.find(o=>o.worker.toLowerCase()===n.toLowerCase());
+        if(offday){
+          return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(239,68,68,.06);border-radius:8px;border:1px solid rgba(239,68,68,.2)">
+            <div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0"></div>
+            <div style="width:26px;height:26px;border-radius:50%;background:${COLORS[i%COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0">${esc(initial(n))}</div>
+            <span style="font-size:12px;font-weight:600;color:var(--text)">${esc(n)}</span>
+            <span style="font-size:11px;color:var(--red);margin-left:auto">🏖 휴무${offday.reason?' ('+esc(offday.reason)+')':''}</span>
+          </div>`;
+        }
+        const stKey=Object.keys(cachedStates).find(k=>k.toLowerCase()===n.toLowerCase())||n;
+        const st=cachedStates[stKey]||{};
         const runCodes=Object.entries(st).filter(([,v])=>v.action==='start').map(([c])=>c);
         const pauseCodes=Object.entries(st).filter(([,v])=>v.action==='pause').map(([c])=>c);
         let statusTxt='대기중',statusColor='var(--text3)',dotColor='var(--text3)';
