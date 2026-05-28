@@ -1568,10 +1568,13 @@ function renderPlanTable(filterFn){
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${typeof wHrs==='object'?wHrs.str:wHrs}</td>
       <td><span class="badge ${sc[getPlanStatus(p)]||'badge-gray'}">${sm[getPlanStatus(p)]||'예정'}</span></td>
       <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-secondary btn-sm" style="margin-right:4px" onclick="openEditPlanModal('${esc(p.id)}')" title="수정"><i class="ti ti-edit"></i></button>
-        <button class="btn btn-secondary btn-sm" style="color:#dc2626" onclick="deletePlan('${esc(p.id)}')" title="삭제"><i class="ti ti-trash"></i></button>
-      </td>
+      <td style="white-space:nowrap">${(()=>{
+        const _st = getPlanStatus(p);
+        const _canEdit = _st==='planned' || _st==='waiting';
+        return `
+        <button class="btn btn-secondary btn-sm" style="margin-right:4px${_canEdit?'':';opacity:.3;cursor:not-allowed'}" ${_canEdit?`onclick="openEditPlanModal('${esc(p.id)}')"`:''} title="${_canEdit?'수정':'작업중이거나 완료된 계획은 수정할 수 없습니다'}"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-secondary btn-sm" style="color:#dc2626${_canEdit?'':';opacity:.3;cursor:not-allowed'}" ${_canEdit?`onclick="deletePlan('${esc(p.id)}')"`:''} title="${_canEdit?'삭제':'작업중이거나 완료된 계획은 삭제할 수 없습니다'}"><i class="ti ti-trash"></i></button>`;
+      })()}</td>
     </tr>`;
   }).join('');
   // 요약 KPI 업데이트
@@ -1611,6 +1614,12 @@ function updatePlanKPI(plans){
 
 window.deletePlan=async function(id){
   if(!id||id==='undefined'){showToast('삭제할 계획 ID가 없습니다');return;}
+  // 상태 체크: 예정·대기만 삭제 허용
+  const _delPlan = cachedPlans[id] || Object.entries(cachedPlans).find(([k,p])=>k===id||p.id===id||p.code===id)?.[1];
+  if(_delPlan){
+    const _delSt = getPlanStatus(_delPlan);
+    if(_delSt !== 'planned' && _delSt !== 'waiting'){ showToast('예정·대기 상태인 계획만 삭제할 수 있습니다'); return; }
+  }
   if(!confirm('이 계획과 관련된 모든 작업 기록이 삭제됩니다. 계속하시겠습니까?'))return;
 
   // id 찾기
@@ -2425,6 +2434,8 @@ let editingPlanId = null;
 window.openEditPlanModal = function(id) {
   const p = cachedPlans[id] || Object.values(cachedPlans).find(x => x.id === id) || Object.entries(cachedPlans).find(([k])=>k===id)?.[1];
   if(!p) { showToast('계획 정보를 찾을 수 없습니다'); return; }
+  const _editSt = getPlanStatus(p);
+  if(_editSt !== 'planned' && _editSt !== 'waiting') { showToast('예정·대기 상태인 계획만 수정할 수 있습니다'); return; }
   editingPlanId = p.id || id;
   document.getElementById('edit-plan-id-label').textContent = p.code + ' / ' + (p.date||'');
   document.getElementById('ef-code').value = p.code||'';
@@ -2550,9 +2561,13 @@ function orPlanRow(p) {
       <span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>
       ${shippedInfo}
     </td>
-    <td style="white-space:nowrap">
-      ${st!=='shipped'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer;white-space:nowrap">출하</button>`:'<span style="font-size:10px;color:var(--text3)">출하완료</span>'}
-    </td>
+    <td style="white-space:nowrap">${(()=>{
+      if(st==='shipped') return '<span style="font-size:10px;color:var(--text3)">출하완료</span>';
+      if(st==='done')    return `<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer;white-space:nowrap">출하</button>`;
+      const _blockMsg = {running:'작업중입니다',planned:'작업 예정중입니다',waiting:'대기중입니다',failed:'미달성 상태입니다'};
+      const _msg = _blockMsg[st]||'진행중입니다';
+      return `<button onclick="showToast('${_msg}')" style="font-size:10px;padding:3px 8px;background:var(--bg4);color:var(--text3);border:1px solid var(--border2);border-radius:5px;cursor:not-allowed;white-space:nowrap" title="${_msg}">출하</button>`;
+    })()}</td>
     <td style="font-size:12px;color:var(--text3)">${esc(p.remark||'—')}</td>
   </tr>`;
 }
@@ -2887,9 +2902,16 @@ window.onCalDrop = function(e, dateStr) {
 };
 
 window.shipPlan = async function(id) {
-  if(!confirm('출하 완료 처리하시겠습니까?')) return;
   const plan = cachedPlans[id] || Object.values(cachedPlans).find(p=>p.id===id);
   if(!plan) { showToast('계획을 찾을 수 없습니다'); return; }
+  // 완료 상태만 출하 허용
+  const _shipSt = getPlanStatus(plan);
+  if(_shipSt === 'shipped') { showToast('이미 출하완료된 계획입니다'); return; }
+  if(_shipSt !== 'done') {
+    const _blockMsg = {running:'작업중입니다',planned:'작업 예정중입니다',waiting:'대기중입니다',failed:'미달성 상태입니다'};
+    showToast(_blockMsg[_shipSt]||'완료 상태일 때만 출하할 수 있습니다'); return;
+  }
+  if(!confirm('출하 완료 처리하시겠습니까?')) return;
   const now = new Date();
   const shippedAt = now.toLocaleDateString('ko-KR') + ' ' + now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
   const updated = {...plan, id, status:'shipped', shippedAt};
