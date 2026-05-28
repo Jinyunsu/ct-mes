@@ -339,11 +339,11 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   </div>
   <div class="sb-nav">
     <div class="sb-label">작업</div>
-    <button class="sb-item active" id="sb-worker" onclick="go('worker')"><i class="ti ti-tool"></i> 작업 관리<span class="sb-dot"></span></button>
+    <button class="sb-item" id="sb-worker" onclick="go('worker')"><i class="ti ti-tool"></i> 작업 관리<span class="sb-dot"></span></button>
 
     <div class="sb-divider"></div>
     <div class="sb-label">생산</div>
-    <button class="sb-item" id="sb-dashboard" onclick="go('dashboard')"><i class="ti ti-layout-dashboard"></i> 대시보드<span class="sb-dot"></span></button>
+    <button class="sb-item active" id="sb-dashboard" onclick="go('dashboard')"><i class="ti ti-layout-dashboard"></i> 대시보드<span class="sb-dot"></span></button>
     <button class="sb-item" id="sb-prodplan" onclick="go('prodplan')"><i class="ti ti-calendar-event"></i> 생산계획<span class="sb-dot"></span></button>
     <button class="sb-item" id="sb-progress" onclick="go('progress')"><i class="ti ti-activity"></i> 진행현황<span class="sb-dot"></span></button>
     <button class="sb-item" id="sb-performance" onclick="go('performance')"><i class="ti ti-chart-bar"></i> 실적분석<span class="sb-dot"></span></button>
@@ -388,7 +388,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   <div class="content">
 
     <!-- ══ 작업 관리 ══ -->
-    <div class="page active" id="page-worker">
+    <div class="page" id="page-worker">
       <div id="worker-select">
         <div class="page-header">
           <div class="ph-left">
@@ -439,7 +439,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
     </div>
 
     <!-- ══ 대시보드 ══ -->
-    <div class="page" id="page-dashboard">
+    <div class="page active" id="page-dashboard">
       <div class="page-header">
         <div class="ph-left"><div class="page-title">대시보드</div><div class="page-desc">금일 생산 현황 종합</div></div>
         <div class="ph-right"><div class="chip chip-live"><i class="ti ti-wifi" style="font-size:11px"></i> 실시간</div></div>
@@ -1023,6 +1023,9 @@ function setUser(account) {
   document.getElementById('tb-av').textContent = initials;
   // 데이터 즉시 로드 (폴링 시작)
   loadAll().then(startPolling);
+  // PC에서는 대시보드로
+  const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  if(!isMobile) go('dashboard');
 }
 
 window._msLogin = async function() {
@@ -1049,9 +1052,14 @@ let pollingTimer=null;
 
 async function loadAll() {
   try {
-    const [n,s,p,l] = await Promise.all([API.get('/api/names'),API.get('/api/states'),API.get('/api/plans'),API.get('/api/logs')]);
+    // names/states 먼저 빠르게 로드해서 작업자 즉시 표시
+    const [n,s] = await Promise.all([API.get('/api/names'),API.get('/api/states')]);
     if(n) cachedNames=n;
     if(s) cachedStates=s;
+    renderWorkerGrid();
+    renderWorkerListPage();
+    // 나머지 데이터 로드
+    const [p,l] = await Promise.all([API.get('/api/plans'),API.get('/api/logs')]);
     if(p) cachedPlans=p;
     if(l) cachedLogs=l;
     renderWorkerGrid();
