@@ -147,6 +147,7 @@ td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--text2);ve
 tr:last-child td{border-bottom:none}
 tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 .tbl-wrap{border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;overflow-x:auto}
+@media print{.worker-activity-wrap{max-height:none!important;overflow:visible!important;}}
 
 .prog-bar{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;min-width:50px}
 .prog-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .3s}
@@ -816,7 +817,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="card">
           <div class="card-title"><i class="ti ti-users"></i> 작업자별 활동</div>
-          <div class="tbl-wrap">
+          <div class="tbl-wrap worker-activity-wrap" style="max-height:220px;overflow-y:auto">
             <table>
               <thead><tr><th>작업코드</th><th>작업자</th><th>투입시간</th><th>생산수량</th></tr></thead>
               <tbody><tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr></tbody>
