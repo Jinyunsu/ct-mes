@@ -479,7 +479,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           </div>
         </div>
         <div class="card">
-          <div class="card-title"><i class="ti ti-clock-hour-3"></i> 최근 작업 활동</div>
+          <div class="card-title"><i class="ti ti-clock-hour-3"></i> 최근 작업 활동 <span style="font-size:11px;font-weight:400;color:var(--text3)">(최근 10일)</span></div>
           <div id="d-recent" style="max-height:200px;overflow-y:auto">
             <div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">활동 없음</div>
           </div>
@@ -2123,9 +2123,10 @@ function renderDashboard(){
   const recentEl=document.getElementById('d-recent');
   if(recentEl){
     const _activeCodes=new Set(Object.values(cachedPlans).map(p=>p.code?.toLowerCase()));
+    const _10daysAgo=Date.now()-(10*24*60*60*1000);
     const allLogs=[];
     Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').forEach(([w,wlogs])=>{
-      Object.values(wlogs||{}).filter(l=>_activeCodes.has(l.code?.toLowerCase())).forEach(l=>allLogs.push({...l,worker:w}));
+      Object.values(wlogs||{}).filter(l=>_activeCodes.has(l.code?.toLowerCase())&&l.ts>=_10daysAgo).forEach(l=>allLogs.push({...l,worker:w}));
     });
     allLogs.sort((a,b)=>b.ts-a.ts);
     const recent=allLogs.slice(0,10);
