@@ -1913,7 +1913,12 @@ function getPlanStatus(p){
 
 function getWorkerCountForCode(code){
   const workers=new Set();
+  // 현재 작업 중인 작업자 (states)
   Object.entries(cachedStates).forEach(([w,codes])=>{if(codes[code])workers.add(w);});
+  // 완료된 작업자도 포함 (logs)
+  Object.entries(cachedLogs||{}).forEach(([worker,logs])=>{
+    Object.values(logs||{}).forEach(l=>{if(l.code===code)workers.add(worker);});
+  });
   return workers.size;
 }
 
