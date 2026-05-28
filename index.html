@@ -603,7 +603,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="metric green"><div class="metric-label">총 생산수량</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">EA</span></div></div>
         <div class="metric amber"><div class="metric-label">평균 달성률</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">%</span></div></div>
         <div class="metric cyan"><div class="metric-label">총 작업시간</div><div class="metric-value-row"><div class="metric-value">—</div></div></div>
-        <div class="metric purple"><div class="metric-label">1인당 생산성</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">EA/hr</span></div></div>
+        <div class="metric purple"><div class="metric-label">시간당 생산성</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">EA/hr</span></div></div>
         <div class="metric red"><div class="metric-label">불량률</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">%</span></div></div>
       </div>
       <div class="grid-2" style="margin-bottom:14px">
@@ -2393,7 +2393,7 @@ function renderPerformance(){
   let perfTotalMs=0;
   monthCodes.forEach(c=>{ perfTotalMs+=calcWorkHours(c).ms; });
   const perfHrs=(perfTotalMs/3600000).toFixed(1);
-  // 1인당 생산성
+  // 시간당 생산성
   const workerCount=Object.keys(cachedStates).length||1;
   const productivity=perfTotalMs>0?((totalAct/(perfTotalMs/3600000))||0).toFixed(1):'—';
 
