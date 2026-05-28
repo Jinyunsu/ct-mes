@@ -3140,30 +3140,9 @@ window.printDailyReport = function() {
       .badge-blue{background:#dbeafe;color:#1d4ed8}
       .badge-gray{background:#f3f4f6;color:#6b7280}
       .badge-red{background:#fee2e2;color:#dc2626}
+      .worker-activity-wrap{max-height:none!important;overflow:visible!important;}
       @media print{body{margin:0}}
-    
-/* ══ 모바일 전용 스타일 ══ */
-@media (max-width: 768px) {
-  .sidebar { display: none !important; }
-  .main-content { margin-left: 0 !important; width: 100% !important; }
-  .topbar { padding: 0 12px !important; }
-  .tb-title { font-size: 14px !important; }
-  .page { padding: 12px !important; }
-  .page-title { font-size: 18px !important; }
-  .worker-card { min-height: 80px !important; }
-  .wc-avatar { width: 44px !important; height: 44px !important; font-size: 18px !important; }
-  .job-card { padding: 12px !important; }
-  .job-btns { display: flex !important; flex-direction: row !important; gap: 4px !important; }
-  .job-btns button { flex: 1 !important; padding: 7px 2px !important; font-size: 10px !important; gap: 2px !important; white-space: nowrap !important; min-width: 0 !important; }
-  .job-btns button i { font-size: 10px !important; }
-  .worker-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
-  div#worker-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
-  #worker-select { overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; }
-  #page-worker { overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; }
-  .metric-value { font-size: 22px !important; }
-  input, select, .input { font-size: 16px !important; } /* iOS 줌 방지 */
-}
-</style>
+    </style>
   </head><body>
     ${printArea.innerHTML}
   </body></html>`);
