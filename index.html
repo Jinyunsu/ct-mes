@@ -654,9 +654,6 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
     <div class="page" id="page-workers">
       <div class="page-header">
         <div class="ph-left"><div class="page-title">작업자 현황</div><div class="page-desc">작업자 투입시간 및 실적 현황</div></div>
-        <div class="ph-right">
-          <button class="btn btn-primary" onclick="openModal('worker-add-modal')"><i class="ti ti-user-plus"></i> 작업자 추가</button>
-        </div>
       </div>
       <div class="metrics">
         <div class="metric blue"><div class="metric-label">전체 작업자</div><div class="metric-value" id="wm-total">—</div><div class="metric-sub">명</div></div>
@@ -672,7 +669,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           </div>
           <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
             <input id="new-worker-inp" class="input" placeholder="이름 입력 (최대 8자)" maxlength="8" onkeydown="if(event.key==='Enter')addWorker()">
-            <button class="btn btn-primary" onclick="addWorker()"><i class="ti ti-plus"></i></button>
+            <button class="btn btn-primary" onclick="addWorker()"><i class="ti ti-user-plus"></i> 추가</button>
           </div>
         </div>
         <div class="card">
@@ -2492,7 +2489,16 @@ function renderWorkerStats(){
   if(el('wm-avg'))el('wm-avg').textContent=avgH||'0';
 
   if(!cachedNames.length){tbl.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr>';return;}
-  tbl.innerHTML=cachedNames.map(n=>{
+
+  // 오늘 휴무 작업자 맨 위에 표시
+  const todayOffRows = Object.values(cachedOffdays||{})
+    .filter(o=>o.date===today)
+    .map(o=>`<tr style="background:rgba(239,68,68,.05)">
+      <td style="font-weight:600;color:var(--red)">${esc(o.worker)}</td>
+      <td colspan="4" style="font-size:12px;color:var(--red)">🏖 휴무${o.reason?' ('+esc(o.reason)+')':''}</td>
+    </tr>`);
+
+  tbl.innerHTML=todayOffRows.join('')+cachedNames.map(n=>{
     const st=cachedStates[n]||{};
     const activeCodes=Object.keys(st).filter(c=>st[c].action&&st[c].action!=='end');
     const allLogs=Object.values(cachedLogs?.[n]||{});
