@@ -1930,6 +1930,10 @@ function renderCalendar(){
       return dsStartLogs.length>0;
     });
     const allDp=[...prevUnfinished.map(p=>({...p,_carry:true})),...dp];
+    // 호버 툴팁용 전체 목록
+    const tooltipLines=allDp.map(p=>`${p._carry?'↩ ':''}${p.code}${p.customer?' ('+p.customer+')':''} | ${p.planQty||0}EA | ${getPlanStatus(p)==='done'?'완료':getPlanStatus(p)==='running'?'작업중':'예정'}`).join('\n');
+    const offTooltip=Object.values(cachedOffdays||{}).filter(o=>o.date===ds).map(o=>`🏖 ${o.worker}${o.reason?' ('+o.reason+')':''}`).join('\n');
+    const fullTooltip=[tooltipLines,offTooltip].filter(Boolean).join('\n');
     const ph=allDp.slice(0,3).map(p=>{
       const c=getCalColor(p.code);
       const isDone=getPlanStatus(p)==='done'||p.status==='done';
@@ -1937,17 +1941,17 @@ function renderCalendar(){
       const color=isDone?'var(--green)':p._carry?'var(--red)':c.text;
       const border=p._carry?'1px dashed var(--red)':'none';
       const prefix=p._carry?'↩ ':'';
-      return `<div class="cal-chip" style="background:${bg};color:${color};border:${border}" title="${p.code} | ${p.customer||''} | ${p.planQty||0}EA">${prefix}${p.code}</div>`;
+      return `<div class="cal-chip" style="background:${bg};color:${color};border:${border}" title="${p.code}${p.customer?' ('+p.customer+')':''} | ${p.planQty||0}EA">${prefix}${p.code}${p.customer?` (${p.customer})`:''}</div>`;
     }).join('');
     // 해당 날짜 휴무 작업자
     const offWorkers=Object.values(cachedOffdays||{}).filter(o=>o.date===ds);
     const offHtml=offWorkers.map(o=>`<div style="font-size:9px;background:rgba(239,68,68,.12);color:var(--red);border-radius:3px;padding:1px 4px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o.worker}${o.reason?' ('+o.reason+')':''}">🏖 ${o.worker}${o.reason?` (${o.reason})`:''}</div>`).join('');
-    html+=`<div class="cal-day${isToday?' today':''}"
+    html+=`<div class="cal-day${isToday?' today':''}" title="${fullTooltip}"
       ondragover="event.preventDefault();event.currentTarget.style.background='rgba(59,130,246,.18)'"
       ondragleave="event.currentTarget.style.background=''"
       ondrop="onCalDrop(event,'${ds}');event.currentTarget.style.background=''">
       <div class="cal-num" style="color:${isToday?'var(--accent)':dc};${isToday?'font-weight:900':''}">${d}</div>
-      ${ph}${allDp.length>3?`<div style="font-size:9px;color:var(--text3)">+${allDp.length-3}</div>`:''}
+      ${ph}${allDp.length>3?`<div style="font-size:9px;color:var(--text3)" title="${fullTooltip}">+${allDp.length-3}개 더보기</div>`:''}
       ${offHtml}
     </div>`;
   }
