@@ -1183,6 +1183,8 @@ function refreshUI() {
   renderOrDay();
   renderOrMonth();
   renderOrAll();
+  if(typeof renderPerformance==='function') renderPerformance();
+  if(typeof renderWorkerStats==='function') renderWorkerStats();
 }
 // 생산계획 필터 초기화
 (function(){
@@ -1733,11 +1735,11 @@ window.deleteWorker=async function(name){
     // 1. 이름 삭제
     const res=await API.del('/api/names',{name});
     if(res) cachedNames=res;
-    // 2. states 삭제
-    await fetch('/api/states',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({worker:name,deleteAll:true})}).catch(()=>{});
+    // 2. states 삭제 (worker 키로)
+    await fetch('/api/states',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({worker:name})}).catch(()=>{});
     delete cachedStates[name];
-    // 3. logs 삭제
-    await fetch('/api/logs',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({worker:name,deleteAll:true})}).catch(()=>{});
+    // 3. logs 삭제 (worker 키로)
+    await fetch('/api/logs',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({worker:name})}).catch(()=>{});
     delete cachedLogs[name];
     // 4. offdays 삭제
     const workerOffdays=Object.entries(cachedOffdays||{}).filter(([,o])=>o.worker===name);
@@ -2123,10 +2125,11 @@ function getWorkerCountForCode(code){
       if(c.toLowerCase().trim()===lc) workers.add(w);
     });
   });
-  // states에 없으면 오늘 logs 기반으로 보완
+  // 오늘 logs 기반으로 보완 (cachedNames에 있는 작업자만)
   if(workers.size===0){
     const today=new Date().toISOString().slice(0,10);
     Object.entries(cachedLogs||{}).forEach(([worker,wlogs])=>{
+      if(!cachedNames.some(n=>n.toLowerCase()===worker.toLowerCase())) return;
       Object.values(wlogs||{}).forEach(l=>{
         if((l.code||'').toLowerCase().trim()===lc){
           if(new Date(l.ts).toISOString().slice(0,10)===today) workers.add(worker);
@@ -2147,7 +2150,9 @@ function getLogsForCode(code){
 
 function calcWorkHours(code){
   const intervals=[];
-  Object.values(cachedLogs||{}).forEach(wlogs=>{
+  Object.entries(cachedLogs||{}).forEach(([worker, wlogs])=>{
+    // 삭제된 작업자 로그 무시
+    if(!cachedNames.some(n=>n.toLowerCase()===worker.toLowerCase())) return;
     const entries=Object.values(wlogs||{}).filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
     let st=null;
     entries.forEach(l=>{
@@ -2612,10 +2617,36 @@ function renderPerformance(){
   }
 
 
-  // 작업자별 투입시간 차트
+  // 작업자별 투입시간 차트 (이달 기준)
   const cwEl=document.getElementById('chart-worker');
   if(cwEl){
-    const workerData=cachedNames.map(n=>({name:n,ms:calcWorkerTotalHours(n)})).filter(w=>w.ms>0).sort((a,b)=>b.ms-a.ms);
+    const workerData=cachedNames.map(n=>{
+      // 이달 로그만 계산
+      const wlogs=Object.values(cachedLogs?.[n]||{}).filter(l=>{
+        const li=new Date(l.ts).toISOString().slice(0,7);
+        return li===monthStr;
+      });
+      const codes=new Set(wlogs.map(l=>l.code));
+      const allIntervals=[];
+      codes.forEach(code=>{
+        const entries=wlogs.filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
+        let st=null;
+        entries.forEach(l=>{
+          if(l.action==='start') st=l.ts;
+          else if((l.action==='end'||l.action==='pause')&&st){allIntervals.push([st,l.ts]);st=null;}
+        });
+        if(st) allIntervals.push([st,Date.now()]);
+      });
+      allIntervals.sort((a,b)=>a[0]-b[0]);
+      const merged=allIntervals.length?[[...allIntervals[0]]]:[];
+      for(let i=1;i<allIntervals.length;i++){
+        const last=merged[merged.length-1];
+        if(allIntervals[i][0]<=last[1]) last[1]=Math.max(last[1],allIntervals[i][1]);
+        else merged.push([...allIntervals[i]]);
+      }
+      const ms=merged.reduce((s,[a,b])=>s+(b-a),0);
+      return {name:n,ms};
+    }).filter(w=>w.ms>0).sort((a,b)=>b.ms-a.ms);
     if(!workerData.length){
       cwEl.innerHTML='<div style="text-align:center;width:100%;color:var(--text3);font-size:12px;align-self:center">데이터 없음</div>';
     }else{
@@ -3364,14 +3395,14 @@ window.deleteAllPlans = async function() {
     // 2. states 전체 삭제 (작업자별)
     const stateWorkers = Object.keys(cachedStates);
     for(const worker of stateWorkers) {
-      await fetch('/api/states', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({worker, deleteAll:true})}).catch(()=>{});
+      await fetch('/api/states', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({worker})}).catch(()=>{});
     }
     cachedStates = {};
 
-    // 3. logs 전체 삭제 (작업자별)
-    const logWorkers = Object.keys(cachedLogs||{}).filter(w=>w!=='__system__');
+    // 3. logs 전체 삭제 (cachedNames 기준 + cachedLogs에 있는 모든 작업자)
+    const logWorkers = [...new Set([...Object.keys(cachedLogs||{}).filter(w=>w!=='__system__'), ...cachedNames])];
     for(const worker of logWorkers) {
-      await fetch('/api/logs', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({worker, deleteAll:true})}).catch(()=>{});
+      await fetch('/api/logs', {method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({worker})}).catch(()=>{});
     }
     cachedLogs = {};
 
