@@ -181,7 +181,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 .worker-card:hover{border-color:var(--border2);transform:translateY(-2px)}
 .worker-card.running::before{background:var(--green)}
 .worker-card.running{border-color:rgba(34,197,94,.3)}
-.worker-card.paused::before{background:var(--amber)}
+.worker-card.paused::before{background:var(--accent)}
 .worker-card.paused{border-color:rgba(245,158,11,.3)}
 .wc-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;margin:0 auto 10px}
 .wc-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
@@ -195,7 +195,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 .job-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .dot-idle{background:var(--text3)}
 .dot-run{background:var(--green);animation:pulse 1.4s infinite}
-.dot-pause{background:var(--amber)}
+.dot-pause{background:var(--accent)}
 .dot-done{background:var(--text3)}
 .job-code{font-size:14px;font-weight:700;color:var(--text);flex:1;font-family:var(--mono)}
 .job-body{display:none;padding:0 16px 14px;border-top:1px solid var(--border)}
@@ -205,8 +205,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 .jbtn:disabled{opacity:.25;cursor:default}
 .jbtn-start{background:#16a34a;color:#fff}
 .jbtn-start:hover:not(:disabled){background:#15803d}
-.jbtn-pause{background:#d97706;color:#fff}
-.jbtn-pause:hover:not(:disabled){background:#b45309}
+.jbtn-pause{background:#2563eb;color:#fff}
+.jbtn-pause:hover:not(:disabled){background:#1d4ed8}
 .jbtn-end{background:#dc2626;color:#fff}
 .jbtn-end:hover:not(:disabled){background:#b91c1c}
 
@@ -477,7 +477,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <div style="display:flex;flex-direction:column;gap:8px">
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">지연 작업</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge badge-amber" style="margin-left:auto">확인필요</span></div>
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="ti ti-bug"></i></div><div><div class="kpi-label">납기 초과</div><div class="kpi-val" id="d-alert-overdue">0건</div></div><span class="badge badge-red" style="margin-left:auto">주의</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-player-pause"></i></div><div><div class="kpi-label">작업 중 정지</div><div class="kpi-val" id="d-alert-waiting">0건</div></div><span class="badge badge-amber" style="margin-left:auto">정지</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(59,130,246,.1);color:var(--accent)"><i class="ti ti-player-pause"></i></div><div><div class="kpi-label">작업 중 정지</div><div class="kpi-val" id="d-alert-waiting">0건</div></div><span class="badge badge-blue" style="margin-left:auto">정지</span></div>
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div class="kpi-val" id="d-alert-done">0건</div></div><span class="badge badge-green" style="margin-left:auto">금일</span></div>
           </div>
         </div>
@@ -1299,7 +1299,7 @@ function renderWorkerGrid() {
     Object.values(st).forEach(v=>{if(v?.action==='start')run++;else if(v?.action==='pause')pause++;});
     let cls='',stxt='대기중',scol='var(--text3)';
     if(run>0){cls='running';stxt=`● ${run}개 작업중`;scol='var(--green)';}
-    else if(pause>0){cls='paused';stxt=`⏸ ${pause}개 정지`;scol='var(--amber)';}
+    else if(pause>0){cls='paused';stxt=`⏸ ${pause}개 정지`;scol='var(--accent)';}
     return `<div class="worker-card ${cls}" style="position:relative">
       <div onclick="selectWorker(${i})" style="cursor:pointer">
         <div class="wc-avatar" style="background:${COLORS[i%COLORS.length]}">${esc(initial(n))}</div>
@@ -1470,11 +1470,11 @@ function renderJobs(){
   list.innerHTML=codes.map(c=>{
     const s=jobs[c],a=s.action;
     const dotCls=a==='start'?'dot-run':a==='pause'?'dot-pause':a==='end'?'dot-done':'dot-idle';
-    const badgeCls=a==='start'?'badge-green':a==='pause'?'badge-amber':a==='end'?'badge-gray':'badge-gray';
+    const badgeCls=a==='start'?'badge-green':a==='pause'?'badge-blue':a==='end'?'badge-gray':'badge-gray';
     const badgeTxt=a==='start'?'작업중':a==='pause'?'일시정지':a==='end'?'완료':'대기';
     const cardCls=a==='start'?'running':a==='pause'?'paused':'';
         const elapsed=a==='start'&&s.startTs?fmtElapsed(Date.now()-s.startTs):'';
-    const since=a==='start'?`<div style="font-size:13px;font-weight:700;color:var(--green);margin:8px 0 10px;font-family:var(--mono);letter-spacing:.5px">${elapsed||'0s'}</div>`:a==='pause'&&s.since?`<div style="font-size:11px;color:var(--amber);margin:8px 0 10px">${s.since} 일시정지</div>`:'';
+    const since=a==='start'?`<div style="font-size:13px;font-weight:700;color:var(--green);margin:8px 0 10px;font-family:var(--mono);letter-spacing:.5px">${elapsed||'0s'}</div>`:a==='pause'&&s.since?`<div style="font-size:11px;color:var(--accent);margin:8px 0 10px">${s.since} 일시정지</div>`:'';
     return `<div class="job-card ${cardCls}">
       <div class="job-head" onclick="toggleJob('${esc(c)}')">
         <div class="job-dot ${dotCls}"></div>
@@ -2051,13 +2051,16 @@ function renderCalendar(){
 
   // 멀티데이 바 오버레이
   const plans=Object.values(cachedPlans).filter(p=>p.date);
+  const todayDs=new Date().toISOString().slice(0,10);
   // 각 계획의 시작/끝 날짜 계산
   plans.forEach((p,pi)=>{
     const st=getPlanStatus(p);
+    if(st==='shipped') return; // 출하 제외
     const col=statusColor[st]||statusColor.planned;
-    // 시작: p.date, 끝: dueDate 있으면 dueDate, 없으면 같은 날
     const startDs=p.date;
-    const endDs=p.dueDate&&p.dueDate>=startDs?p.dueDate:startDs;
+    if(!startDs) return;
+    // 완료면 오늘(완료된 날)에서 멈춤, 나머지는 오늘까지 이어짐
+    const endDs=todayDs>startDs?todayDs:startDs;
     // 이 달력에 포함되는 범위만
     const monthStart=`${calYear}-${String(calMonth+1).padStart(2,'0')}-01`;
     const monthEnd=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(lastDate).padStart(2,'0')}`;
@@ -2313,7 +2316,7 @@ function renderDashboard(){
         const pauseCodes=Object.entries(st).filter(([,v])=>v.action==='pause').map(([c])=>c);
         let statusTxt='대기중',statusColor='var(--text3)',dotColor='var(--text3)';
         if(runCodes.length){statusTxt=runCodes.slice(0,2).join(', ')+(runCodes.length>2?` 외 ${runCodes.length-2}`:'')+' 작업중';statusColor='var(--green)';dotColor='var(--green)';}
-        else if(pauseCodes.length){statusTxt='일시정지';statusColor='var(--amber)';dotColor='var(--amber)';}
+        else if(pauseCodes.length){statusTxt='일시정지';statusColor='var(--accent)';dotColor='var(--accent)';}
         return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)">
           <div style="width:7px;height:7px;border-radius:50%;background:${dotColor};flex-shrink:0;${runCodes.length?'animation:pulse 1.4s infinite':''}"></div>
           <div style="width:26px;height:26px;border-radius:50%;background:${COLORS[i%COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0">${esc(initial(n))}</div>
@@ -2366,7 +2369,7 @@ function renderDashboard(){
     if(!recent.length){recentEl.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">활동 없음</div>';}
     else{
       const icons={start:'▶',pause:'⏸',end:'■'};
-      const cols={start:'var(--green)',pause:'var(--amber)',end:'var(--text3)'};
+      const cols={start:'var(--green)',pause:'var(--accent)',end:'var(--text3)'};
       const lbls={start:'시작',pause:'일시정지',end:'종료'};
       recentEl.innerHTML=recent.map(l=>`
         <div class="timeline-item">
@@ -2470,7 +2473,7 @@ function renderProgress(){
           <td style="font-family:var(--mono)">${(plan.planQty||0).toLocaleString()}</td>
           <td style="font-family:var(--mono);color:var(--green)">${(plan.actQty||0).toLocaleString()}</td>
           <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-family:var(--mono)">${pct}%</span></div></td>
-          <td><span class="badge ${info.action==='start'?'badge-blue':'badge-amber'}" style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:${info.action==='start'?'var(--green)':'var(--amber)'};${info.action==='start'?'animation:pulse 1.4s infinite;':''}display:inline-block"></span>${info.action==='start'?'작업중':'일시정지'}</span></td>
+          <td><span class="badge ${info.action==='start'?'badge-blue':'badge-blue'}" style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:${info.action==='start'?'var(--green)':'var(--accent)'};${info.action==='start'?'animation:pulse 1.4s infinite;':''}display:inline-block"></span>${info.action==='start'?'작업중':'일시정지'}</span></td>
           <td style="font-size:11px;color:var(--text3)">${recentLog?recentLog.time:'—'}</td>
         </tr>`);
       });
@@ -2553,7 +2556,7 @@ function renderProgress(){
       tlDiv.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">오늘 작업 기록 없음</div>';
     }else{
       const icons={start:'▶',pause:'⏸',end:'■'};
-      const cols={start:'var(--green)',pause:'var(--amber)',end:'var(--text3)'};
+      const cols={start:'var(--green)',pause:'var(--accent)',end:'var(--text3)'};
       const lbls={start:'시작',pause:'일시정지',end:'종료'};
       tlDiv.innerHTML=allLogs.map(l=>`
         <div class="timeline-item">
@@ -2720,7 +2723,7 @@ function renderWorkerStats(){
       <td style="font-family:var(--mono)">${codeSet.size}</td>
       <td style="font-family:var(--mono)">${wHrsStr}</td>
       <td style="font-family:var(--mono);color:var(--green)">${totalQty>0?totalQty.toLocaleString()+' EA':'—'}</td>
-      <td><span class="badge ${isWorking?'badge-green':activeCodes.length?'badge-amber':'badge-gray'}">${isWorking?'작업중':activeCodes.length?'정지':'대기'}</span></td>
+      <td><span class="badge ${isWorking?'badge-green':activeCodes.length?'badge-blue':'badge-gray'}">${isWorking?'작업중':activeCodes.length?'정지':'대기'}</span></td>
     </tr>`;
   }).join('');
 }
