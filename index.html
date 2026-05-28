@@ -1831,11 +1831,14 @@ function renderPlanTable(filterFn){
       <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
       <td style="white-space:nowrap">${(()=>{
         const _st=getPlanStatus(p);
-        const _can=_st==='planned'||_st==='waiting';
+        const _hasLog=Object.values(cachedLogs||{}).some(wl=>Object.values(wl||{}).some(l=>l.code?.toLowerCase()===p.code?.toLowerCase()));
+        const _can=(_st==='planned')||(_st==='waiting'&&!_hasLog);
         const _dis=';opacity:.3;cursor:not-allowed';
+        const _title=_st==='running'?'작업중인 계획은 수정할 수 없습니다':_st==='done'?'완료된 계획은 수정할 수 없습니다':(!_can)?'작업이 시작된 계획은 수정할 수 없습니다':'수정';
+        const _titleD=_st==='running'?'작업중인 계획은 삭제할 수 없습니다':_st==='done'?'완료된 계획은 삭제할 수 없습니다':(!_can)?'작업이 시작된 계획은 삭제할 수 없습니다':'삭제';
         return `
-        <button class="btn btn-secondary btn-sm" style="margin-right:4px${_can?'':_dis}" onclick="planAction('edit','${esc(p.id)}')" title="${_can?'수정':_st==='running'?'작업중인 계획은 수정할 수 없습니다':'완료된 계획은 수정할 수 없습니다'}"><i class="ti ti-edit"></i></button>
-        <button class="btn btn-secondary btn-sm" style="color:#dc2626${_can?'':_dis}" onclick="planAction('delete','${esc(p.id)}')" title="${_can?'삭제':_st==='running'?'작업중인 계획은 삭제할 수 없습니다':'완료된 계획은 삭제할 수 없습니다'}"><i class="ti ti-trash"></i></button>`;
+        <button class="btn btn-secondary btn-sm" style="margin-right:4px${_can?'':_dis}" onclick="planAction('edit','${esc(p.id)}')" title="${_title}"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-secondary btn-sm" style="color:#dc2626${_can?'':_dis}" onclick="planAction('delete','${esc(p.id)}')" title="${_titleD}"><i class="ti ti-trash"></i></button>`;
       })()}</td>
     </tr>`;
   }).join('');
@@ -1876,14 +1879,21 @@ function updatePlanKPI(plans){
 
 
 window.planAction = function(type, id) {
-  const st = getPlanStatus(cachedPlans[id] || Object.values(cachedPlans).find(p=>p.id===id) || {});
+  const plan = cachedPlans[id] || Object.values(cachedPlans).find(p=>p.id===id) || {};
+  const st = getPlanStatus(plan);
+  // 작업 로그가 있으면 작업이 시작된 것으로 간주
+  const hasLog = Object.values(cachedLogs||{}).some(wl=>
+    Object.values(wl||{}).some(l=>l.code?.toLowerCase()===plan.code?.toLowerCase())
+  );
   if(type === 'edit') {
     if(st === 'running') { showToast('작업중인 계획은 수정할 수 없습니다'); return; }
     if(st === 'done') { showToast('완료된 계획은 수정할 수 없습니다'); return; }
+    if(st === 'waiting' && hasLog) { showToast('작업이 시작된 계획은 수정할 수 없습니다'); return; }
     openEditPlanModal(id);
   } else if(type === 'delete') {
     if(st === 'running') { showToast('작업중인 계획은 삭제할 수 없습니다'); return; }
     if(st === 'done') { showToast('완료된 계획은 삭제할 수 없습니다'); return; }
+    if(st === 'waiting' && hasLog) { showToast('작업이 시작된 계획은 삭제할 수 없습니다'); return; }
     deletePlan(id);
   }
 };
