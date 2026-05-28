@@ -1038,7 +1038,7 @@ const API = {
   async get(p) { try { const r=await fetch(p); return r.json(); } catch(e) { return null; } },
   async post(p,b) { _pollingLocked=true; try { const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); const j=await r.json(); _pollingLocked=false; return j; } catch(e) { _pollingLocked=false; return null; } },
   async put(p,b) { _pollingLocked=true; try { const r=await fetch(p,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); const j=await r.json(); _pollingLocked=false; return j; } catch(e) { _pollingLocked=false; return null; } },
-  async del(p,b) { _pollingLocked=true; try { const r=await fetch(p,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); return r.json(); } catch(e) { return null; } }
+  async del(p,b) { _pollingLocked=true; try { const r=await fetch(p,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); const j=await r.json(); _pollingLocked=false; return j; } catch(e) { _pollingLocked=false; return null; } }
 };
 
 let cachedNames=[], cachedStates={}, cachedPlans={}, cachedLogs={};
@@ -1072,7 +1072,22 @@ async function loadAll() {
     }
   } catch(e) {}
 }
-function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,2000); }
+function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,1000); }
+// 캐시 변경 후 즉시 전체 UI 갱신 (서버 재호출 없이)
+function refreshUI() {
+  renderWorkerGrid();
+  renderWorkerListPage();
+  filterPlanTable({fromPolling:true});
+  renderCalendar();
+  renderAllLinked();
+  renderOrKPIs();
+  updatePlanSelect();
+  if(typeof curOrderTab!=='undefined'){
+    if(curOrderTab==='daily') renderOrDay();
+    else if(curOrderTab==='monthly') renderOrMonth();
+    else if(curOrderTab==='all') renderOrAll();
+  }
+}
 // 생산계획 필터 초기화
 (function(){
   const now = new Date();
@@ -1549,21 +1564,8 @@ window.submitPlan=async function(){
   if(res){
     cachedPlans=res;
     closeModal('plan-modal');
-    filterPlanTable({fromPolling:true});
-    renderCalendar();
-    renderOrKPIs();
-    if(typeof curPlanTab!=='undefined'){
-      if(curPlanTab==='daily')renderOrDayPlans();
-      else if(curPlanTab==='monthly')renderOrMonthPlans();
-      else if(curPlanTab==='all')renderOrAllPlans();
-    }
     showToast(`[${code}] 등록됨`);
-    renderOrKPIs();
-    if(typeof curOrderTab!=="undefined"){
-      if(curOrderTab==="daily") renderOrDay();
-      else if(curOrderTab==="monthly") renderOrMonth();
-      else if(curOrderTab==="all") renderOrAll();
-    }
+    refreshUI();
   }
 };
 
@@ -1761,23 +1763,9 @@ window.deletePlan=async function(id){
     });
   }
 
-  // 전체 UI 갱신
-  filterPlanTable();
-  renderCalendar();
-  renderOrKPIs();
-  renderAllLinked(); // 대시보드, 진행현황, 작업일보 등
-  updatePlanKPI(Object.values(cachedPlans)); // KPI 즉시 갱신
-  // 총 작업시간 즉시 재계산 (삭제된 로그 반영)
-  const _today=new Date().toISOString().slice(0,10);
-  const _dh=document.getElementById('d-hours');
-  if(_dh){const ms=_calcTotalMsForDate(_today);_dh.textContent=ms>0?fmtElapsed(ms):'—';}
-  const _dlh=document.getElementById('dl-hours');
-  if(_dlh){const ds=document.getElementById('daily-date')?.value;if(ds){const ms=_calcTotalMsForDate(ds);_dlh.textContent=ms>0?fmtElapsed(ms):'—';}}
-  if(typeof curOrderTab!=='undefined'){
-    if(curOrderTab==='daily') renderOrDay();
-    else if(curOrderTab==='monthly') renderOrMonth();
-    else if(curOrderTab==='all') renderOrAll();
-  }
+  // 전체 UI 즉시 갱신
+  refreshUI();
+  updatePlanKPI(Object.values(cachedPlans));
   showToast(`[${planCode||id}] 계획 및 관련 기록 삭제됨`);
   // 폴링 재시작
   startPolling();
@@ -2568,21 +2556,8 @@ window.submitEditPlan = async function() {
     cachedPlans = res;
     closeModal('plan-edit-modal');
     editingPlanId = null;
-    renderPlanTable();
-    renderCalendar();
-    renderOrKPIs();
-    if(typeof curPlanTab !== 'undefined') {
-      if(curPlanTab === 'daily') renderOrDayPlans();
-      else if(curPlanTab === 'monthly') renderOrMonthPlans();
-      else if(curPlanTab === 'all') renderOrAllPlans();
-    }
     showToast('수정 완료');
-    renderOrKPIs();
-    if(typeof curOrderTab!=="undefined"){
-      if(curOrderTab==="daily") renderOrDay();
-      else if(curOrderTab==="monthly") renderOrMonth();
-      else if(curOrderTab==="all") renderOrAll();
-    }
+    refreshUI();
   } else {
     showToast('수정 실패: ' + (res?.error || '오류'));
   }
