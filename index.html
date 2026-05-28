@@ -4,9 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CTNS MES Lite · 생산관리 시스템</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css"></noscript>
 <style>
 :root {
   --bg: #f0f2f8;
@@ -305,9 +309,9 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   .page-title { font-size: 18px !important; }
   .worker-card { min-height: 80px !important; }
   .wc-avatar { width: 44px !important; height: 44px !important; font-size: 18px !important; }
-  .job-card { padding: 12px !important; }
-  .job-btns { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
-  .job-btns button { padding: 14px 8px !important; font-size: 13px !important; }
+  .job-card { padding: 10px !important; }
+  .job-btns { display: flex !important; flex-direction: row !important; gap: 4px !important; }
+  .job-btns button { flex: 1 !important; padding: 7px 2px !important; font-size: 10px !important; gap: 2px !important; white-space: nowrap !important; min-width: 0 !important; }
   .worker-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important; gap: 8px !important; }
   .metric-value { font-size: 22px !important; }
   input, select, .input { font-size: 16px !important; } /* iOS 줌 방지 */
@@ -373,7 +377,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 </div>
 
 <!-- 메인 -->
-<div class="main-wrap">
+<div class="main-wrap" id="main-wrap" style="visibility:hidden">
   <div class="topbar">
     <div class="tb-left">
       <button class="menu-toggle" onclick="toggleSidebar()"><i class="ti ti-menu-2"></i></button>
@@ -1002,7 +1006,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.32.2/lib/msal-browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.32.2/lib/msal-browser.min.js" defer></script>
 <script>
 // 전역 래퍼 함수 (MSAL 로드 전 클릭 방지)
 function msLogin() {
@@ -1047,6 +1051,8 @@ function setUser(account) {
   // 로그인 화면 즉시 숨기고 앱 표시
   const ls = document.getElementById('login-screen');
   if(ls) ls.style.display = 'none';
+  const mw = document.getElementById('main-wrap');
+  if(mw) mw.style.visibility = 'visible';
   document.getElementById('sb-avatar').textContent = initials;
   document.getElementById('sb-uname').textContent = name;
   document.getElementById('sb-uemail').textContent = email;
@@ -1068,7 +1074,12 @@ window._msLogout = function() {
   if(!confirm('로그아웃 하시겠습니까?')) return;
   msalInstance.logoutRedirect({ postLogoutRedirectUri: window.location.href });
 };
-initAuth();
+// MSAL 로드 완료 후 initAuth 실행
+if(typeof msal !== 'undefined') {
+  initAuth();
+} else {
+  document.querySelector('script[src*="msal"]').addEventListener('load', initAuth);
+}
 
 /* ══ API ══ */
 const API = {
@@ -2031,11 +2042,21 @@ function getPlanStatus(p){
 
 function getWorkerCountForCode(code){
   const workers=new Set();
-  // 현재 작업 중인 작업자 (states)
-  Object.entries(cachedStates).forEach(([w,codes])=>{if(codes[code])workers.add(w);});
-  // 완료된 작업자도 포함 (logs)
+  const lowerCode=code?.toLowerCase();
+  // 현재 작업 중이거나 정지 상태인 작업자 (states)
+  Object.entries(cachedStates).forEach(([w,codes])=>{
+    const found=Object.entries(codes).find(([c])=>c.toLowerCase()===lowerCode);
+    if(found) workers.add(w);
+  });
+  // 오늘 작업 로그가 있는 작업자도 포함 (완료 포함)
+  const today=new Date().toISOString().slice(0,10);
   Object.entries(cachedLogs||{}).forEach(([worker,logs])=>{
-    Object.values(logs||{}).forEach(l=>{if(l.code===code)workers.add(worker);});
+    Object.values(logs||{}).forEach(l=>{
+      if(l.code?.toLowerCase()===lowerCode){
+        const logDate=new Date(l.ts).toISOString().slice(0,10);
+        if(logDate===today) workers.add(worker);
+      }
+    });
   });
   return workers.size;
 }
@@ -3053,8 +3074,8 @@ window.printDailyReport = function() {
   .worker-card { min-height: 80px !important; }
   .wc-avatar { width: 44px !important; height: 44px !important; font-size: 18px !important; }
   .job-card { padding: 12px !important; }
-  .job-btns { grid-template-columns: 1fr 1fr 1fr !important; gap: 4px !important; }
-  .job-btns button { padding: 6px 4px !important; font-size: 10px !important; gap: 2px !important; white-space: nowrap !important; }
+  .job-btns { display: flex !important; flex-direction: row !important; gap: 4px !important; }
+  .job-btns button { flex: 1 !important; padding: 7px 2px !important; font-size: 10px !important; gap: 2px !important; white-space: nowrap !important; min-width: 0 !important; }
   .job-btns button i { font-size: 10px !important; }
   .worker-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
   div#worker-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
