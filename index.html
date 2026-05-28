@@ -2138,7 +2138,15 @@ function renderDashboard(){
   if(wstEl){
     if(!cachedNames.length){wstEl.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">등록된 작업자 없음</div>';}
     else{
-      wstEl.innerHTML='<div style="display:flex;flex-direction:column;gap:6px">'+cachedNames.map((n,i)=>{
+      const todayOffdays=Object.values(cachedOffdays||{}).filter(o=>o.date===today);
+      const offRows=todayOffdays.map(o=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(239,68,68,.06);border-radius:8px;border:1px solid rgba(239,68,68,.2)">
+          <div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0"></div>
+          <div style="width:26px;height:26px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:var(--red);flex-shrink:0">${esc(initial(o.worker))}</div>
+          <span style="font-size:12px;font-weight:600;color:var(--text)">${esc(o.worker)}</span>
+          <span style="font-size:11px;color:var(--red);margin-left:auto">🏖 휴무${o.reason?' ('+esc(o.reason)+')':''}</span>
+        </div>`).join('');
+      wstEl.innerHTML='<div style="display:flex;flex-direction:column;gap:6px">'+offRows+cachedNames.map((n,i)=>{
         const st=cachedStates[n]||{};
         const runCodes=Object.entries(st).filter(([,v])=>v.action==='start').map(([c])=>c);
         const pauseCodes=Object.entries(st).filter(([,v])=>v.action==='pause').map(([c])=>c);
@@ -2265,6 +2273,8 @@ function renderProgress(){
       const rows=[];
       activeCodes.forEach((info,code)=>{
         const plan=plans.find(p=>p.code===code)||{code,planQty:0,actQty:0,customer:'—',productCode:'—',spec:'—'};
+        // 완료된 계획은 activeCodes에서 제외 (아래 완료 섹션에서 처리)
+        if(getPlanStatus(plan)==='done'||plan.status==='done') return;
         const pct=plan.planQty>0?Math.round((plan.actQty||0)/plan.planQty*100):0;
         const hrs=calcWorkHours(code);
         const wSet=new Set(info.workers);
