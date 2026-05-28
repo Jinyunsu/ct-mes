@@ -378,6 +378,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   <div class="topbar">
     <div class="tb-left">
       <button class="menu-toggle" onclick="toggleSidebar()"><i class="ti ti-menu-2"></i></button>
+      <button id="tb-home-btn" onclick="location.reload()" style="display:none;background:none;border:none;color:var(--text);font-size:18px;cursor:pointer;padding:4px 8px 4px 0"><i class="ti ti-home"></i></button>
       <span class="tb-title" id="tb-title">작업 관리</span>
       <span class="tb-sep">·</span>
       <span class="tb-page" id="tb-page">CTNS MES Lite</span>
@@ -3054,8 +3055,9 @@ window.printDailyReport = function() {
   .worker-card { min-height: 80px !important; }
   .wc-avatar { width: 44px !important; height: 44px !important; font-size: 18px !important; }
   .job-card { padding: 12px !important; }
-  .job-btns { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
-  .job-btns button { padding: 14px 8px !important; font-size: 13px !important; }
+  .job-btns { grid-template-columns: 1fr 1fr 1fr !important; gap: 4px !important; }
+  .job-btns button { padding: 7px 3px !important; font-size: 11px !important; gap: 2px !important; }
+  #tb-home-btn { display: inline-flex !important; align-items: center !important; }
   .worker-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important; gap: 8px !important; }
   .metric-value { font-size: 22px !important; }
   input, select, .input { font-size: 16px !important; } /* iOS 줌 방지 */
