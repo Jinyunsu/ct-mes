@@ -181,7 +181,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 .worker-card:hover{border-color:var(--border2);transform:translateY(-2px)}
 .worker-card.running::before{background:var(--green)}
 .worker-card.running{border-color:rgba(34,197,94,.3)}
-.worker-card.paused::before{background:var(--accent)}
+.worker-card.paused::before{background:var(--amber)}
 .worker-card.paused{border-color:rgba(245,158,11,.3)}
 .wc-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;margin:0 auto 10px}
 .wc-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
@@ -195,7 +195,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 .job-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .dot-idle{background:var(--text3)}
 .dot-run{background:var(--green);animation:pulse 1.4s infinite}
-.dot-pause{background:var(--accent)}
+.dot-pause{background:var(--amber)}
 .dot-done{background:var(--text3)}
 .job-code{font-size:14px;font-weight:700;color:var(--text);flex:1;font-family:var(--mono)}
 .job-body{display:none;padding:0 16px 14px;border-top:1px solid var(--border)}
@@ -205,8 +205,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 .jbtn:disabled{opacity:.25;cursor:default}
 .jbtn-start{background:#16a34a;color:#fff}
 .jbtn-start:hover:not(:disabled){background:#15803d}
-.jbtn-pause{background:#2563eb;color:#fff}
-.jbtn-pause:hover:not(:disabled){background:#1d4ed8}
+.jbtn-pause{background:#d97706;color:#fff}
+.jbtn-pause:hover:not(:disabled){background:#b45309}
 .jbtn-end{background:#dc2626;color:#fff}
 .jbtn-end:hover:not(:disabled){background:#b91c1c}
 
@@ -248,7 +248,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 
 /* ══ 달력 ══ */
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cal-day{min-height:90px;padding:5px;background:var(--bg3);border-radius:7px;border:1px solid var(--border);cursor:pointer;transition:background .15s;position:relative;overflow:visible}
+.cal-day{min-height:72px;padding:5px;background:var(--bg3);border-radius:7px;border:1px solid var(--border);cursor:pointer;transition:background .15s}
 .cal-day:hover{background:var(--bg4)}
 .cal-day.today{border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.06)}
 .cal-num{font-size:11px;font-weight:700;margin-bottom:3px}
@@ -477,7 +477,6 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <div style="display:flex;flex-direction:column;gap:8px">
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">지연 작업</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge badge-amber" style="margin-left:auto">확인필요</span></div>
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="ti ti-bug"></i></div><div><div class="kpi-label">납기 초과</div><div class="kpi-val" id="d-alert-overdue">0건</div></div><span class="badge badge-red" style="margin-left:auto">주의</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(59,130,246,.1);color:var(--accent)"><i class="ti ti-player-pause"></i></div><div><div class="kpi-label">작업 중 정지</div><div class="kpi-val" id="d-alert-waiting">0건</div></div><span class="badge badge-blue" style="margin-left:auto">정지</span></div>
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div class="kpi-val" id="d-alert-done">0건</div></div><span class="badge badge-green" style="margin-left:auto">금일</span></div>
           </div>
         </div>
@@ -517,7 +516,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th style="width:36px">NO</th><th>등록일</th><th>생산계획일</th><th>납기일</th><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
+            <thead><tr><th>등록일</th><th>생산계획일</th><th>납기일</th><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
             <tbody id="plan-tbl"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
           </table>
         </div>
@@ -569,8 +568,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="card-title"><i class="ti ti-activity"></i> 실시간 작업현황</div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th style="width:36px">NO</th><th>작업코드</th><th>제품코드</th><th>고객사</th><th>생산계획일</th><th>투입인원</th><th>작업시간</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>최근액션</th></tr></thead>
-            <tbody><tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">진행중인 작업이 없습니다</td></tr></tbody>
+            <thead><tr><th>작업코드</th><th>제품코드</th><th>고객사</th><th>생산계획일</th><th>투입인원</th><th>작업시간</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>최근액션</th></tr></thead>
+            <tbody><tr><td colspan="11" style="text-align:center;color:var(--text3);padding:24px">진행중인 작업이 없습니다</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -732,7 +731,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">달성률</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="dk-rate">—</div></div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th style="width:36px">NO</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>비고</th></tr></thead>
+        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>비고</th></tr></thead>
         <tbody id="or-day-tbody"><tr><td colspan="11" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
@@ -777,7 +776,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th style="width:36px">NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
+        <thead><tr><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
         <tbody id="or-all-tbody"><tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
@@ -1299,7 +1298,7 @@ function renderWorkerGrid() {
     Object.values(st).forEach(v=>{if(v?.action==='start')run++;else if(v?.action==='pause')pause++;});
     let cls='',stxt='대기중',scol='var(--text3)';
     if(run>0){cls='running';stxt=`● ${run}개 작업중`;scol='var(--green)';}
-    else if(pause>0){cls='paused';stxt=`⏸ ${pause}개 정지`;scol='var(--accent)';}
+    else if(pause>0){cls='paused';stxt=`⏸ ${pause}개 정지`;scol='var(--amber)';}
     return `<div class="worker-card ${cls}" style="position:relative">
       <div onclick="selectWorker(${i})" style="cursor:pointer">
         <div class="wc-avatar" style="background:${COLORS[i%COLORS.length]}">${esc(initial(n))}</div>
@@ -1470,11 +1469,11 @@ function renderJobs(){
   list.innerHTML=codes.map(c=>{
     const s=jobs[c],a=s.action;
     const dotCls=a==='start'?'dot-run':a==='pause'?'dot-pause':a==='end'?'dot-done':'dot-idle';
-    const badgeCls=a==='start'?'badge-green':a==='pause'?'badge-blue':a==='end'?'badge-gray':'badge-gray';
+    const badgeCls=a==='start'?'badge-green':a==='pause'?'badge-amber':a==='end'?'badge-gray':'badge-gray';
     const badgeTxt=a==='start'?'작업중':a==='pause'?'일시정지':a==='end'?'완료':'대기';
     const cardCls=a==='start'?'running':a==='pause'?'paused':'';
         const elapsed=a==='start'&&s.startTs?fmtElapsed(Date.now()-s.startTs):'';
-    const since=a==='start'?`<div style="font-size:13px;font-weight:700;color:var(--green);margin:8px 0 10px;font-family:var(--mono);letter-spacing:.5px">${elapsed||'0s'}</div>`:a==='pause'&&s.since?`<div style="font-size:11px;color:var(--accent);margin:8px 0 10px">${s.since} 일시정지</div>`:'';
+    const since=a==='start'?`<div style="font-size:13px;font-weight:700;color:var(--green);margin:8px 0 10px;font-family:var(--mono);letter-spacing:.5px">${elapsed||'0s'}</div>`:a==='pause'&&s.since?`<div style="font-size:11px;color:var(--amber);margin:8px 0 10px">${s.since} 일시정지</div>`:'';
     return `<div class="job-card ${cardCls}">
       <div class="job-head" onclick="toggleJob('${esc(c)}')">
         <div class="job-dot ${dotCls}"></div>
@@ -1798,13 +1797,12 @@ function renderPlanTable(filterFn){
     const h=Math.floor(total/3600000),m=Math.floor((total%3600000)/60000);
     return h>0?`${h}h ${m}m`:`${m}m`;
   }
-  tbody.innerHTML=plans.map((p,idx)=>{
+  tbody.innerHTML=plans.map(p=>{
     const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
     const wCnt=getWorkerCount(p.code);
     const wHrs=calcWorkHours(p.code);
     const isToday=p.date===new Date().toISOString().slice(0,10);
     return `<tr style="${isToday?'background:rgba(59,130,246,.04)':''}">
-      <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${idx+1}</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.createdAt||'—'}</td>
       <td style="font-family:var(--mono);font-size:11px">
         <div style="display:flex;align-items:center;gap:5px">
@@ -2003,138 +2001,58 @@ function renderCalendar(){
   const firstDay=new Date(calYear,calMonth,1).getDay();
   const lastDate=new Date(calYear,calMonth+1,0).getDate();
   const today=new Date().toISOString().slice(0,10);
-
-  // 상태별 색상
-  const statusColor={
-    done:{bg:'rgba(34,197,94,.25)',text:'#16a34a',border:'rgba(34,197,94,.4)'},
-    running:{bg:'rgba(59,130,246,.2)',text:'#2563eb',border:'rgba(59,130,246,.4)'},
-    waiting:{bg:'rgba(245,158,11,.18)',text:'#d97706',border:'rgba(245,158,11,.4)'},
-    planned:{bg:'rgba(148,163,184,.18)',text:'#64748b',border:'rgba(148,163,184,.4)'},
-    failed:{bg:'rgba(239,68,68,.18)',text:'#dc2626',border:'rgba(239,68,68,.4)'},
-    shipped:{bg:'rgba(34,197,94,.12)',text:'#15803d',border:'rgba(34,197,94,.25)'},
-  };
-
-  // 날짜 → 인덱스 (0 = 달력 첫 칸)
-  const dateToIdx=(ds)=>{
-    const d=parseInt(ds.slice(8),10);
-    return firstDay+d-1;
-  };
-  const idxToDate=(idx)=>{
-    const d=idx-firstDay+1;
-    if(d<1||d>lastDate)return null;
-    return `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-  };
-  const totalCells=firstDay+lastDate;
-  const rows=Math.ceil(totalCells/7);
-
-  // 달력 셀 렌더링
-  let cellsHtml='';
-  for(let i=0;i<firstDay;i++) cellsHtml+=`<div class="cal-day" style="background:var(--bg2);opacity:.3;position:relative"></div>`;
+  let html='';
+  for(let i=0;i<firstDay;i++)html+=`<div class="cal-day" style="background:var(--bg2);opacity:.3"></div>`;
   for(let d=1;d<=lastDate;d++){
     const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday=ds===today;
     const dow=new Date(calYear,calMonth,d).getDay();
     const dc=dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text2)';
-    const offWorkers=Object.values(cachedOffdays||{}).filter(o=>o.date===ds);
-    const offHtml=offWorkers.map(o=>`<div style="font-size:9px;background:rgba(239,68,68,.12);color:var(--red);border-radius:3px;padding:1px 4px;margin-top:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🏖 ${esc(o.worker)}${o.reason?` (${esc(o.reason)})`:''}</div>`).join('');
-    // 해당 날짜 포함 계획 툴팁
-    const dayPlans=Object.values(cachedPlans).filter(p=>{
-      if(!p.date||p.status==='shipped') return false;
-      const st=getPlanStatus(p);
-      const eDs=todayDs>p.date?todayDs:p.date;
-      return p.date<=ds&&ds<=eDs;
+    const dp=Object.values(cachedPlans).filter(p=>p.date&&p.date===ds);
+    // 이전 날짜 미완료 계획 (오늘까지 이어지는 것)
+    const prevUnfinished=Object.values(cachedPlans).filter(p=>{
+      if(!p.date||p.date>=ds)return false;
+      if(getPlanStatus(p)==='done'||p.status==='done')return false;
+      if((p.actQty||0)>=(p.planQty||1))return false; // 수량 완료
+      const allPlanLogs=Object.values(cachedLogs||{}).flatMap(wl=>
+        Object.values(wl||{}).filter(l=>l.code===p.code)
+      );
+      if(!allPlanLogs.length)return false;
+      // ds 날짜에 start 로그가 있어야 이월 표시
+      const dsStartLogs=allPlanLogs.filter(l=>
+        l.action==='start' && new Date(l.ts).toISOString().slice(0,10)===ds
+      );
+      return dsStartLogs.length>0;
     });
-    const tooltipTxt=[
-      ...dayPlans.map(p=>`${p.code}${p.customer?' ('+p.customer+')':''} | ${p.planQty||0}EA | ${getPlanStatus(p)==='done'?'완료':getPlanStatus(p)==='running'?'작업중':getPlanStatus(p)==='waiting'?'대기':getPlanStatus(p)==='failed'?'미달성':'예정'}`),
-      ...offWorkers.map(o=>`🏖 ${o.worker}${o.reason?' ('+o.reason+')':''}`)
-    ].join('\n');
-    cellsHtml+=`<div class="cal-day${isToday?' today':''}" style="position:relative;min-height:90px" title="${tooltipTxt}"
+    const allDp=[...prevUnfinished.map(p=>({...p,_carry:true})),...dp];
+    // 호버 툴팁용 전체 목록
+    const tooltipLines=allDp.map(p=>`${p._carry?'↩ ':''}${p.code}${p.customer?' ('+p.customer+')':''} | ${p.planQty||0}EA | ${getPlanStatus(p)==='done'?'완료':getPlanStatus(p)==='running'?'작업중':'예정'}`).join('\n');
+    const offTooltip=Object.values(cachedOffdays||{}).filter(o=>o.date===ds).map(o=>`🏖 ${o.worker}${o.reason?' ('+o.reason+')':''}`).join('\n');
+    const fullTooltip=[tooltipLines,offTooltip].filter(Boolean).join('\n');
+    const ph=allDp.slice(0,3).map(p=>{
+      const c=getCalColor(p.code);
+      const isDone=getPlanStatus(p)==='done'||p.status==='done';
+      const bg=isDone?'rgba(34,197,94,.25)':p._carry?'rgba(239,68,68,.15)':c.bg;
+      const color=isDone?'var(--green)':p._carry?'var(--red)':c.text;
+      const border=p._carry?'1px dashed var(--red)':'none';
+      const prefix=p._carry?'↩ ':'';
+      return `<div class="cal-chip" style="background:${bg};color:${color};border:${border}" title="${p.code}${p.customer?' ('+p.customer+')':''} | ${p.planQty||0}EA">${prefix}${p.code}${p.customer?` (${p.customer})`:''}</div>`;
+    }).join('');
+    // 해당 날짜 휴무 작업자
+    const offWorkers=Object.values(cachedOffdays||{}).filter(o=>o.date===ds);
+    const offHtml=offWorkers.map(o=>`<div style="font-size:9px;background:rgba(239,68,68,.12);color:var(--red);border-radius:3px;padding:1px 4px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o.worker}${o.reason?' ('+o.reason+')':''}">🏖 ${o.worker}${o.reason?` (${o.reason})`:''}</div>`).join('');
+    html+=`<div class="cal-day${isToday?' today':''}" title="${fullTooltip}"
       ondragover="event.preventDefault();event.currentTarget.style.background='rgba(59,130,246,.18)'"
       ondragleave="event.currentTarget.style.background=''"
       ondrop="onCalDrop(event,'${ds}');event.currentTarget.style.background=''">
       <div class="cal-num" style="color:${isToday?'var(--accent)':dc};${isToday?'font-weight:900':''}">${d}</div>
+      ${ph}${allDp.length>3?`<div style="font-size:9px;color:var(--text3)" title="${fullTooltip}">+${allDp.length-3}개 더보기</div>`:''}
       ${offHtml}
     </div>`;
   }
   const rem=(firstDay+lastDate)%7===0?0:7-((firstDay+lastDate)%7);
-  for(let i=0;i<rem;i++) cellsHtml+=`<div class="cal-day" style="background:var(--bg2);opacity:.3;position:relative"></div>`;
-  grid.innerHTML=cellsHtml;
-
-  // 멀티데이 바 오버레이
-  const plans=Object.values(cachedPlans).filter(p=>p.date);
-  const todayDs=new Date().toISOString().slice(0,10);
-  // 각 계획의 시작/끝 날짜 계산
-  plans.forEach((p,pi)=>{
-    const st=getPlanStatus(p);
-    if(st==='shipped') return; // 출하 제외
-    const col=statusColor[st]||statusColor.planned;
-    const startDs=p.date;
-    if(!startDs) return;
-    // 완료면 오늘(완료된 날)에서 멈춤, 나머지는 오늘까지 이어짐
-    const endDs=todayDs>startDs?todayDs:startDs;
-    // 이 달력에 포함되는 범위만
-    const monthStart=`${calYear}-${String(calMonth+1).padStart(2,'0')}-01`;
-    const monthEnd=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(lastDate).padStart(2,'0')}`;
-    const visStart=startDs<monthStart?monthStart:startDs;
-    const visEnd=endDs>monthEnd?monthEnd:endDs;
-    if(visStart>monthEnd||visEnd<monthStart)return;
-
-  // 날짜별 레인 사용 추적 { 'YYYY-MM-DD': [planCode, ...] }
-  const lanemap={}; // { 'YYYY-MM-DD_lane': planCode }
-  function getLane(ds, code){
-    for(let lane=0;lane<8;lane++){
-      const key=`${ds}_${lane}`;
-      if(!lanemap[key]){ lanemap[key]=code; return lane; }
-    }
-    return 0;
-  }
-
-  plans.forEach((p,pi)=>{
-    const st=getPlanStatus(p);
-    if(st==='shipped') return;
-    const col=statusColor[st]||statusColor.planned;
-    const startDs=p.date;
-    if(!startDs) return;
-    const endDs=todayDs>startDs?todayDs:startDs;
-    const monthStart=`${calYear}-${String(calMonth+1).padStart(2,'0')}-01`;
-    const monthEnd=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(lastDate).padStart(2,'0')}`;
-    const visStart=startDs<monthStart?monthStart:startDs;
-    const visEnd=endDs>monthEnd?monthEnd:endDs;
-    if(visStart>monthEnd||visEnd<monthStart)return;
-
-    // 레인 결정: visStart 기준
-    const lane=getLane(visStart, p.code);
-    if(lane>=3) return; // 최대 3개만 표시
-
-    let curDs=visStart;
-    while(curDs<=visEnd){
-      const curD=parseInt(curDs.slice(8),10);
-      const curDow=new Date(calYear,calMonth,curD).getDay();
-      const daysLeft=6-curDow;
-      const endOfWeek=new Date(calYear,calMonth,curD+daysLeft);
-      const endOfWeekDs=endOfWeek.getFullYear()+'-'+String(endOfWeek.getMonth()+1).padStart(2,'0')+'-'+String(endOfWeek.getDate()).padStart(2,'0');
-      const segEnd=visEnd<endOfWeekDs?visEnd:endOfWeekDs;
-      const segEndD=parseInt(segEnd.slice(8),10);
-      const colStart=firstDay+curD-1;
-      const colEnd=firstDay+segEndD-1;
-      const startCell=grid.children[colStart];
-      if(startCell){
-        const spanCols=colEnd-colStart+1;
-        const isStart=curDs===visStart;
-        const isEnd=segEnd===visEnd;
-        const label=`${p.code}${p.customer?` (${p.customer})`:''}`;
-        const topPx=22+(lane*17);
-        const bar=document.createElement('div');
-        bar.style.cssText=`position:absolute;left:${isStart?'2px':'-1px'};right:${isEnd?'2px':'-1px'};top:${topPx}px;height:14px;background:${col.bg};border:1px solid ${col.border};border-radius:${isStart?'4px':'0'} ${isEnd?'4px':'0'} ${isEnd?'4px':'0'} ${isStart?'4px':'0'};z-index:${2+lane};overflow:hidden;white-space:nowrap;cursor:default;width:calc(${spanCols*100}% + ${(spanCols-1)*2}px)`;
-        bar.title=`${label} | ${p.planQty||0}EA | ${st==='done'?'완료':st==='running'?'작업중':st==='waiting'?'대기':st==='failed'?'미달성':'예정'}`;
-        bar.innerHTML=`<span style="font-size:9px;font-weight:700;color:${col.text};padding:0 4px;line-height:14px;display:block;overflow:hidden;text-overflow:ellipsis">${label}</span>`;
-        startCell.appendChild(bar);
-      }
-      const nextD=segEndD+1;
-      if(nextD>lastDate)break;
-      curDs=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(nextD).padStart(2,'0')}`;
-    }
-  });
+  for(let i=0;i<rem;i++)html+=`<div class="cal-day" style="background:var(--bg2);opacity:.3"></div>`;
+  grid.innerHTML=html;
 }
 window.calPrev=function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();};
 window.calNext=function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();};
@@ -2346,7 +2264,7 @@ function renderDashboard(){
         const pauseCodes=Object.entries(st).filter(([,v])=>v.action==='pause').map(([c])=>c);
         let statusTxt='대기중',statusColor='var(--text3)',dotColor='var(--text3)';
         if(runCodes.length){statusTxt=runCodes.slice(0,2).join(', ')+(runCodes.length>2?` 외 ${runCodes.length-2}`:'')+' 작업중';statusColor='var(--green)';dotColor='var(--green)';}
-        else if(pauseCodes.length){statusTxt='일시정지';statusColor='var(--accent)';dotColor='var(--accent)';}
+        else if(pauseCodes.length){statusTxt='일시정지';statusColor='var(--amber)';dotColor='var(--amber)';}
         return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)">
           <div style="width:7px;height:7px;border-radius:50%;background:${dotColor};flex-shrink:0;${runCodes.length?'animation:pulse 1.4s infinite':''}"></div>
           <div style="width:26px;height:26px;border-radius:50%;background:${COLORS[i%COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0">${esc(initial(n))}</div>
@@ -2399,7 +2317,7 @@ function renderDashboard(){
     if(!recent.length){recentEl.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">활동 없음</div>';}
     else{
       const icons={start:'▶',pause:'⏸',end:'■'};
-      const cols={start:'var(--green)',pause:'var(--accent)',end:'var(--text3)'};
+      const cols={start:'var(--green)',pause:'var(--amber)',end:'var(--text3)'};
       const lbls={start:'시작',pause:'일시정지',end:'종료'};
       recentEl.innerHTML=recent.map(l=>`
         <div class="timeline-item">
@@ -2423,11 +2341,9 @@ function renderDashboard(){
   const overdueCnt = allPlans.filter(p=>p.dueDate && p.dueDate<today2 && getPlanStatus(p)!=='done' && getPlanStatus(p)!=='shipped').length;
   // 완료: 오늘 완료된 계획
   const doneTodayCnt = allPlans.filter(p=>getPlanStatus(p)==='done' && (p.date===today2 || p.createdAt===today2)).length;
-  const waitingCnt = allPlans.filter(p=>getPlanStatus(p)==='waiting').length;
   const el2=id=>document.getElementById(id);
   if(el2('d-alert-delayed')) el2('d-alert-delayed').textContent=delayedCnt+'건';
   if(el2('d-alert-overdue')) el2('d-alert-overdue').textContent=overdueCnt+'건';
-  if(el2('d-alert-waiting')) el2('d-alert-waiting').textContent=waitingCnt+'건';
   if(el2('d-alert-done')) el2('d-alert-done').textContent=doneTodayCnt+'건';}
 
 // ── 진행현황 ──
@@ -2468,7 +2384,6 @@ function renderProgress(){
       ptbl.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">오늘 작업 내역이 없습니다</td></tr>';
     }else{
       const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기'};
-      let _rowNo=0;
       const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
       // Collect all active codes from states
       const todayCodes=new Set(runPlans.map(p=>p.code?.toLowerCase()));
@@ -2493,7 +2408,6 @@ function renderProgress(){
         const wCnt=getWorkerCountForCode(code);
         const recentLog=Object.values(cachedLogs||{}).flatMap(wl=>Object.values(wl||{})).filter(l=>l.code===code).sort((a,b)=>b.ts-a.ts)[0];
         rows.push(`<tr>
-          <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${++_rowNo}</td>
           <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(code)}</td>
           <td style="font-size:11px">${esc(plan.productCode||'—')}</td>
           <td style="font-size:11px">${esc(plan.customer||'—')}</td>
@@ -2503,7 +2417,7 @@ function renderProgress(){
           <td style="font-family:var(--mono)">${(plan.planQty||0).toLocaleString()}</td>
           <td style="font-family:var(--mono);color:var(--green)">${(plan.actQty||0).toLocaleString()}</td>
           <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-family:var(--mono)">${pct}%</span></div></td>
-          <td><span class="badge ${info.action==='start'?'badge-blue':'badge-blue'}" style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:${info.action==='start'?'var(--green)':'var(--accent)'};${info.action==='start'?'animation:pulse 1.4s infinite;':''}display:inline-block"></span>${info.action==='start'?'작업중':'일시정지'}</span></td>
+          <td><span class="badge ${info.action==='start'?'badge-blue':'badge-amber'}" style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:${info.action==='start'?'var(--green)':'var(--amber)'};${info.action==='start'?'animation:pulse 1.4s infinite;':''}display:inline-block"></span>${info.action==='start'?'작업중':'일시정지'}</span></td>
           <td style="font-size:11px;color:var(--text3)">${recentLog?recentLog.time:'—'}</td>
         </tr>`);
       });
@@ -2515,7 +2429,6 @@ function renderProgress(){
           const hrs=calcWorkHours(p.code);
           const wCnt=getWorkerCountForCode(p.code);
           rows.push(`<tr>
-            <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${++_rowNo}</td>
             <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
             <td style="font-size:11px">${esc(p.productCode||'—')}</td>
             <td style="font-size:11px">${esc(p.customer||'—')}</td>
@@ -2530,7 +2443,7 @@ function renderProgress(){
           </tr>`);
         }
       });
-      ptbl.innerHTML=rows.join('')||'<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">오늘 작업 내역이 없습니다</td></tr>';
+      ptbl.innerHTML=rows.join('')||'<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">오늘 작업 내역이 없습니다</td></tr>';
     }
   }
 
@@ -2586,7 +2499,7 @@ function renderProgress(){
       tlDiv.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">오늘 작업 기록 없음</div>';
     }else{
       const icons={start:'▶',pause:'⏸',end:'■'};
-      const cols={start:'var(--green)',pause:'var(--accent)',end:'var(--text3)'};
+      const cols={start:'var(--green)',pause:'var(--amber)',end:'var(--text3)'};
       const lbls={start:'시작',pause:'일시정지',end:'종료'};
       tlDiv.innerHTML=allLogs.map(l=>`
         <div class="timeline-item">
@@ -2753,7 +2666,7 @@ function renderWorkerStats(){
       <td style="font-family:var(--mono)">${codeSet.size}</td>
       <td style="font-family:var(--mono)">${wHrsStr}</td>
       <td style="font-family:var(--mono);color:var(--green)">${totalQty>0?totalQty.toLocaleString()+' EA':'—'}</td>
-      <td><span class="badge ${isWorking?'badge-green':activeCodes.length?'badge-blue':'badge-gray'}">${isWorking?'작업중':activeCodes.length?'정지':'대기'}</span></td>
+      <td><span class="badge ${isWorking?'badge-green':activeCodes.length?'badge-amber':'badge-gray'}">${isWorking?'작업중':activeCodes.length?'정지':'대기'}</span></td>
     </tr>`;
   }).join('');
 }
@@ -2999,14 +2912,13 @@ function renderOrKPIs() {
 const OR_SM = {done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',shipped:'출하완료'};
 const OR_SC = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',shipped:'badge-green'};
 
-function orPlanRow(p, no) {
+function orPlanRow(p) {
   const pct = p.planQty>0 ? Math.round((p.actQty||0)/p.planQty*100) : 0;
   const st = p.shippedAt ? 'shipped' : getPlanStatus(p);
   const shippedInfo = p.shippedAt ? `<div style="font-size:9px;color:var(--text3);margin-top:2px">${p.shippedAt}</div>` : '';
   const today = new Date().toISOString().slice(0,10);
   const dueCls = p.dueDate && p.dueDate < today && st!=='done' && st!=='shipped' ? 'color:var(--red)' : 'color:var(--text3)';
   return `<tr>
-    <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${no||''}</td>
     <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
     <td>${esc(p.customer||'—')}</td>
     <td style="font-size:11px;color:var(--text3)">${esc(p.productCode||'—')}</td>
@@ -3055,7 +2967,7 @@ window.renderOrDay = function() {
   if(el('dk-rate')) el('dk-rate').textContent = rate+'%';
   const tbody = el('or-day-tbody'); if(!tbody) return;
   tbody.innerHTML = plans.length
-    ? plans.map((p,i)=>orPlanRow(p,i+1)).join('')
+    ? plans.map(orPlanRow).join('')
     : '<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr>';
 };
 
@@ -3104,8 +3016,8 @@ window.renderOrMonth = function() {
         <span style="font-size:11px;font-weight:700;color:${dr>=100?'var(--green)':dr>0?'var(--amber)':'var(--text3)'}">${dr}%</span>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th style="width:36px">NO</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>비고</th></tr></thead>
-        <tbody>${dp.map((p,i)=>orPlanRow(p,i+1)).join('')}</tbody>
+        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>비고</th></tr></thead>
+        <tbody>${dp.map(orPlanRow).join('')}</tbody>
       </table></div>
     </div>`;
   }).join('');
@@ -3120,11 +3032,10 @@ window.renderOrAll = function() {
   plans.sort((a,b)=>a.date>b.date?1:-1);
   const tbody = document.getElementById('or-all-tbody'); if(!tbody) return;
   if(!plans.length) { tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>'; return; }
-  tbody.innerHTML = plans.map((p,idx)=>{
+  tbody.innerHTML = plans.map(p=>{
     const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
     const st=getPlanStatus(p);
     return `<tr>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${idx+1}</td>
       <td style="font-size:12px;color:var(--text3)">${p.date||'—'}</td>
       <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
       <td>${esc(p.customer||'—')}</td>
