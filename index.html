@@ -439,7 +439,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <div class="card-title"><i class="ti ti-chart-line"></i> 작업코드별 진행현황</div>
           <div class="tbl-wrap">
             <table>
-              <thead><tr><th>작업코드</th><th>제품코드</th><th>고객사</th><th>투입인원</th><th>작업시간</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>최근액션</th></tr></thead>
+              <thead><tr><th>작업코드</th><th>제품코드</th><th>생산계획일</th><th>고객사</th><th>투입인원</th><th>작업시간</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>최근액션</th></tr></thead>
               <tbody id="d-progress-tbl"><tr><td colspan="10" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr></tbody>
             </table>
           </div>
@@ -548,8 +548,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="card-title"><i class="ti ti-activity"></i> 실시간 작업현황</div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>작업코드</th><th>제품코드</th><th>고객사</th><th>투입인원</th><th>작업시간</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>최근액션</th></tr></thead>
-            <tbody><tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">진행중인 작업이 없습니다</td></tr></tbody>
+            <thead><tr><th>작업코드</th><th>제품코드</th><th>생산계획일</th><th>고객사</th><th>투입인원</th><th>작업시간</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>최근액션</th></tr></thead>
+            <tbody><tr><td colspan="11" style="text-align:center;color:var(--text3);padding:24px">진행중인 작업이 없습니다</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -714,8 +714,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">달성률</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="dk-rate">—</div></div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
-        <tbody id="or-day-tbody"><tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
+        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>비고</th></tr></thead>
+        <tbody id="or-day-tbody"><tr><td colspan="11" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
   </div>
@@ -2052,6 +2052,7 @@ function renderProgress(){
         rows.push(`<tr>
           <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(code)}</td>
           <td style="font-size:11px">${esc(plan.productCode||'—')}</td>
+          <td style="font-family:var(--mono);font-size:11px;color:var(--accent)">${plan.date||'—'}</td>
           <td style="font-size:11px">${esc(plan.customer||'—')}</td>
           <td>${wSet.size}명</td>
           <td style="font-family:var(--mono);font-size:11px">${hrs.str}</td>
@@ -2522,17 +2523,21 @@ function renderOrKPIs() {
   if(el('or-rate')) el('or-rate').textContent = rate;
 }
 
-const OR_SM = {done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기'};
-const OR_SC = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
+const OR_SM = {done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',shipped:'출하완료'};
+const OR_SC = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',shipped:'badge-green'};
 
 function orPlanRow(p) {
   const pct = p.planQty>0 ? Math.round((p.actQty||0)/p.planQty*100) : 0;
-  const st = getPlanStatus(p);
+  const st = p.shippedAt ? 'shipped' : getPlanStatus(p);
+  const shippedInfo = p.shippedAt ? `<div style="font-size:9px;color:var(--text3);margin-top:2px">${p.shippedAt}</div>` : '';
+  const today = new Date().toISOString().slice(0,10);
+  const dueCls = p.dueDate && p.dueDate < today && st!=='done' && st!=='shipped' ? 'color:var(--red)' : 'color:var(--text3)';
   return `<tr>
     <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
     <td>${esc(p.customer||'—')}</td>
     <td style="font-size:11px;color:var(--text3)">${esc(p.productCode||'—')}</td>
     <td style="font-size:11px;color:var(--text3)">${esc(p.spec||'—')}</td>
+    <td style="font-family:var(--mono);font-size:11px;${dueCls}">${p.dueDate||'—'}</td>
     <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()} EA</td>
     <td style="font-family:var(--mono);color:${(p.actQty||0)>0?'var(--green)':'var(--text3)'}">${(p.actQty||0).toLocaleString()} EA</td>
     <td><div style="display:flex;align-items:center;gap:6px">
@@ -2541,7 +2546,13 @@ function orPlanRow(p) {
       </div>
       <span style="font-size:12px">${pct}%</span>
     </div></td>
-    <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span></td>
+    <td>
+      <span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>
+      ${shippedInfo}
+    </td>
+    <td style="white-space:nowrap">
+      ${st!=='shipped'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer;white-space:nowrap">출하</button>`:'<span style="font-size:10px;color:var(--text3)">출하완료</span>'}
+    </td>
     <td style="font-size:12px;color:var(--text3)">${esc(p.remark||'—')}</td>
   </tr>`;
 }
@@ -2571,7 +2582,7 @@ window.renderOrDay = function() {
   const tbody = el('or-day-tbody'); if(!tbody) return;
   tbody.innerHTML = plans.length
     ? plans.map(orPlanRow).join('')
-    : '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr>';
+    : '<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr>';
 };
 
 window.orChMonth = function(d) {
@@ -2619,7 +2630,7 @@ window.renderOrMonth = function() {
         <span style="font-size:11px;font-weight:700;color:${dr>=100?'var(--green)':dr>0?'var(--amber)':'var(--text3)'}">${dr}%</span>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
+        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>비고</th></tr></thead>
         <tbody>${dp.map(orPlanRow).join('')}</tbody>
       </table></div>
     </div>`;
@@ -2873,6 +2884,27 @@ window.onCalDrop = function(e, dateStr) {
       showToast(`[${plan.code}] → ${dateStr} 변경됨`);
     } else showToast('변경 실패');
   });
+};
+
+window.shipPlan = async function(id) {
+  if(!confirm('출하 완료 처리하시겠습니까?')) return;
+  const plan = cachedPlans[id] || Object.values(cachedPlans).find(p=>p.id===id);
+  if(!plan) { showToast('계획을 찾을 수 없습니다'); return; }
+  const now = new Date();
+  const shippedAt = now.toLocaleDateString('ko-KR') + ' ' + now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
+  const updated = {...plan, id, status:'shipped', shippedAt};
+  const res = await API.put('/api/plans', updated);
+  if(res && !res.error) {
+    cachedPlans = res;
+    filterPlanTable();
+    renderOrKPIs();
+    if(typeof curOrderTab!=='undefined'){
+      if(curOrderTab==='daily') renderOrDay();
+      else if(curOrderTab==='monthly') renderOrMonth();
+      else if(curOrderTab==='all') renderOrAll();
+    }
+    showToast(`[${plan.code}] 출하완료 처리됨 (${shippedAt})`);
+  } else showToast('처리 실패');
 };
 function showToast(msg){
   let t=document.getElementById('g-toast');
