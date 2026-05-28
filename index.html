@@ -1668,18 +1668,21 @@ window.submitPlan=async function(){
   const today=new Date().toISOString().slice(0,10);
   const newPlan={code,date:'',createdAt:today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',status:'planned',dueDate:document.getElementById('pf-duedate')?.value||''};
   closeModal('plan-modal');
-  // 폴링 중단 후 서버 저장
+  // 폴링 완전 중단
   if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
   _pollingLocked=true;
-  const res=await API.post('/api/plans',newPlan);
+  try {
+    const r=await fetch('/api/plans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(newPlan)});
+    const res=await r.json();
+    if(res && !res.error){
+      cachedPlans=res;
+      showToast(`[${code}] 등록됨`);
+      refreshUI();
+    } else {
+      showToast('등록 실패');
+    }
+  } catch(e){ showToast('등록 실패'); }
   _pollingLocked=false;
-  if(res){
-    cachedPlans=res;
-    showToast(`[${code}] 등록됨`);
-    refreshUI();
-  } else {
-    showToast('등록 실패');
-  }
   startPolling();
 };
 
