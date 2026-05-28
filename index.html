@@ -2305,17 +2305,30 @@ function renderProgress(){
   // 실시간 진행현황 테이블
   const ptbl=document.querySelector('#page-progress .tbl-wrap tbody');
   if(ptbl){
-    // 오늘 날짜 계획 + 작업중/완료된 계획 모두 표시
-    const runPlans=plans.filter(p=>p.date===today||(p.actQty>0&&getPlanStatus(p)!=='planned'));
+    // 오늘 날짜 계획 + 작업중/정지 상태 계획 + 실적 있으나 미달성 계획
+    const activePlanCodes=new Set();
+    Object.values(cachedStates).forEach(codes=>{
+      Object.keys(codes||{}).forEach(c=>activePlanCodes.add(c.toLowerCase()));
+    });
+    const runPlans=plans.filter(p=>{
+      if(p.date===today) return true; // 오늘 계획
+      const st=getPlanStatus(p);
+      if(activePlanCodes.has((p.code||'').toLowerCase())) return true; // 현재 작업중/정지
+      if(st!=='planned'&&st!=='done'&&st!=='shipped') return true; // 대기/작업중/미달성
+      if((p.actQty||0)>0&&(p.actQty||0)<(p.planQty||0)) return true; // 실적 있으나 미달
+      return false;
+    });
     if(!runPlans.length){
       ptbl.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">오늘 작업 내역이 없습니다</td></tr>';
     }else{
       const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기'};
       const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray'};
       // Collect all active codes from states
+      const todayCodes=new Set(runPlans.map(p=>p.code?.toLowerCase()));
       const activeCodes=new Map();
       Object.entries(cachedStates).forEach(([w,codes])=>{
         Object.entries(codes).forEach(([c,s])=>{
+          if(!todayCodes.has(c.toLowerCase())) return; // runPlans에 있는 코드만
           if(!activeCodes.has(c))activeCodes.set(c,{workers:[w],action:s.action,since:s.since});
           else activeCodes.get(c).workers.push(w);
         });
