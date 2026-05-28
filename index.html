@@ -1052,16 +1052,26 @@ let pollingTimer=null;
 
 async function loadAll() {
   try {
-    // names/states 먼저 빠르게 로드해서 작업자 즉시 표시
-    const [n,s] = await Promise.all([API.get('/api/names'),API.get('/api/states')]);
+    const [n,s,p,l] = await Promise.all([
+      API.get('/api/names'),
+      API.get('/api/states'),
+      API.get('/api/plans'),
+      API.get('/api/logs')
+    ]);
+    // 변경 감지
+    const prevNames = JSON.stringify(cachedNames);
+    const prevStates = JSON.stringify(cachedStates);
+    const prevPlans = JSON.stringify(cachedPlans);
+    const prevLogs = JSON.stringify(cachedLogs);
     if(n) cachedNames=n;
     if(s) cachedStates=s;
-    renderWorkerGrid();
-    renderWorkerListPage();
-    // 나머지 데이터 로드
-    const [p,l] = await Promise.all([API.get('/api/plans'),API.get('/api/logs')]);
     if(p) cachedPlans=p;
     if(l) cachedLogs=l;
+    const namesChanged = JSON.stringify(cachedNames) !== prevNames;
+    const statesChanged = JSON.stringify(cachedStates) !== prevStates;
+    const plansChanged = JSON.stringify(cachedPlans) !== prevPlans;
+    const logsChanged = JSON.stringify(cachedLogs) !== prevLogs;
+    if(!namesChanged && !statesChanged && !plansChanged && !logsChanged) return; // 변경없으면 스킵
     renderWorkerGrid();
     renderWorkerListPage();
     filterPlanTable({fromPolling:true});
@@ -1076,7 +1086,7 @@ async function loadAll() {
     }
   } catch(e) {}
 }
-function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,1500); }
+function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,2000); }
 // 생산계획 필터 초기화
 (function(){
   const now = new Date();
@@ -1110,6 +1120,25 @@ function go(id) {
   document.getElementById('tb-title').textContent = info.title||id;
   document.getElementById('tb-page').textContent = info.parent||'CTNS MES Lite';
   closeSidebar();
+  // 페이지 전환 시 즉시 렌더링
+  if(id==='dashboard') renderDashboard();
+  else if(id==='progress') renderProgress();
+  else if(id==='performance') renderPerformance();
+  else if(id==='workers') renderWorkerStats();
+  else if(id==='prodplan'){ filterPlanTable(); renderCalendar(); }
+  else if(id==='orders'){
+    renderOrKPIs();
+    if(curOrderTab==='daily') renderOrDay();
+    else if(curOrderTab==='monthly') renderOrMonth();
+    else renderOrAll();
+  }
+  else if(id==='daily'){
+    const dd=document.getElementById('daily-date');
+    if(dd&&!dd.value) dd.value=todayISO();
+    if(dd?.value) renderDailyReport(dd.value);
+  }
+  const _mob = window.innerWidth<=768||/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  if(_mob && id!=='worker') { go('worker'); return; }
 }
 
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sb-overlay').classList.toggle('open');}
@@ -2479,12 +2508,15 @@ function renderDailyReport(dateStr){
 
 // ── loadAll 후 전체 연계 렌더 ──
 function renderAllLinked(){
+  const activePage = document.querySelector('.page.active')?.id || '';
   renderDashboard();
-  renderProgress();
-  renderPerformance();
-  renderWorkerStats();
-  const dailyDate=document.getElementById('daily-date')?.value;
-  if(dailyDate)renderDailyReport(dailyDate);
+  if(activePage==='page-progress') renderProgress();
+  if(activePage==='page-performance') renderPerformance();
+  if(activePage==='page-workers') renderWorkerStats();
+  if(activePage==='page-daily'){
+    const dailyDate=document.getElementById('daily-date')?.value;
+    if(dailyDate) renderDailyReport(dailyDate);
+  }
 }
 
 
