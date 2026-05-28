@@ -1558,7 +1558,7 @@ function renderLogs(){
   list.innerHTML=logs.map(l=>`<div class="timeline-item">
     <div class="tl-dot" style="background:${cols[l.action]};color:${tcols[l.action]}">${icons[l.action]||'●'}</div>
     <div style="flex:1;min-width:0">
-      <div class="tl-code">${esc(l.code)}</div>
+      <div class="tl-code">${esc(l.code)}${(()=>{const _p=Object.values(cachedPlans).find(p=>p.code?.toLowerCase()===l.code?.toLowerCase());return _p?.customer?` (${esc(_p.customer)})`:'';})()}</div>
       <div class="tl-action" style="color:${tcols[l.action]}">${lbls[l.action]||l.action}${l.qty>0?' · '+l.qty+'EA':''}</div>
     </div>
     <div style="text-align:right;flex-shrink:0">
