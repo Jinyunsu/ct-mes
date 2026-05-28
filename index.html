@@ -200,12 +200,12 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 .job-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:12px}
 .jbtn{padding:10px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s}
 .jbtn:disabled{opacity:.25;cursor:default}
-.jbtn-start{background:rgba(34,197,94,.15);color:#4ade80}
-.jbtn-start:hover:not(:disabled){background:rgba(34,197,94,.25)}
-.jbtn-pause{background:rgba(245,158,11,.12);color:#fbbf24}
-.jbtn-pause:hover:not(:disabled){background:rgba(245,158,11,.2)}
-.jbtn-end{background:rgba(239,68,68,.1);color:#f87171}
-.jbtn-end:hover:not(:disabled){background:rgba(239,68,68,.18)}
+.jbtn-start{background:#16a34a;color:#fff}
+.jbtn-start:hover:not(:disabled){background:#15803d}
+.jbtn-pause{background:#d97706;color:#fff}
+.jbtn-pause:hover:not(:disabled){background:#b45309}
+.jbtn-end{background:#dc2626;color:#fff}
+.jbtn-end:hover:not(:disabled){background:#b91c1c}
 
 /* ══ 모달 ══ */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:200;padding:24px;backdrop-filter:blur(4px)}
@@ -1098,7 +1098,7 @@ async function loadAllFast() {
     }
   };
   // 각 API 독립적으로 호출 - 오는 대로 바로 반영
-  API.get('/api/names').then(n=>{ if(n){ cachedNames=n; render(); } });
+  API.get('/api/names').then(n=>{ if(n){ cachedNames=n; renderWorkerGrid(); render(); } });
   API.get('/api/states').then(s=>{ if(s){ cachedStates=s; render(); } });
   API.get('/api/plans').then(p=>{ if(p){ cachedPlans=p; render(); } });
   API.get('/api/offdays').then(o=>{ if(o){ cachedOffdays=o; render(); } });
@@ -1199,8 +1199,9 @@ function go(id) {
     if(dd&&!dd.value) dd.value=todayISO();
     if(dd?.value) renderDailyReport(dd.value);
   }
-  // 백그라운드에서 최신 데이터 받아와 재렌더링
-  loadAll();
+  // 백그라운드에서 최신 데이터 받아와 재렌더링 (worker 페이지는 loadAllFast로 이미 처리됨)
+  if(id !== 'worker') loadAll();
+  else renderWorkerGrid();
   const _mob = window.innerWidth<=768||/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
   if(_mob && id!=='worker') { go('worker'); return; }
 }
