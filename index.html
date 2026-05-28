@@ -1108,7 +1108,8 @@ async function loadAll() {
     }
   } catch(e) {}
 }
-function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,1000); }
+function startPolling() { if(pollingTimer)clearInterval(pollingTimer); pollingTimer=setInterval(loadAll,3000); }
+function restartPollingDelayed(ms=2000) { if(pollingTimer){clearInterval(pollingTimer);pollingTimer=null;} setTimeout(()=>{ _pollingLocked=false; startPolling(); }, ms); }
 // 캐시 변경 후 즉시 전체 UI 갱신 (서버 재호출 없이)
 function refreshUI() {
   renderWorkerGrid();
@@ -1485,9 +1486,8 @@ window.doAction=async function(code,action,qty=0,partialEnd=false){
   }
 
   refreshUI();
-  _pollingLocked=false;
-  // 모든 저장 완료 후 폴링 재시작
-  startPolling();
+  // 모든 저장 완료 후 폴링 재시작 (딜레이로 덮어쓰기 방지)
+  restartPollingDelayed(2000);
   const lbls={start:'▶ 시작',pause:'⏸ 정지',end:'■ 종료'};
   showToast(`[${code}] ${lbls[action]}${qty>0?' ('+qty+'EA)':''}`);
 };
@@ -1681,8 +1681,7 @@ window.submitPlan=async function(){
       showToast('등록 실패');
     }
   } catch(e){ showToast('등록 실패'); }
-  _pollingLocked=false;
-  startPolling();
+  restartPollingDelayed(2000);
 };
 
 function renderPlanTable(filterFn){
@@ -1885,12 +1884,10 @@ window.deletePlan=async function(id){
     });
   }
 
-  // 전체 UI 즉시 갱신
   refreshUI();
   updatePlanKPI(Object.values(cachedPlans));
   showToast(`[${planCode||id}] 계획 및 관련 기록 삭제됨`);
-  // 폴링 재시작
-  startPolling();
+  restartPollingDelayed(2000);
 };
 
 /* ══ 달력 ══ */
@@ -2717,8 +2714,11 @@ window.submitEditPlan = async function() {
     editingPlanId = null;
     showToast('수정 완료');
     refreshUI();
+    restartPollingDelayed(2000);
   } else {
     showToast('수정 실패: ' + (res?.error || '오류'));
+    _pollingLocked=false;
+    startPolling();
   }
 };
 
@@ -3122,21 +3122,18 @@ window.shipPlan = async function(id) {
   if(!confirm('출하 완료 처리하시겠습니까?')) return;
   const plan = cachedPlans[id] || Object.values(cachedPlans).find(p=>p.id===id);
   if(!plan) { showToast('계획을 찾을 수 없습니다'); return; }
+  if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
+  _pollingLocked=true;
   const now = new Date();
   const shippedAt = now.toLocaleDateString('ko-KR') + ' ' + now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
   const updated = {...plan, id, status:'shipped', shippedAt};
   const res = await API.put('/api/plans', updated);
   if(res && !res.error) {
     cachedPlans = res;
-    filterPlanTable();
-    renderOrKPIs();
-    if(typeof curOrderTab!=='undefined'){
-      if(curOrderTab==='daily') renderOrDay();
-      else if(curOrderTab==='monthly') renderOrMonth();
-      else if(curOrderTab==='all') renderOrAll();
-    }
+    refreshUI();
     showToast(`[${plan.code}] 출하완료 처리됨 (${shippedAt})`);
   } else showToast('처리 실패');
+  restartPollingDelayed(2000);
 };
 
 /* ══ 모바일 감지 ══ */
