@@ -818,8 +818,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <div class="card-title"><i class="ti ti-users"></i> 작업자별 활동</div>
           <div class="tbl-wrap">
             <table>
-              <thead><tr><th>작업자</th><th>담당코드</th><th>시작</th><th>종료</th><th>투입시간</th><th>생산수량</th></tr></thead>
-              <tbody><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr></tbody>
+              <thead><tr><th>작업코드</th><th>작업자</th><th>투입시간</th><th>생산수량</th></tr></thead>
+              <tbody><tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -2432,22 +2432,35 @@ function renderProgress(){
   if(wtbl){
     if(!cachedNames.length){wtbl.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr>';}
     else{
-      wtbl.innerHTML=cachedNames.map(n=>{
-        const st=cachedStates[n]||{};
-        const runEntries=Object.entries(st).filter(([,v])=>v.action==='start');
-        const pauseEntries=Object.entries(st).filter(([,v])=>v.action==='pause');
-        const code=runEntries[0]?.[0]||pauseEntries[0]?.[0]||'—';
-        const action=runEntries.length?'start':pauseEntries.length?'pause':'idle';
-        const since=runEntries[0]?.[1]?.since||pauseEntries[0]?.[1]?.since||'—';
-        const plan=Object.values(cachedPlans).find(p=>p.code===code)||{};
-        return `<tr>
-          <td style="font-weight:600">${esc(n)}</td>
-          <td style="font-family:var(--mono);font-weight:700">${code==='—'?'<span style="color:var(--text3)">대기중</span>':esc(code)}</td>
-          <td><span class="badge ${action==='start'?'badge-green':action==='pause'?'badge-amber':'badge-gray'}">${action==='start'?'작업중':action==='pause'?'정지':'대기'}</span></td>
-          <td style="font-family:var(--mono);font-size:11px">${since}</td>
-          <td style="font-family:var(--mono);font-size:11px">${code==='—'?'—':fmtElapsed(calcWorkerCodeHours(n,code))}</td>
-        </tr>`;
-      }).join('');
+      const rows=[];
+      cachedNames.forEach(n=>{
+        const stKey=Object.keys(cachedStates).find(k=>k.toLowerCase()===n.toLowerCase())||n;
+        const st=cachedStates[stKey]||{};
+        const allEntries=Object.entries(st).filter(([,v])=>v.action==='start'||v.action==='pause');
+        if(allEntries.length===0){
+          // 대기중
+          rows.push(`<tr>
+            <td style="font-weight:600">${esc(n)}</td>
+            <td style="color:var(--text3)">대기중</td>
+            <td><span class="badge badge-gray">대기</span></td>
+            <td style="color:var(--text3)">—</td>
+            <td style="color:var(--text3)">—</td>
+          </tr>`);
+        } else {
+          allEntries.forEach(([code,v],i)=>{
+            const action=v.action;
+            const since=v.since||'—';
+            rows.push(`<tr>
+              ${i===0?`<td style="font-weight:600" rowspan="${allEntries.length}">${esc(n)}</td>`:''}
+              <td style="font-family:var(--mono);font-weight:700;color:var(--accent)">${esc(code)}</td>
+              <td><span class="badge ${action==='start'?'badge-green':'badge-amber'}">${action==='start'?'작업중':'정지'}</span></td>
+              <td style="font-family:var(--mono);font-size:11px">${since}</td>
+              <td style="font-family:var(--mono);font-size:11px">${fmtElapsed(calcWorkerCodeHours(n,code))}</td>
+            </tr>`);
+          });
+        }
+      });
+      wtbl.innerHTML=rows.join('');
     }
   }
 
@@ -2734,11 +2747,12 @@ function renderDailyReport(dateStr){
     const offWorkers=Object.values(cachedOffdays||{}).filter(o=>o.date===dateStr);
     offWorkers.forEach(o=>{
       allRows.push(`<tr style="background:rgba(239,68,68,.05)">
-        <td style="font-weight:600;color:var(--red)">${esc(o.worker)}</td>
-        <td colspan="5" style="font-size:12px;color:var(--red)">🏖 휴무${o.reason?' ('+esc(o.reason)+')':''}</td>
+        <td colspan="4" style="font-size:12px;color:var(--red)">🏖 ${esc(o.worker)} 휴무${o.reason?' ('+esc(o.reason)+')':''}</td>
       </tr>`);
     });
     const todayLocalStr=new Date(dateStr).toLocaleDateString('ko-KR');
+    // 코드별로 작업자 투입시간 집계
+    const codeWorkerMap={}; // { code: { worker: { ms, qty } } }
     Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').forEach(([worker,wlogs])=>{
       const dayLogs=Object.values(wlogs||{}).filter(l=>{
         const logIso=new Date(l.ts).toISOString().slice(0,10);
@@ -2747,21 +2761,27 @@ function renderDailyReport(dateStr){
       const _planCodes=new Set(Object.values(cachedPlans).map(p=>p.code?.toLowerCase()));
       const codes=new Set(dayLogs.map(l=>l.code).filter(c=>_planCodes.has(c?.toLowerCase())));
       codes.forEach(code=>{
-        const codeLogs=dayLogs.filter(l=>l.code===code);
-        const startLog=codeLogs.find(l=>l.action==='start');
-        const endLog=[...codeLogs].reverse().find(l=>l.action==='end');
-        const qty=codeLogs.filter(l=>l.action==='end').reduce((s,l)=>s+(l.qty||0),0);
-        allRows.push(`<tr>
+        if(!codeWorkerMap[code]) codeWorkerMap[code]={};
+        const ms=calcWorkerCodeHours(worker,code);
+        const qty=dayLogs.filter(l=>l.code===code&&l.action==='end').reduce((s,l)=>s+(l.qty||0),0);
+        codeWorkerMap[code][worker]={ms,qty};
+      });
+    });
+    // 코드별로 렌더링
+    const sortedCodes=Object.keys(codeWorkerMap).sort();
+    sortedCodes.forEach(code=>{
+      const workerData=codeWorkerMap[code];
+      const workerEntries=Object.entries(workerData).sort((a,b)=>b[1].ms-a[1].ms);
+      workerEntries.forEach(([worker,{ms,qty}],i)=>{
+        allRows.push(`<tr${i===0?' style="border-top:2px solid var(--border2)"':''}>
+          ${i===0?`<td style="font-weight:700;font-family:var(--mono);color:var(--accent)" rowspan="${workerEntries.length}">${esc(code)}</td>`:''}
           <td style="font-weight:600">${esc(worker)}</td>
-          <td style="font-family:var(--mono);font-weight:700">${esc(code)}</td>
-          <td style="font-family:var(--mono);font-size:11px">${startLog?.time||'—'}</td>
-          <td style="font-family:var(--mono);font-size:11px">${endLog?.time||'작업중'}</td>
-          <td style="font-family:var(--mono);font-size:11px">${fmtElapsed(calcWorkerCodeHours(worker,code))}</td>
+          <td style="font-family:var(--mono);font-size:11px">${ms>0?fmtElapsed(ms):'—'}</td>
           <td style="font-family:var(--mono);color:var(--green)">${qty>0?qty.toLocaleString()+' EA':'—'}</td>
         </tr>`);
       });
     });
-    wtbl.innerHTML=allRows.join('')||'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr>';
+    wtbl.innerHTML=allRows.join('')||'<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr>';
   }
 }
 
