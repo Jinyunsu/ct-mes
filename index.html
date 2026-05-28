@@ -1544,11 +1544,17 @@ function renderPlanTable(filterFn){
     return `<tr style="${isToday?'background:rgba(59,130,246,.04)':''}">
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.createdAt||'—'}</td>
       <td style="font-family:var(--mono);font-size:11px">
-        <input type="date" value="${p.date||''}" onchange="changePlanDate('${esc(p.id)}',this.value)"
-          style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700;border:1px solid transparent;background:transparent;cursor:pointer;padding:2px 4px;border-radius:4px;outline:none;width:120px"
-          onmouseover="this.style.borderColor='var(--border)'"
-          onmouseout="this.style.borderColor='transparent'"
-          title="클릭하여 생산계획일 변경">
+        <div style="display:flex;align-items:center;gap:5px">
+          <span style="color:var(--accent);font-weight:700">${p.date||'—'}</span>
+          <span draggable="true"
+            ondragstart="onPlanRowDrag(event,'${esc(p.id)}')"
+            ondragend="this.style.opacity='1'"
+            onmousedown="this.style.opacity='0.5'"
+            style="cursor:grab;color:var(--text3);display:inline-flex;align-items:center;padding:1px 3px;border-radius:3px;border:1px solid var(--border)"
+            title="달력으로 드래그하여 날짜 변경">
+            <i class="ti ti-grip-vertical" style="font-size:11px"></i>
+          </span>
+        </div>
       </td>
       <td style="font-family:var(--mono);font-size:11px;color:${p.dueDate&&p.dueDate<new Date().toISOString().slice(0,10)&&getPlanStatus(p)!=='done'?'var(--red)':'var(--text3)'}">${p.dueDate||'—'}</td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
@@ -1743,7 +1749,9 @@ function renderCalendar(){
       return `<div class="cal-chip" style="background:${bg};color:${color};border:${border}" title="${p.code} | ${p.customer||''} | ${p.planQty||0}EA">${prefix}${p.code}</div>`;
     }).join('');
     html+=`<div class="cal-day${isToday?' today':''}"
->
+      ondragover="event.preventDefault();event.currentTarget.style.background='rgba(59,130,246,.18)'"
+      ondragleave="event.currentTarget.style.background=''"
+      ondrop="onCalDrop(event,'${ds}');event.currentTarget.style.background=''">
       <div class="cal-num" style="color:${isToday?'var(--accent)':dc};${isToday?'font-weight:900':''}">${d}</div>
       ${ph}${allDp.length>3?`<div style="font-size:9px;color:var(--text3)">+${allDp.length-3}</div>`:''}
     </div>`;
@@ -2830,6 +2838,41 @@ window.exportDailyExcel = function() {
   a.download = `작업일보_${dateVal}.csv`;
   a.click();
   showToast(`작업일보 ${dateVal} 엑셀 저장됨`);
+};
+
+/* ══ 생산계획 달력 드래그앤드롭 ══ */
+let _dragPlanId = null;
+
+window.onPlanRowDrag = function(e, planId) {
+  _dragPlanId = planId;
+  e.dataTransfer.setData('text/plain', planId);
+  e.dataTransfer.effectAllowed = 'move';
+};
+
+window.onCalDrop = function(e, dateStr) {
+  e.preventDefault();
+  e.stopPropagation();
+  const planId = _dragPlanId || e.dataTransfer.getData('text/plain');
+  _dragPlanId = null;
+  if(!planId) return;
+  const plan = cachedPlans[planId] || Object.values(cachedPlans).find(p=>p.id===planId);
+  if(!plan) { showToast('계획을 찾을 수 없습니다'); return; }
+  if(plan.date === dateStr) { showToast('이미 같은 날짜입니다'); return; }
+  if(!confirm(`[${plan.code}] 생산계획일을 ${dateStr}로 변경하시겠습니까?`)) return;
+  API.put('/api/plans', {...plan, id: planId, date: dateStr}).then(res => {
+    if(res && !res.error) {
+      cachedPlans = res;
+      filterPlanTable();
+      renderCalendar();
+      renderOrKPIs();
+      if(typeof curOrderTab!=='undefined'){
+        if(curOrderTab==='daily') renderOrDay();
+        else if(curOrderTab==='monthly') renderOrMonth();
+        else if(curOrderTab==='all') renderOrAll();
+      }
+      showToast(`[${plan.code}] → ${dateStr} 변경됨`);
+    } else showToast('변경 실패');
+  });
 };
 function showToast(msg){
   let t=document.getElementById('g-toast');
