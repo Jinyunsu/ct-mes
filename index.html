@@ -1015,11 +1015,13 @@ function setUser(account) {
   document.getElementById('sb-uname').textContent = name;
   document.getElementById('sb-uemail').textContent = email;
   document.getElementById('tb-av').textContent = initials;
-  // 데이터 즉시 로드 (폴링 시작)
-  loadAll().then(startPolling);
-  // PC에서는 대시보드로
+  // 데이터 즉시 로드 후 페이지 렌더링
   const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-  if(!isMobile) go('dashboard');
+  loadAll().then(()=>{
+    startPolling();
+    if(!isMobile) go('dashboard');
+    else go('worker');
+  });
 }
 
 window._msLogin = async function() {
@@ -1121,7 +1123,7 @@ function go(id) {
   document.getElementById('tb-title').textContent = info.title||id;
   document.getElementById('tb-page').textContent = info.parent||'CTNS MES Lite';
   closeSidebar();
-  // 페이지 전환 시 즉시 렌더링
+  // 페이지 전환 시 즉시 렌더링 (캐시 기반)
   if(id==='dashboard') renderDashboard();
   else if(id==='progress') renderProgress();
   else if(id==='performance') renderPerformance();
@@ -1138,6 +1140,8 @@ function go(id) {
     if(dd&&!dd.value) dd.value=todayISO();
     if(dd?.value) renderDailyReport(dd.value);
   }
+  // 백그라운드에서 최신 데이터 받아와 재렌더링
+  loadAll();
   const _mob = window.innerWidth<=768||/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
   if(_mob && id!=='worker') { go('worker'); return; }
 }
