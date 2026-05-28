@@ -4,9 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CTNS MES Lite · 생산관리 시스템</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css"></noscript>
 <style>
 :root {
   --bg: #f0f2f8;
@@ -373,7 +377,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 </div>
 
 <!-- 메인 -->
-<div class="main-wrap">
+<div class="main-wrap" id="main-wrap" style="visibility:hidden">
   <div class="topbar">
     <div class="tb-left">
       <button class="menu-toggle" onclick="toggleSidebar()"><i class="ti ti-menu-2"></i></button>
@@ -1002,7 +1006,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.32.2/lib/msal-browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.32.2/lib/msal-browser.min.js" defer></script>
 <script>
 // 전역 래퍼 함수 (MSAL 로드 전 클릭 방지)
 function msLogin() {
@@ -1047,6 +1051,8 @@ function setUser(account) {
   // 로그인 화면 즉시 숨기고 앱 표시
   const ls = document.getElementById('login-screen');
   if(ls) ls.style.display = 'none';
+  const mw = document.getElementById('main-wrap');
+  if(mw) mw.style.visibility = 'visible';
   document.getElementById('sb-avatar').textContent = initials;
   document.getElementById('sb-uname').textContent = name;
   document.getElementById('sb-uemail').textContent = email;
@@ -1068,7 +1074,12 @@ window._msLogout = function() {
   if(!confirm('로그아웃 하시겠습니까?')) return;
   msalInstance.logoutRedirect({ postLogoutRedirectUri: window.location.href });
 };
-initAuth();
+// MSAL 로드 완료 후 initAuth 실행
+if(typeof msal !== 'undefined') {
+  initAuth();
+} else {
+  document.querySelector('script[src*="msal"]').addEventListener('load', initAuth);
+}
 
 /* ══ API ══ */
 const API = {
