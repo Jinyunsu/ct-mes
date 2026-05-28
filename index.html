@@ -1439,36 +1439,45 @@ window.doAction=async function(code,action,qty=0,partialEnd=false){
   cachedLogs[currentUser][newLog.ts]=newLog;
   renderJobs(); renderLogs();
   startJobTimer();
-  // API 비동기 처리
+  // 폴링 완전 중단 (작업 완료까지)
+  if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
   _pollingLocked=true;
-  API.post('/api/logs',newLog).finally(()=>{});
+
+  // 1. 로그 저장 먼저 완료
+  await API.post('/api/logs',newLog);
+
   if(action==='end'){
+    // 2. states 삭제
     await API.del('/api/states',{worker:currentUser,code});
+    // 3. 계획 실적수량 업데이트
     if(qty>0){
       const match=Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase()&&getPlanStatus(p)!=='done')
         || Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase());
       if(match){
         const[pid,plan]=match;
-        // 실적수량이 절대 계획수량 초과 불가
         const already=Number(plan.actQty)||0;
         const planQty=Number(plan.planQty)||0;
         const safeQty=Math.min(qty, planQty-already);
-        if(safeQty<=0){ _pollingLocked=false; return; }
-        const newActQty=already+safeQty;
-        const isDone=newActQty>=planQty;
-        const updated={...plan,id:pid,actQty:newActQty,status:isDone?'done':plan.status};
-        cachedPlans[pid]={...updated};
-        const res=await API.put('/api/plans',updated);
-        if(res) cachedPlans=res;
-        refreshUI();
+        if(safeQty>0){
+          const newActQty=already+safeQty;
+          const isDone=newActQty>=planQty;
+          const updated={...plan,id:pid,actQty:newActQty,status:isDone?'done':plan.status};
+          cachedPlans[pid]={...updated};
+          const res=await API.put('/api/plans',updated);
+          if(res) cachedPlans=res;
+        }
       }
     }
-    _pollingLocked=false;
   } else {
+    // start/pause: states 저장
     const res=await API.post('/api/states',{worker:currentUser,code,action,since:timeStr,date:dateStr});
     if(res) cachedStates=res;
-    _pollingLocked=false;
   }
+
+  refreshUI();
+  _pollingLocked=false;
+  // 모든 저장 완료 후 폴링 재시작
+  startPolling();
   const lbls={start:'▶ 시작',pause:'⏸ 정지',end:'■ 종료'};
   showToast(`[${code}] ${lbls[action]}${qty>0?' ('+qty+'EA)':''}`);
 };
