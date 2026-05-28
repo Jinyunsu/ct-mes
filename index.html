@@ -1336,9 +1336,9 @@ function fmtElapsed(ms){
   const h=Math.floor(s/3600);
   const m=Math.floor((s%3600)/60);
   const sec=s%60;
-  if(h>0) return h+'h '+String(m).padStart(2,'0')+'m '+String(sec).padStart(2,'0')+'s';
-  if(m>0) return m+'m '+String(sec).padStart(2,'0')+'s';
-  return sec+'s';
+  if(h>0) return h+'시간 '+String(m).padStart(2,'0')+'분 '+String(sec).padStart(2,'0')+'초';
+  if(m>0) return m+'분 '+String(sec).padStart(2,'0')+'초';
+  return sec+'초';
 }
 
 // 작업 카드 타이머 - 1초마다 갱신 (대시보드·작업일보 총작업시간 동기화 포함)
@@ -1958,9 +1958,9 @@ function calcWorkHours(code){
   const s=Math.floor((total%60000)/1000);
   let str='—';
   if(total>0){
-    if(h>0) str=`${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
-    else if(m>0) str=`${m}m ${String(s).padStart(2,'0')}s`;
-    else str=`${s}s`;
+    if(h>0) str=`${h}시간 ${String(m).padStart(2,'0')}분 ${String(s).padStart(2,'0')}초`;
+    else if(m>0) str=`${m}분 ${String(s).padStart(2,'0')}초`;
+    else str=`${s}초`;
   }
   return {ms:total,str};
 }
