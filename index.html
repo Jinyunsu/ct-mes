@@ -479,8 +479,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="card">
           <div class="card-title"><i class="ti ti-bell"></i> 알림·이슈</div>
           <div style="display:flex;flex-direction:column;gap:8px">
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(167,139,250,.15);color:#a78bfa"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">지연 작업</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge" style="margin-left:auto;background:rgba(167,139,250,.15);color:#a78bfa">확인필요</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="ti ti-bug"></i></div><div><div class="kpi-label">납기 초과</div><div class="kpi-val" id="d-alert-overdue">0건</div></div><span class="badge badge-red" style="margin-left:auto">주의</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(167,139,250,.15);color:#a78bfa"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">납기 지연</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge" style="margin-left:auto;background:rgba(167,139,250,.15);color:#a78bfa">납기초과</span></div>
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-player-pause"></i></div><div><div class="kpi-label">작업 중 정지</div><div class="kpi-val" id="d-alert-paused">0건</div></div><span class="badge badge-amber" style="margin-left:auto">정지</span></div>
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div class="kpi-val" id="d-alert-done">0건</div></div><span class="badge badge-green" style="margin-left:auto">금일</span></div>
           </div>
@@ -2574,11 +2573,9 @@ function renderDashboard(){
         const st=getPlanStatus(p);
         const today2=new Date().toISOString().slice(0,10);
         const isOverdue=p.dueDate&&p.dueDate<today2&&st!=='done'&&st!=='shipped';
-        const isDelayed=p.date&&p.date<today2&&st!=='done'&&st!=='shipped'&&st!=='planned';
-        const rowBg=isOverdue?'background:rgba(239,68,68,.07)':isDelayed?'background:rgba(167,139,250,.07)':'';
+        const rowBg=isOverdue?'background:rgba(239,68,68,.07)':'';
         const issues=[];
         if(isOverdue){ const d=Math.floor((new Date(today2)-new Date(p.dueDate))/86400000); issues.push(`납기초과 D+${d}일`);}
-        if(isDelayed&&!isOverdue) issues.push('지연작업');
         return `<tr style="${rowBg}">
           <td style="font-weight:700;font-family:var(--mono);color:var(--accent);padding:8px 12px;white-space:nowrap">${esc(p.code||'—')}</td>
           <td style="font-size:11px;color:var(--text2);padding:8px 12px">${esc(p.productCode||'—')}</td>
@@ -2692,19 +2689,13 @@ function renderDashboard(){
   const today2 = new Date().toISOString().slice(0,10);
   const allPlans = activePlans();
   // 지연 작업: 작업일 지났는데 미완료
-  const delayedCnt = allPlans.filter(p=>p.date && p.date<today2 && getPlanStatus(p)==='failed').length;
+  const delayedCnt = allPlans.filter(p=>p.dueDate && p.dueDate<today2 && getPlanStatus(p)!=='done' && getPlanStatus(p)!=='shipped').length;
   // 납기 초과: 납기일 지났는데 완료 안됨
-  const overdueCnt = allPlans.filter(p=>
-    p.dueDate && p.dueDate < today2 &&
-    p.date && p.date <= today2 &&  // 생산계획일이 오늘 이전인 것만
-    getPlanStatus(p)!=='done' && getPlanStatus(p)!=='shipped'
-  ).length;
   // 완료: 오늘 완료된 계획
   const doneTodayCnt = allPlans.filter(p=>getPlanStatus(p)==='done' && (p.date===today2 || p.createdAt===today2)).length;
   const pausedCnt = allPlans.filter(p=>getPlanStatus(p)==='paused').length;
   const el2=id=>document.getElementById(id);
   if(el2('d-alert-delayed')) el2('d-alert-delayed').textContent=delayedCnt+'건';
-  if(el2('d-alert-overdue')) el2('d-alert-overdue').textContent=overdueCnt+'건';
     if(el2('d-alert-paused')) el2('d-alert-paused').textContent=pausedCnt+'건';
   if(el2('d-alert-done')) el2('d-alert-done').textContent=doneTodayCnt+'건';}
 
