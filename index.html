@@ -3449,7 +3449,7 @@ window.orGoToday = function() {
 window.renderOrDay = function() {
   const p = document.getElementById('or-day-picker');
   const ds = p?.value || todayISO();
-  const plans = allOrderPlans().filter(x=>x.date===ds || x.createdAt===ds);
+  const plans = allOrderPlans().filter(x=>x.date===ds);
   const tp=plans.reduce((s,x)=>s+(x.planQty||0),0);
   const ta=plans.reduce((s,x)=>s+(x.actQty||0),0);
   const rate=tp>0?Math.round(ta/tp*100):0;
