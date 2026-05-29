@@ -386,6 +386,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       <span class="tb-page" id="tb-page">CTNS MES Lite</span>
     </div>
     <div class="tb-right">
+      <div id="presence-bar" style="display:flex;align-items:center;gap:-6px;margin-right:8px"></div>
       <div class="tb-badge tb-live">실시간</div>
       <div class="tb-clock" id="clock">--:--:--</div>
       <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;cursor:pointer" id="tb-av" onclick="msLogout()"></div>
@@ -1192,6 +1193,8 @@ function setUser(account) {
   const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   // 관리자 여부 확인
   isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+  // presence 시작
+  startPresence(email, name, initials);
   // 로그인 화면 즉시 숨기고 앱 표시
   const ls = document.getElementById('login-screen');
   if(ls) ls.style.display = 'none';
@@ -1959,7 +1962,79 @@ async function _saveNote(note) {
   restartPollingDelayed(2000);
 }
 
-/* ══ 생산계획일 지정 ══ */
+/* ══ 접속자 현황 (Presence) ══ */
+let _presenceTimer = null;
+let _currentEmail = '';
+let _currentName = '';
+let _currentInitials = '';
+const PRESENCE_COLORS = ['#5b8ef0','#34c97a','#f0b84a','#f05b5b','#a78bfa','#06b6d4','#f97316','#ec4899'];
+
+function presenceColor(email) {
+  let hash = 0;
+  for(let i=0;i<email.length;i++) hash = email.charCodeAt(i) + ((hash<<5)-hash);
+  return PRESENCE_COLORS[Math.abs(hash) % PRESENCE_COLORS.length];
+}
+
+async function sendHeartbeat() {
+  if(!_currentEmail) return;
+  try {
+    const res = await fetch('/api/presence', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email:_currentEmail, name:_currentName, initials:_currentInitials})
+    });
+    if(res.ok) {
+      const users = await res.json();
+      renderPresence(users);
+    }
+  } catch(e) {}
+}
+
+function renderPresence(users) {
+  const bar = document.getElementById('presence-bar');
+  if(!bar) return;
+  const MAX_SHOW = 5;
+  const shown = users.slice(0, MAX_SHOW);
+  const extra = users.length - MAX_SHOW;
+  bar.innerHTML = shown.map((u,i) => {
+    const color = presenceColor(u.email);
+    const isSelf = u.email === _currentEmail;
+    return `<div title="${u.name}${isSelf?' (나)':''}" style="
+      width:28px;height:28px;border-radius:50%;
+      background:${color};
+      display:inline-flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:900;color:#fff;
+      border:2px solid ${isSelf?'#fff':'var(--bg2)'};
+      margin-left:${i===0?'0':'-6px'};
+      position:relative;z-index:${MAX_SHOW-i};
+      cursor:default;
+      box-shadow:0 1px 3px rgba(0,0,0,.3);
+      ${isSelf?'box-shadow:0 0 0 2px var(--accent);':''}
+    ">${u.initials||u.name.slice(0,2).toUpperCase()}</div>`;
+  }).join('') + (extra > 0 ? `<div title="${extra}명 더" style="
+    width:28px;height:28px;border-radius:50%;
+    background:var(--bg4);
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:9px;font-weight:700;color:var(--text3);
+    border:2px solid var(--bg2);
+    margin-left:-6px;cursor:default;
+  ">+${extra}</div>` : '');
+}
+
+function startPresence(email, name, initials) {
+  _currentEmail = email;
+  _currentName = name;
+  _currentInitials = initials;
+  sendHeartbeat();
+  if(_presenceTimer) clearInterval(_presenceTimer);
+  _presenceTimer = setInterval(sendHeartbeat, 30000);
+  // 페이지 닫을 때 presence 삭제
+  window.addEventListener('beforeunload', ()=>{
+    navigator.sendBeacon('/api/presence', JSON.stringify({email, _delete:true}));
+  });
+}
+
+
 let _planDateId = null;
 window.openPlanDateModal = function(id) {
   _planDateId = id;
