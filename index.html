@@ -480,11 +480,12 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="card">
           <div class="card-title"><i class="ti ti-bell"></i> 알림·이슈</div>
           <div style="display:flex;flex-direction:column;gap:8px">
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(59,130,246,.1);color:var(--accent)"><i class="ti ti-player-play"></i></div><div><div class="kpi-label">작업 중</div><div style="font-size:10px;color:var(--text3);margin-top:1px">현재 진행 중인 작업 코드</div><div class="kpi-val" id="d-alert-running">0건</div></div><span class="badge badge-blue" style="margin-left:auto;flex-shrink:0">작업중</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(167,139,250,.15);color:#a78bfa"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">납기지연</div><div style="font-size:10px;color:var(--text3);margin-top:1px">납기일이 오늘을 지난 미출하 계획</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge" style="margin-left:auto;background:rgba(167,139,250,.15);color:#a78bfa;flex-shrink:0">납기지연</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-player-pause"></i></div><div><div class="kpi-label">작업 중 정지</div><div style="font-size:10px;color:var(--text3);margin-top:1px">현재 정지 상태인 작업 코드</div><div class="kpi-val" id="d-alert-paused">0건</div></div><span class="badge badge-amber" style="margin-left:auto;flex-shrink:0">정지</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div style="font-size:10px;color:var(--text3);margin-top:1px">오늘 완료된 작업 코드</div><div class="kpi-val" id="d-alert-done">0건</div></div><span class="badge badge-green" style="margin-left:auto;flex-shrink:0">금일</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="ti ti-trash"></i></div><div><div class="kpi-label">계획 취소</div><div style="font-size:10px;color:var(--text3);margin-top:1px">오늘 등록일 기준 취소된 계획</div><div class="kpi-val" id="d-alert-cancel">0건</div></div><span class="badge badge-red" style="margin-left:auto;flex-shrink:0">취소</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(167,139,250,.15);color:#a78bfa"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">납기지연</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge" style="margin-left:auto;background:rgba(167,139,250,.15);color:#a78bfa">납기지연</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(100,116,139,.1);color:var(--text3)"><i class="ti ti-clock"></i></div><div><div class="kpi-label">작업 대기</div><div class="kpi-val" id="d-alert-waiting">0건</div></div><span class="badge badge-gray" style="margin-left:auto">대기</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(59,130,246,.1);color:var(--accent)"><i class="ti ti-player-play"></i></div><div><div class="kpi-label">작업 중</div><div class="kpi-val" id="d-alert-running">0건</div></div><span class="badge badge-blue" style="margin-left:auto">작업중</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-player-pause"></i></div><div><div class="kpi-label">작업 중 정지</div><div class="kpi-val" id="d-alert-paused">0건</div></div><span class="badge badge-amber" style="margin-left:auto">정지</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div class="kpi-val" id="d-alert-done">0건</div></div><span class="badge badge-green" style="margin-left:auto">금일</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="ti ti-trash"></i></div><div><div class="kpi-label">계획 취소</div><div class="kpi-val" id="d-alert-cancel">0건</div></div><span class="badge badge-red" style="margin-left:auto">취소</span></div>
           </div>
         </div>
         <div class="card" style="display:flex;flex-direction:column;max-height:400px">
@@ -2700,9 +2701,11 @@ function renderDashboard(){
   const pausedCnt = allPlans.filter(p=>getPlanStatus(p)==='paused').length;
   const el2=id=>document.getElementById(id);
   const runningCnt = allPlans.filter(p=>getPlanStatus(p)==='running').length;
+  const waitingCnt = allPlans.filter(p=>getPlanStatus(p)==='waiting').length;
   const cancelCnt = Object.values(cachedPlans).filter(p=>p.status==='deleted'&&(p.createdAt===today2||p.date===today2)).length;
-  if(el2('d-alert-running')) el2('d-alert-running').textContent=runningCnt+'건';
   if(el2('d-alert-delayed')) el2('d-alert-delayed').textContent=delayedCnt+'건';
+  if(el2('d-alert-waiting')) el2('d-alert-waiting').textContent=waitingCnt+'건';
+  if(el2('d-alert-running')) el2('d-alert-running').textContent=runningCnt+'건';
   if(el2('d-alert-paused')) el2('d-alert-paused').textContent=pausedCnt+'건';
   if(el2('d-alert-done')) el2('d-alert-done').textContent=doneTodayCnt+'건';
   if(el2('d-alert-cancel')) el2('d-alert-cancel').textContent=cancelCnt+'건';}
