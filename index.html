@@ -1160,6 +1160,11 @@ function normalizeStates(states){
   return normalized;
 }
 
+// deleted 제외한 활성 계획만 반환
+function activePlans(){ return Object.values(cachedPlans).filter(p=>p.status!=='deleted'); }
+// 수주관리용: deleted 포함 전체 (등록일 기준 정렬)
+function allOrderPlans(){ return Object.values(cachedPlans).sort((a,b)=>(a.createdAt||a.date||'')>(b.createdAt||b.date||'')?1:-1); }
+
 let cachedNames=[], cachedStates={}, cachedPlans={}, cachedLogs={}, cachedOffdays={};
 let pollingTimer=null;
 let _pollingLocked=false; // 작업 중 폴링 잠금
@@ -1934,7 +1939,7 @@ window.submitPlan=async function(){
 function renderPlanTable(filterFn){
   const tbody=document.getElementById('plan-tbl');
   if(!tbody)return;
-  let plans=Object.values(cachedPlans).map(p=>({...p, id: p.id || Object.keys(cachedPlans).find(k=>cachedPlans[k]===p) || p.code}));
+  let plans=activePlans().map(p=>({...p, id: p.id || Object.keys(cachedPlans).find(k=>cachedPlans[k]===p) || p.code}));
   if(filterFn)plans=plans.filter(filterFn);
   plans.sort((a,b)=>a.date>b.date?1:-1);
   if(!plans.length){tbody.innerHTML='<tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
@@ -2092,7 +2097,7 @@ window.deletePlan=async function(id){
   delete cachedPlans[realId];
   filterPlanTable();
   renderCalendar();
-  updatePlanKPI(Object.values(cachedPlans));
+  updatePlanKPI(activePlans());
 
   // 1. 계획 삭제 API 호출
   const res = await API.del('/api/plans', {id: realId});
@@ -2123,7 +2128,7 @@ window.deletePlan=async function(id){
     delete cachedPlans[realId];
     filterPlanTable();
     renderCalendar();
-    updatePlanKPI(Object.values(cachedPlans));
+    updatePlanKPI(activePlans());
     renderOrKPIs();
     renderAllLinked();
     Object.keys(cachedStates).forEach(w=>{
@@ -2155,7 +2160,7 @@ window.deletePlan=async function(id){
   }
 
   refreshUI();
-  updatePlanKPI(Object.values(cachedPlans));
+  updatePlanKPI(activePlans());
   showToast(`[${planCode||id}] 계획 및 관련 기록 삭제됨`);
   restartPollingDelayed(2000);
 };
@@ -2183,9 +2188,9 @@ function renderCalendar(){
     const isToday=ds===today;
     const dow=new Date(calYear,calMonth,d).getDay();
     const dc=dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text2)';
-    const dp=Object.values(cachedPlans).filter(p=>p.date&&p.date===ds);
+    const dp=activePlans().filter(p=>p.date&&p.date===ds);
     // 이전 날짜 미완료 계획 (오늘까지 이어지는 것)
-    const prevUnfinished=Object.values(cachedPlans).filter(p=>{
+    const prevUnfinished=activePlans().filter(p=>{
       if(!p.date||p.date>=ds)return false;
       if(getPlanStatus(p)==='done'||p.status==='done')return false;
       if((p.actQty||0)>=(p.planQty||1))return false; // 수량 완료
@@ -2346,7 +2351,7 @@ function calcWorkHours(code){
 // ── 대시보드 ──
 function renderDashboard(){
   const today=new Date().toISOString().slice(0,10);
-  const plans=Object.values(cachedPlans);
+  const plans=activePlans();
   const todayPlans=plans.filter(p=>p.date===today);
   const totalPlanQty=todayPlans.reduce((s,p)=>s+(p.planQty||0),0);
   const totalActQty=todayPlans.reduce((s,p)=>s+(p.actQty||0),0);
@@ -2357,7 +2362,7 @@ function renderDashboard(){
     Object.values(codes).forEach(s=>{if(s.action==='start')runningWorkers.add(w);});
   });
   // 총 작업시간 (오늘) - 코드/작업자 관계없이 전체 구간 병합
-  const _validCodes=new Set(Object.values(cachedPlans).map(p=>p.code?.toLowerCase()));
+  const _validCodes=new Set(activePlans().map(p=>p.code?.toLowerCase()));
   let allDayIntervals = [];
   Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').map(([,wlogs])=>wlogs).forEach(wlogs=>{
     const todayEntries = Object.values(wlogs||{}).filter(l=>new Date(l.ts).toISOString().slice(0,10)===today && _validCodes.has(l.code?.toLowerCase())).sort((a,b)=>a.ts-b.ts);
@@ -2465,7 +2470,7 @@ function renderDashboard(){
     for(let i=6;i>=0;i--){
       const d = new Date(); d.setDate(d.getDate()-i);
       const iso = d.toISOString().slice(0,10);
-      const dayPlans = Object.values(cachedPlans).filter(p=>p.date===iso);
+      const dayPlans = activePlans().filter(p=>p.date===iso);
       const qty = dayPlans.reduce((s,p)=>s+(p.actQty||0),0);
       days.push({iso, label: `${d.getMonth()+1}/${d.getDate()}`, qty});
     }
@@ -2488,7 +2493,7 @@ function renderDashboard(){
   // 최근 활동
   const recentEl=document.getElementById('d-recent');
   if(recentEl){
-    const _activeCodes=new Set(Object.values(cachedPlans).map(p=>p.code?.toLowerCase()));
+    const _activeCodes=new Set(activePlans().map(p=>p.code?.toLowerCase()));
     const _10daysAgo=Date.now()-(10*24*60*60*1000);
     const allLogs=[];
     Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').forEach(([w,wlogs])=>{
@@ -2516,7 +2521,7 @@ function renderDashboard(){
 
   // 알림/이슈 카운팅
   const today2 = new Date().toISOString().slice(0,10);
-  const allPlans = Object.values(cachedPlans);
+  const allPlans = activePlans();
   // 지연 작업: 작업일 지났는데 미완료
   const delayedCnt = allPlans.filter(p=>p.date && p.date<today2 && getPlanStatus(p)==='failed').length;
   // 납기 초과: 납기일 지났는데 완료 안됨
@@ -2533,7 +2538,7 @@ function renderDashboard(){
 // ── 진행현황 ──
 function renderProgress(){
   const today=new Date().toISOString().slice(0,10);
-  const plans=Object.values(cachedPlans);
+  const plans=activePlans();
   // 작업중 코드 (오늘 작업중인 것)
   const runningCodes=new Set();
   const runningWorkers=new Set();
@@ -2701,7 +2706,7 @@ function renderProgress(){
 
 // ── 실적분석 ──
 function renderPerformance(){
-  const plans=Object.values(cachedPlans);
+  const plans=activePlans();
   const now=new Date();
   const monthStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const monthPlans=plans.filter(p=>p.date?.startsWith(monthStr));
@@ -2854,7 +2859,7 @@ window.custGoThisMonth = function() {
 function renderCustomers(){
   const search=(document.getElementById('customer-search')?.value||'').toLowerCase();
   const ms=custTab==='monthly'?(document.getElementById('cust-month-picker')?.value||new Date().toISOString().slice(0,7)):null;
-  let plans=Object.values(cachedPlans).filter(p=>p.customer);
+  let plans=activePlans().filter(p=>p.customer);
   if(ms) plans=plans.filter(p=>(p.date||p.createdAt||'').startsWith(ms));
 
   // 고객사별 그룹핑
@@ -3250,7 +3255,7 @@ function calcComply(plans){
 }
 
 function renderOrKPIs() {
-  const plans = Object.values(cachedPlans);
+  const plans = allOrderPlans();
   const tp = plans.reduce((s,p)=>s+(p.planQty||0),0);
   const ta = plans.reduce((s,p)=>s+(p.actQty||0),0);
   const rate = tp>0 ? Math.round(ta/tp*100) : 0;
@@ -3276,8 +3281,8 @@ function updateOrTopKPI(plans){
   if(el('or-comply')) el('or-comply').textContent=comply;
 }
 
-const OR_SM = {done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'중지',shipped:'출하완료'};
-const OR_SC = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-blue',shipped:'badge-green'};
+const OR_SM = {done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'중지',shipped:'출하완료',deleted:'계획취소'};
+const OR_SC = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-blue',shipped:'badge-green',deleted:'badge-red'};
 
 function orPlanRow(p, no) {
   const pct = p.planQty>0 ? Math.round((p.actQty||0)/p.planQty*100) : 0;
@@ -3286,7 +3291,8 @@ function orPlanRow(p, no) {
   const today = new Date().toISOString().slice(0,10);
   const isOverdue = p.dueDate && p.dueDate < today && st!=='done' && st!=='shipped';
   const dueCls = isOverdue ? 'color:var(--red)' : 'color:var(--text3)';
-  return `<tr${isOverdue?' style="background:rgba(239,68,68,.04)"':''}>
+  const isDeleted = p.status === 'deleted';
+  return `<tr${isDeleted?' style="opacity:.6;background:rgba(239,68,68,.04)"':isOverdue?' style="background:rgba(239,68,68,.04)"':''}>
     <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${no||''}</td>
     <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
     <td>${esc(p.customer||'—')}</td>
@@ -3307,7 +3313,7 @@ function orPlanRow(p, no) {
     </td>
     <td style="font-size:11px;color:var(--text3);max-width:120px">${esc(p.remark||'—')}</td>
     <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
-    <td style="font-size:11px;color:var(--text3)">—</td>
+    <td style="font-size:11px;${p.status==='deleted'?'color:var(--red);font-weight:700':'color:var(--text3)'}">${p.status==='deleted'?'계획취소':'—'}</td>
   </tr>`;
 }
 
@@ -3324,7 +3330,7 @@ window.orGoToday = function() {
 window.renderOrDay = function() {
   const p = document.getElementById('or-day-picker');
   const ds = p?.value || todayISO();
-  const plans = Object.values(cachedPlans).filter(x=>x.date===ds);
+  const plans = allOrderPlans().filter(x=>x.date===ds || x.createdAt===ds);
   const tp=plans.reduce((s,x)=>s+(x.planQty||0),0);
   const ta=plans.reduce((s,x)=>s+(x.actQty||0),0);
   const rate=tp>0?Math.round(ta/tp*100):0;
@@ -3357,7 +3363,7 @@ window.orGoThisMonth = function() {
 window.renderOrMonth = function() {
   const p = document.getElementById('or-month-picker');
   const ms = p?.value || new Date().toISOString().slice(0,7);
-  const plans = Object.values(cachedPlans).filter(x=>x.date?.startsWith(ms));
+  const plans = allOrderPlans().filter(x=>x.createdAt?.startsWith(ms)||x.date?.startsWith(ms));
   plans.sort((a,b)=>a.date>b.date?1:-1);
   const tp=plans.reduce((s,x)=>s+(x.planQty||0),0);
   const ta=plans.reduce((s,x)=>s+(x.actQty||0),0);
@@ -3399,7 +3405,7 @@ window.renderOrMonth = function() {
 window.renderOrAll = function() {
   const search = (document.getElementById('or-search')?.value||'').toLowerCase();
   const sf = document.getElementById('or-status-f')?.value||'';
-  let plans = Object.values(cachedPlans);
+  let plans = allOrderPlans();
   if(search) plans = plans.filter(p=>p.code?.toLowerCase().includes(search)||p.customer?.toLowerCase().includes(search));
   if(sf) plans = plans.filter(p=>(p.status||'planned')===sf);
   plans.sort((a,b)=>a.date>b.date?1:-1);
@@ -3432,7 +3438,7 @@ window.renderOrAll = function() {
       <td style="white-space:nowrap">${st==='shipped'?'<span style="font-size:10px;color:var(--green);font-weight:700">✓ 출하완료</span>':st==='done'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer">출하</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}</td>
       <td style="font-size:11px;color:var(--text3);max-width:120px">${esc(p.remark||'—')}</td>
       <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
-      <td style="font-size:11px;color:var(--text3)">—</td>
+      <td style="font-size:11px;${p.status==='deleted'?'color:var(--red);font-weight:700':'color:var(--text3)'}">${p.status==='deleted'?'계획취소':'—'}</td>
     </tr>`;
   }).join('');
 };
