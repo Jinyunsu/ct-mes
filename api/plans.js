@@ -120,7 +120,8 @@ export default async function handler(req, res) {
     if (req.method === 'DELETE') {
       const { id } = req.body;
       if (!id) return res.status(400).json({ error: 'id required' });
-      await sql`DELETE FROM plans WHERE id = ${id}`;
+      // 소프트 삭제: status를 'deleted'로 변경
+      await sql`UPDATE plans SET status = 'deleted' WHERE id = ${id}`;
       return res.status(200).json(await getAllPlans());
     }
 
