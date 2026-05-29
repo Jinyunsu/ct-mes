@@ -518,7 +518,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>등록일</th><th>생산계획일</th><th>납기일</th><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>요청사항</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
+            <thead><tr><th>등록일</th><th>생산계획일</th><th>납기일</th><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>요청사항</th><th style="width:100px">관리</th></tr></thead>
             <tbody id="plan-tbl"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
           </table>
         </div>
@@ -1808,13 +1808,13 @@ window.deleteWorker=async function(name){
 window.openNoteEdit = async function(id) {
   const p = cachedPlans[id] || Object.values(cachedPlans).find(x=>x.id===id);
   if(!p) return;
-  const note = prompt(`[${p.code}] 비고 입력:`, p.note||'');
+  const note = prompt(`[${p.code}] 비고 (지우려면 빈칸으로 확인):`, p.note||'');
   if(note === null) return; // 취소
   if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
   _pollingLocked = true;
-  const updated = {...p, id, note};
+  const updated = {...p, id, note: note.trim()};
   const res = await API.put('/api/plans', updated);
-  if(res && !res.error){ cachedPlans=res; refreshUI(); showToast('비고 저장됨'); }
+  if(res && !res.error){ cachedPlans=res; refreshUI(); showToast(note.trim()?'비고 저장됨':'비고 삭제됨'); }
   else showToast('저장 실패');
   restartPollingDelayed(2000);
 };
@@ -1948,7 +1948,6 @@ function renderPlanTable(filterFn){
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${typeof wHrs==='object'?wHrs.str:wHrs}</td>
       <td><span class="badge ${sc[getPlanStatus(p)]||'badge-gray'}">${sm[getPlanStatus(p)]||'예정'}</span></td>
       <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
-      <td style="color:var(--text3);font-size:11px;cursor:pointer" onclick="openNoteEdit('${esc(p.id)}')" title="클릭하여 비고 편집">${p.note?esc(p.note):'<span style="color:var(--border2)">—</span>'}</td>
       <td style="white-space:nowrap">${(()=>{
         const _st=getPlanStatus(p);
         const _hasLog=Object.values(cachedLogs||{}).some(wl=>Object.values(wl||{}).some(l=>l.code?.toLowerCase()===p.code?.toLowerCase()));
@@ -1956,7 +1955,9 @@ function renderPlanTable(filterFn){
         const _dis=';opacity:.3;cursor:not-allowed';
         const _title=_st==='running'?'작업중인 계획은 수정할 수 없습니다':_st==='done'?'완료된 계획은 수정할 수 없습니다':(!_can)?'작업이 시작된 계획은 수정할 수 없습니다':'수정';
         const _titleD=_st==='running'?'작업중인 계획은 삭제할 수 없습니다':_st==='done'?'완료된 계획은 삭제할 수 없습니다':(!_can)?'작업이 시작된 계획은 삭제할 수 없습니다':'삭제';
+        const _hasNote=!!(p.note&&p.note.trim());
         return `
+        <button class="btn btn-secondary btn-sm" style="margin-right:4px;${_hasNote?'color:var(--accent);border-color:var(--accent)':''}" onclick="openNoteEdit('${esc(p.id)}')" title="${_hasNote?'비고: '+esc(p.note):'비고 작성'}"><i class="ti ti-notes"></i></button>
         <button class="btn btn-secondary btn-sm" style="margin-right:4px" onclick="openPlanDateModal('${esc(p.id)}')" title="생산계획일 지정"><i class="ti ti-calendar"></i></button>
         <button class="btn btn-secondary btn-sm" style="margin-right:4px${_can?'':_dis}" onclick="planAction('edit','${esc(p.id)}')" title="${_title}"><i class="ti ti-edit"></i></button>
         <button class="btn btn-secondary btn-sm" style="color:#dc2626${_can?'':_dis}" onclick="planAction('delete','${esc(p.id)}')" title="${_titleD}"><i class="ti ti-trash"></i></button>`;
