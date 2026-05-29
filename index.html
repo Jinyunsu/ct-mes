@@ -479,13 +479,37 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       <div class="grid-2" style="margin-top:14px">
         <div class="card" style="display:flex;flex-direction:column;max-height:400px">
           <div class="card-title" style="flex-shrink:0"><i class="ti ti-bell"></i> 알림·이슈</div>
-          <div style="flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:4px">
-            <div class="kpi-row" style="padding:5px 0;gap:8px"><div class="kpi-icon" style="background:rgba(167,139,250,.15);color:#a78bfa;width:24px;height:24px;font-size:11px;flex-shrink:0"><i class="ti ti-alert-triangle"></i></div><div style="flex:1"><div class="kpi-label" style="font-size:10px">납기지연</div></div><div style="font-size:13px;font-weight:700;font-family:var(--mono)" id="d-alert-delayed">0건</div><span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:9px;padding:1px 6px">납기지연</span></div>
-            <div class="kpi-row" style="padding:5px 0;gap:8px"><div class="kpi-icon" style="background:rgba(100,116,139,.1);color:var(--text3);width:24px;height:24px;font-size:11px;flex-shrink:0"><i class="ti ti-clock"></i></div><div style="flex:1"><div class="kpi-label" style="font-size:10px">작업 대기</div></div><div style="font-size:13px;font-weight:700;font-family:var(--mono)" id="d-alert-waiting">0건</div><span class="badge badge-gray" style="font-size:9px;padding:1px 6px">대기</span></div>
-            <div class="kpi-row" style="padding:5px 0;gap:8px"><div class="kpi-icon" style="background:rgba(59,130,246,.1);color:var(--accent);width:24px;height:24px;font-size:11px;flex-shrink:0"><i class="ti ti-player-play"></i></div><div style="flex:1"><div class="kpi-label" style="font-size:10px">작업 중</div></div><div style="font-size:13px;font-weight:700;font-family:var(--mono)" id="d-alert-running">0건</div><span class="badge badge-blue" style="font-size:9px;padding:1px 6px">작업중</span></div>
-            <div class="kpi-row" style="padding:5px 0;gap:8px"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber);width:24px;height:24px;font-size:11px;flex-shrink:0"><i class="ti ti-player-pause"></i></div><div style="flex:1"><div class="kpi-label" style="font-size:10px">작업 중 정지</div></div><div style="font-size:13px;font-weight:700;font-family:var(--mono)" id="d-alert-paused">0건</div><span class="badge badge-amber" style="font-size:9px;padding:1px 6px">정지</span></div>
-            <div class="kpi-row" style="padding:5px 0;gap:8px"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green);width:24px;height:24px;font-size:11px;flex-shrink:0"><i class="ti ti-circle-check"></i></div><div style="flex:1"><div class="kpi-label" style="font-size:10px">완료 작업</div></div><div style="font-size:13px;font-weight:700;font-family:var(--mono)" id="d-alert-done">0건</div><span class="badge badge-green" style="font-size:9px;padding:1px 6px">금일</span></div>
-            <div class="kpi-row" style="padding:5px 0;gap:8px"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--red);width:24px;height:24px;font-size:11px;flex-shrink:0"><i class="ti ti-trash"></i></div><div style="flex:1"><div class="kpi-label" style="font-size:10px">계획 취소</div></div><div style="font-size:13px;font-weight:700;font-family:var(--mono)" id="d-alert-cancel">0건</div><span class="badge badge-red" style="font-size:9px;padding:1px 6px">취소</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0;overflow-y:auto">
+            <div style="background:var(--bg3);border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:10px;color:#a78bfa;font-weight:700">납기지연</div>
+              <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:#a78bfa" id="d-alert-delayed">0</div>
+              <div style="font-size:10px;color:var(--text3)">건</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:10px;color:var(--text3);font-weight:700">작업 대기</div>
+              <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--text3)" id="d-alert-waiting">0</div>
+              <div style="font-size:10px;color:var(--text3)">건</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:10px;color:var(--accent);font-weight:700">작업 중</div>
+              <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--accent)" id="d-alert-running">0</div>
+              <div style="font-size:10px;color:var(--text3)">건</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:10px;color:var(--amber);font-weight:700">작업 중 정지</div>
+              <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--amber)" id="d-alert-paused">0</div>
+              <div style="font-size:10px;color:var(--text3)">건</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:10px;color:var(--green);font-weight:700">완료 작업</div>
+              <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--green)" id="d-alert-done">0</div>
+              <div style="font-size:10px;color:var(--text3)">건</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:10px;color:var(--red);font-weight:700">계획 취소</div>
+              <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--red)" id="d-alert-cancel">0</div>
+              <div style="font-size:10px;color:var(--text3)">건</div>
+            </div>
           </div>
         </div>
         <div class="card" style="display:flex;flex-direction:column;max-height:400px">
@@ -2703,12 +2727,12 @@ function renderDashboard(){
   const runningCnt = allPlans.filter(p=>getPlanStatus(p)==='running').length;
   const waitingCnt = allPlans.filter(p=>getPlanStatus(p)==='waiting').length;
   const cancelCnt = Object.values(cachedPlans).filter(p=>p.status==='deleted'&&(p.createdAt===today2||p.date===today2)).length;
-  if(el2('d-alert-delayed')) el2('d-alert-delayed').textContent=delayedCnt+'건';
-  if(el2('d-alert-waiting')) el2('d-alert-waiting').textContent=waitingCnt+'건';
-  if(el2('d-alert-running')) el2('d-alert-running').textContent=runningCnt+'건';
-  if(el2('d-alert-paused')) el2('d-alert-paused').textContent=pausedCnt+'건';
-  if(el2('d-alert-done')) el2('d-alert-done').textContent=doneTodayCnt+'건';
-  if(el2('d-alert-cancel')) el2('d-alert-cancel').textContent=cancelCnt+'건';}
+  if(el2('d-alert-delayed')) el2('d-alert-delayed').textContent=delayedCnt;
+  if(el2('d-alert-waiting')) el2('d-alert-waiting').textContent=waitingCnt;
+  if(el2('d-alert-running')) el2('d-alert-running').textContent=runningCnt;
+  if(el2('d-alert-paused')) el2('d-alert-paused').textContent=pausedCnt;
+  if(el2('d-alert-done')) el2('d-alert-done').textContent=doneTodayCnt;
+  if(el2('d-alert-cancel')) el2('d-alert-cancel').textContent=cancelCnt;}
 
 // ── 진행현황 ──
 function renderProgress(){
