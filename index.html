@@ -359,7 +359,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
     <div class="sb-divider"></div>
     <div class="sb-label">관리</div>
     <button class="sb-item" id="sb-workers" onclick="go('workers')"><i class="ti ti-users"></i> 작업자 현황<span class="sb-dot"></span></button>
-    <button class="sb-item" id="sb-customers" onclick="go('customers')"><i class="ti ti-building-store"></i> 고객사 관리<span class="sb-dot"></span></button>
+    <button class="sb-item" id="sb-customers" onclick="go('customers')"><i class="ti ti-building-store"></i> 고객사 현황<span class="sb-dot"></span></button>
     <button class="sb-item" id="sb-orders" onclick="go('orders')"><i class="ti ti-clipboard-list"></i> 수주관리<span class="sb-dot"></span></button>
     <button class="sb-item" id="sb-daily" onclick="go('daily')"><i class="ti ti-report"></i> 작업일보<span class="sb-dot"></span></button>
     <button class="sb-item" id="sb-settings" onclick="go('settings')"><i class="ti ti-settings"></i> 설정<span class="sb-dot"></span></button>
@@ -692,10 +692,10 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       </div>
     </div>
 
-    <!-- ══ 고객사 관리 ══ -->
+    <!-- ══ 고객사 현황 ══ -->
     <div class="page" id="page-customers">
       <div class="page-header">
-        <div class="ph-left"><div class="page-title">고객사 관리</div><div class="page-desc">고객사별 수주 이력 및 실적</div></div>
+        <div class="ph-left"><div class="page-title">고객사 현황</div><div class="page-desc">고객사별 수주 이력 및 실적</div></div>
         <div class="ph-right">
           <input id="customer-search" class="input" style="width:160px;font-size:12px" placeholder="고객사 검색" oninput="renderCustomers()">
           <button class="btn btn-secondary btn-sm" onclick="exportCustomerExcel()"><i class="ti ti-file-spreadsheet"></i> 엑셀</button>
@@ -1356,7 +1356,7 @@ const PAGE_INFO = {
   performance:{title:'실적분석',parent:'생산'},
   workers:{title:'작업자 현황',parent:'관리'},
   orders:{title:'수주관리',parent:'관리'},
-  customers:{title:'고객사 관리',parent:'관리'},
+  customers:{title:'고객사 현황',parent:'관리'},
   daily:{title:'작업일보',parent:'관리'},
   settings:{title:'설정',parent:'관리'},
 };
@@ -2903,7 +2903,7 @@ function renderPerformance(){
     }
   }}
 
-// ── 고객사 관리 ──
+// ── 고객사 현황 ──
 let custTab = 'all';
 window.exportCustomerExcel = function() {
   const search=(document.getElementById('customer-search')?.value||'').toLowerCase();
@@ -3483,7 +3483,7 @@ window.orGoThisMonth = function() {
 window.renderOrMonth = function() {
   const p = document.getElementById('or-month-picker');
   const ms = p?.value || new Date().toISOString().slice(0,7);
-  const plans = allOrderPlans().filter(x=>x.createdAt?.startsWith(ms)||x.date?.startsWith(ms));
+  const plans = allOrderPlans().filter(x=>x.date?.startsWith(ms));
   plans.sort((a,b)=>a.date>b.date?1:-1);
   const tp=plans.reduce((s,x)=>s+(x.planQty||0),0);
   const ta=plans.reduce((s,x)=>s+(x.actQty||0),0);
