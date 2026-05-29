@@ -477,15 +477,20 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
       </div>
       <div class="grid-2" style="margin-top:14px">
-        <div class="card">
+        <div class="card" style="max-height:400px;overflow:hidden">
           <div class="card-title"><i class="ti ti-bell"></i> 알림·이슈</div>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(167,139,250,.15);color:#a78bfa"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">납기지연</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge" style="margin-left:auto;background:rgba(167,139,250,.15);color:#a78bfa">납기지연</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(100,116,139,.1);color:var(--text3)"><i class="ti ti-clock"></i></div><div><div class="kpi-label">작업 대기</div><div class="kpi-val" id="d-alert-waiting">0건</div></div><span class="badge badge-gray" style="margin-left:auto">대기</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(59,130,246,.1);color:var(--accent)"><i class="ti ti-player-play"></i></div><div><div class="kpi-label">작업 중</div><div class="kpi-val" id="d-alert-running">0건</div></div><span class="badge badge-blue" style="margin-left:auto">작업중</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-player-pause"></i></div><div><div class="kpi-label">작업 중 정지</div><div class="kpi-val" id="d-alert-paused">0건</div></div><span class="badge badge-amber" style="margin-left:auto">정지</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div class="kpi-val" id="d-alert-done">0건</div></div><span class="badge badge-green" style="margin-left:auto">금일</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="ti ti-trash"></i></div><div><div class="kpi-label">계획 취소</div><div class="kpi-val" id="d-alert-cancel">0건</div></div><span class="badge badge-red" style="margin-left:auto">취소</span></div>
+          <div class="tbl-wrap" style="overflow-y:auto;max-height:340px">
+            <table>
+              <thead style="position:sticky;top:0;z-index:5"><tr><th>항목</th><th>건수</th><th>상태</th></tr></thead>
+              <tbody>
+                <tr><td><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:#a78bfa;flex-shrink:0"></div>납기지연</div></td><td style="font-family:var(--mono);font-weight:700" id="d-alert-delayed">0건</td><td><span class="badge" style="background:rgba(167,139,250,.15);color:#a78bfa;font-size:10px">납기지연</span></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0"></div>작업 대기</div></td><td style="font-family:var(--mono);font-weight:700" id="d-alert-waiting">0건</td><td><span class="badge badge-gray" style="font-size:10px">대기</span></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.4s infinite;flex-shrink:0"></div>작업 중</div></td><td style="font-family:var(--mono);font-weight:700" id="d-alert-running">0건</td><td><span class="badge badge-blue" style="font-size:10px">작업중</span></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0"></div>작업 중 정지</div></td><td style="font-family:var(--mono);font-weight:700" id="d-alert-paused">0건</td><td><span class="badge badge-amber" style="font-size:10px">정지</span></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></div>완료 작업</div></td><td style="font-family:var(--mono);font-weight:700" id="d-alert-done">0건</td><td><span class="badge badge-green" style="font-size:10px">금일</span></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0"></div>계획 취소</div></td><td style="font-family:var(--mono);font-weight:700" id="d-alert-cancel">0건</td><td><span class="badge badge-red" style="font-size:10px">취소</span></td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
         <div class="card" style="display:flex;flex-direction:column;max-height:400px">
