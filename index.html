@@ -3464,7 +3464,8 @@ window.renderOrAll = function() {
   tbody.innerHTML = plans.map((p,idx)=>{
     const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
     const st=p.shippedAt?'shipped':getPlanStatus(p);
-    const isOverdue=p.dueDate&&p.dueDate<today&&st!=='done'&&st!=='shipped';
+    const isDeleted=p.status==='deleted';
+    const isOverdue=p.dueDate&&p.dueDate<today&&st!=='done'&&st!=='shipped'&&!isDeleted;
     const dueCls=isOverdue?'color:var(--red)':'color:var(--text3)';
     return `<tr${isDeleted?' style="background:rgba(239,68,68,.08);text-decoration:line-through;color:var(--text3)"':''}>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${idx+1}</td>
