@@ -359,6 +359,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
     <div class="sb-divider"></div>
     <div class="sb-label">관리</div>
     <button class="sb-item" id="sb-workers" onclick="go('workers')"><i class="ti ti-users"></i> 작업자 현황<span class="sb-dot"></span></button>
+    <button class="sb-item" id="sb-customers" onclick="go('customers')"><i class="ti ti-building-store"></i> 고객사 관리<span class="sb-dot"></span></button>
     <button class="sb-item" id="sb-orders" onclick="go('orders')"><i class="ti ti-clipboard-list"></i> 수주관리<span class="sb-dot"></span></button>
     <button class="sb-item" id="sb-daily" onclick="go('daily')"><i class="ti ti-report"></i> 작업일보<span class="sb-dot"></span></button>
     <button class="sb-item" id="sb-settings" onclick="go('settings')"><i class="ti ti-settings"></i> 설정<span class="sb-dot"></span></button>
@@ -687,6 +688,26 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
               <tbody id="worker-stats-tbl"><tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr></tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 고객사 관리 ══ -->
+    <div class="page" id="page-customers">
+      <div class="page-header">
+        <div class="ph-left"><div class="page-title">고객사 관리</div><div class="page-desc">고객사별 수주 이력 및 실적</div></div>
+        <div class="ph-right">
+          <input id="customer-search" class="input" style="width:160px;font-size:12px" placeholder="고객사 검색" oninput="renderCustomers()">
+        </div>
+      </div>
+      <div class="metrics" style="grid-template-columns:repeat(3,1fr)">
+        <div class="metric blue"><div class="metric-label">전체 고객사</div><div class="metric-value" id="cust-total">—</div></div>
+        <div class="metric green"><div class="metric-label">총 수주 건수</div><div class="metric-value" id="cust-orders">—</div></div>
+        <div class="metric amber"><div class="metric-label">전체 달성률</div><div class="metric-value-row"><div class="metric-value" id="cust-rate">—</div><span class="metric-sub">%</span></div></div>
+      </div>
+      <div class="card">
+        <div id="customer-list" style="display:flex;flex-direction:column;gap:12px">
+          <div style="text-align:center;color:var(--text3);padding:40px">등록된 고객사가 없습니다</div>
         </div>
       </div>
     </div>
@@ -1186,6 +1207,7 @@ function refreshUI() {
   renderOrAll();
   if(typeof renderPerformance==='function') renderPerformance();
   if(typeof renderWorkerStats==='function') renderWorkerStats();
+  if(typeof renderCustomers==='function') renderCustomers();
 }
 // 생산계획 필터 초기화
 (function(){
@@ -1204,6 +1226,7 @@ const PAGE_INFO = {
   performance:{title:'실적분석',parent:'생산'},
   workers:{title:'작업자 현황',parent:'관리'},
   orders:{title:'수주관리',parent:'관리'},
+  customers:{title:'고객사 관리',parent:'관리'},
   daily:{title:'작업일보',parent:'관리'},
   settings:{title:'설정',parent:'관리'},
 };
@@ -1224,7 +1247,7 @@ function go(id) {
   if(id==='dashboard') renderDashboard();
   else if(id==='progress') renderProgress();
   else if(id==='performance') renderPerformance();
-  else if(id==='workers') renderWorkerStats();
+  else if(id==='customers') renderCustomers();
   else if(id==='prodplan'){ filterPlanTable(); renderCalendar(); }
   else if(id==='orders'){
     renderOrKPIs();
@@ -2680,7 +2703,62 @@ function renderPerformance(){
     }
   }}
 
-// ── 작업자 현황 페이지 통계 ──
+// ── 고객사 관리 ──
+function renderCustomers(){
+  const search=(document.getElementById('customer-search')?.value||'').toLowerCase();
+  const plans=Object.values(cachedPlans).filter(p=>p.customer);
+
+  // 고객사별 그룹핑
+  const map={};
+  plans.forEach(p=>{
+    const c=p.customer.trim();
+    if(!map[c]) map[c]={name:c,plans:[],totalPlan:0,totalAct:0};
+    map[c].plans.push(p);
+    map[c].totalPlan+=Number(p.planQty)||0;
+    map[c].totalAct+=Number(p.actQty)||0;
+  });
+
+  let customers=Object.values(map).filter(c=>!search||c.name.toLowerCase().includes(search));
+  customers.sort((a,b)=>b.plans.length-a.plans.length);
+
+  // KPI
+  const el=id=>document.getElementById(id);
+  if(el('cust-total')) el('cust-total').textContent=Object.keys(map).length;
+  if(el('cust-orders')) el('cust-orders').textContent=plans.length+'건';
+  const totalP=Object.values(map).reduce((s,c)=>s+c.totalPlan,0);
+  const totalA=Object.values(map).reduce((s,c)=>s+c.totalAct,0);
+  if(el('cust-rate')) el('cust-rate').textContent=totalP>0?Math.round(totalA/totalP*100):0;
+
+  const list=document.getElementById('customer-list');
+  if(!list) return;
+  if(!customers.length){list.innerHTML='<div style="text-align:center;color:var(--text3);padding:40px">등록된 고객사가 없습니다</div>';return;}
+
+  list.innerHTML=customers.map(c=>{
+    const rate=c.totalPlan>0?Math.round(c.totalAct/c.totalPlan*100):0;
+    // 날짜 정렬
+    const dates=[...new Set(c.plans.map(p=>p.date||p.createdAt).filter(Boolean))].sort();
+    const dateHtml=dates.map(d=>`<span style="font-size:10px;background:var(--bg4);color:var(--text3);padding:2px 7px;border-radius:4px;border:1px solid var(--border)">${d}</span>`).join('');
+    return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff">${esc(c.name.slice(0,1))}</div>
+          <div>
+            <div style="font-size:15px;font-weight:800;color:var(--text)">${esc(c.name)}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:1px">총 ${c.plans.length}회 수주</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:20px;text-align:right">
+          <div><div style="font-size:10px;color:var(--text3)">계획수량</div><div style="font-size:14px;font-weight:700;font-family:var(--mono)">${c.totalPlan.toLocaleString()} EA</div></div>
+          <div><div style="font-size:10px;color:var(--text3)">실적수량</div><div style="font-size:14px;font-weight:700;font-family:var(--mono);color:var(--green)">${c.totalAct.toLocaleString()} EA</div></div>
+          <div><div style="font-size:10px;color:var(--text3)">달성률</div><div style="font-size:14px;font-weight:700;color:${rate>=100?'var(--green)':rate>0?'var(--accent)':'var(--text3)'}">${rate}%</div></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${dateHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+
 function renderWorkerStats(){
   const tbl=document.getElementById('worker-stats-tbl');
   if(!tbl)return;
