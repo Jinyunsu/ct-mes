@@ -2871,6 +2871,9 @@ window.exportCustomerExcel = function() {
 
 window.switchCustTab = function(tab) {
   custTab = tab;
+  ['all','monthly'].forEach(t=>{
+    const btn=document.getElementById(`cust-tab-btn-${t}`);
+    if(btn){ btn.style.background=t===tab?'var(--accent)':'transparent'; btn.style.color=t===tab?'#fff':'var(--text3)'; btn.style.fontWeight=t===tab?'700':'600'; }
   });
   const mw=document.getElementById('cust-month-wrap');
   if(mw) mw.style.display=tab==='monthly'?'flex':'none';
