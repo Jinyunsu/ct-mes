@@ -481,7 +481,6 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <div class="card-title"><i class="ti ti-bell"></i> 알림·이슈</div>
           <div style="display:flex;flex-direction:column;gap:8px">
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(167,139,250,.15);color:#a78bfa"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">출고 지연</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge" style="margin-left:auto;background:rgba(167,139,250,.15);color:#a78bfa">확인필요</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="ti ti-bug"></i></div><div><div class="kpi-label">납기 초과</div><div class="kpi-val" id="d-alert-overdue">0건</div></div><span class="badge badge-red" style="margin-left:auto">주의</span></div>
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-player-pause"></i></div><div><div class="kpi-label">작업 중 정지</div><div class="kpi-val" id="d-alert-paused">0건</div></div><span class="badge badge-amber" style="margin-left:auto">정지</span></div>
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div class="kpi-val" id="d-alert-done">0건</div></div><span class="badge badge-green" style="margin-left:auto">금일</span></div>
           </div>
@@ -2165,7 +2164,7 @@ function renderPlanTable(filterFn){
       <td><div style="display:flex;align-items:center;gap:6px"><div class="prog-bar" style="width:50px"><div class="prog-fill ${pct>=100?'green':pct>=50?'':'red'}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-family:var(--mono);font-weight:700;color:${pct>=100?'var(--green)':pct>=50?'var(--text)':'var(--red)'}">${pct}%</span></div></td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${wCnt}명</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${typeof wHrs==='object'?wHrs.str:wHrs}</td>
-      <td><span class="badge ${sc[getPlanStatus(p)]||'badge-gray'}">${sm[getPlanStatus(p)]||'예정'}</span></td>
+      <td style="white-space:nowrap"><span class="badge ${sc[getPlanStatus(p)]||'badge-gray'}">${sm[getPlanStatus(p)]||'예정'}</span>${dueBadge(p)}</td>
       <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
       <td style="white-space:nowrap">${(()=>{
         const _st=getPlanStatus(p);
@@ -2416,6 +2415,13 @@ if(dpEl)dpEl.textContent=dn.toLocaleString('ko-KR',{hour12:false});
 /* ══ 연계 메뉴 렌더링 ══ */
 
 // 공통: 상태 계산
+// 납기지연 배지 헬퍼
+function dueBadge(p){
+  const today=new Date().toISOString().slice(0,10);
+  if(p.dueDate&&p.dueDate<today&&p.status!=='shipped') return '<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>';
+  return '';
+}
+
 function getPlanStatus(p){
   const today=new Date().toISOString().slice(0,10);
   if(p.status==='deleted') return 'deleted';
@@ -2587,7 +2593,7 @@ function renderDashboard(){
           <td style="font-family:var(--mono);padding:8px 12px">${(p.planQty||0).toLocaleString()}</td>
           <td style="font-family:var(--mono);color:var(--green);padding:8px 12px">${(p.actQty||0).toLocaleString()}</td>
           <td style="padding:8px 12px"><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-family:var(--mono)">${pct}%</span></div></td>
-          <td style="padding:8px 12px"><span class="badge ${sc[st]}" style="font-size:10px;padding:2px 6px;white-space:nowrap">${sm[st]}</span></td>
+          <td style="padding:8px 12px;white-space:nowrap"><span class="badge ${sc[st]}" style="font-size:10px;padding:2px 6px;white-space:nowrap">${sm[st]}</span>${dueBadge(p)}</td>
         </tr>`;
       }).join('');
     }
@@ -2690,13 +2696,11 @@ function renderDashboard(){
   // 출고 지연: 납기일 < 오늘, 미완료
   const delayedCnt = allPlans.filter(p=>getPlanStatus(p)==='overdue').length;
   // 납기 초과: 동일
-  const overdueCnt = delayedCnt;
   // 완료: 오늘 완료된 계획
   const doneTodayCnt = allPlans.filter(p=>getPlanStatus(p)==='done' && (p.date===today2 || p.createdAt===today2)).length;
   const pausedCnt = allPlans.filter(p=>getPlanStatus(p)==='paused').length;
   const el2=id=>document.getElementById(id);
   if(el2('d-alert-delayed')) el2('d-alert-delayed').textContent=delayedCnt+'건';
-  if(el2('d-alert-overdue')) el2('d-alert-overdue').textContent=overdueCnt+'건';
   if(el2('d-alert-paused')) el2('d-alert-paused').textContent=pausedCnt+'건';
   if(el2('d-alert-done')) el2('d-alert-done').textContent=doneTodayCnt+'건';}
 
@@ -2785,7 +2789,7 @@ function renderProgress(){
             <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()}</td>
             <td style="font-family:var(--mono);color:var(--green)">${(p.actQty||0).toLocaleString()}</td>
             <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px">${pct}%</span></div></td>
-            <td><span class="badge ${sc[st]||'badge-gray'}">${sm[st]||'—'}</span></td>
+            <td style="white-space:nowrap"><span class="badge ${sc[st]||'badge-gray'}">${sm[st]||'—'}</span>${dueBadge(p)}</td>
             <td style="font-size:11px;color:var(--text3)">—</td>
           </tr>`);
         }
@@ -2933,7 +2937,7 @@ function renderPerformance(){
           <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()}</td>
           <td style="font-family:var(--mono);color:var(--green)">${(p.actQty||0).toLocaleString()}</td>
           <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px">${pct}%</span></div></td>
-          <td><span class="badge ${sc[st]}">${sm[st]}</span></td>
+          <td style="white-space:nowrap"><span class="badge ${sc[st]}">${sm[st]}</span>${dueBadge(p)}</td>
         </tr>`;
       }).join('');
     }
@@ -3291,7 +3295,7 @@ function renderDailyReport(dateStr){
         <td style="font-family:var(--mono);color:var(--green)">${(p.actQty||0).toLocaleString()}</td>
         <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px">${pct}%</span></div></td>
         <td style="font-size:11px;font-family:var(--mono)">${hrs.str}</td>
-        <td><span class="badge ${sc[st]}">${sm[st]}</span></td>
+        <td style="white-space:nowrap"><span class="badge ${sc[st]}">${sm[st]}</span>${dueBadge(p)}</td>
       </tr>`;
     }).join('');
   }
@@ -3508,7 +3512,7 @@ function orPlanRow(p, no) {
       </div>
       <span style="font-size:12px">${pct}%</span>
     </div></td>
-    <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${shippedInfo}</td>
+    <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${shippedInfo}${(p.dueDate&&p.dueDate<today&&st!=='shipped')?'<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>':''}</td>
     <td style="white-space:nowrap">
       ${st==='shipped'?'<span style="font-size:10px;color:var(--green);font-weight:700">✓ 출하완료</span>':st==='done'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer;white-space:nowrap">출하</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}
     </td>
@@ -3635,7 +3639,7 @@ window.renderOrAll = function() {
         </div>
         <span style="font-size:11px">${pct}%</span>
       </div></td>
-      <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${p.shippedAt?`<div style="font-size:9px;color:var(--text3)">${p.shippedAt}</div>`:''}</td>
+      <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${p.shippedAt?`<div style="font-size:9px;color:var(--text3)">${p.shippedAt}</div>`:''}${(p.dueDate&&p.dueDate<today&&st!=='shipped')?'<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>':''}</td>
       <td style="white-space:nowrap">${st==='shipped'?'<span style="font-size:10px;color:var(--green);font-weight:700">✓ 출하완료</span>':st==='done'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer">출하</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}</td>
       <td style="font-size:11px;color:var(--text3);max-width:120px">${esc(p.remark||'—')}</td>
       <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
