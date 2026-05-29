@@ -1114,10 +1114,63 @@ async function initAuth() {
   }
 }
 
+// 관리자 이메일 목록
+const ADMIN_EMAILS = [
+  'jys788@myctns.com',
+  'likoreailz@myctns.com',
+  'swkang1@myctns.com',
+  'bmasi1@myctns.com'
+];
+let isAdmin = false;
+
+function applyViewerMode() {
+  // 뷰어 모드: 편집 관련 버튼 숨김
+  const style = document.createElement('style');
+  style.id = 'viewer-mode-style';
+  style.textContent = `
+    /* 생산계획 신규등록/수정/삭제/날짜지정/비고 버튼 */
+    .btn-primary[onclick*="plan-modal"],
+    button[onclick*="planAction"],
+    button[onclick*="openPlanDateModal"],
+    button[onclick*="openNoteEdit"],
+    button[onclick*="openEditPlanModal"],
+    button[onclick*="deletePlan"],
+    button[onclick*="shipPlan"],
+    /* 작업관리 */
+    .jbtn-start, .jbtn-pause, .jbtn-end,
+    #code-inp, button[onclick*="addCode"],
+    /* 작업자 현황 - 추가/삭제/휴무등록 */
+    button[onclick*="deleteWorker"],
+    button[onclick*="openOffday"],
+    #worker-name-inp, button[onclick*="addWorker"],
+    /* 설정 */
+    button[onclick*="changeResetPassword"],
+    button[onclick*="openResetModal"],
+    button[onclick*="openPwChangeModal"],
+    /* 출하 버튼 */
+    button[onclick*="shipPlan"]
+    { display: none !important; }
+    /* 모바일 작업관리 진입 차단 메시지 */
+    #viewer-notice { display: block !important; }
+  `;
+  document.head.appendChild(style);
+
+  // 상단에 뷰어 모드 배지 표시
+  const tbRight = document.querySelector('.tb-right');
+  if(tbRight) {
+    const badge = document.createElement('div');
+    badge.style.cssText = 'padding:3px 10px;background:rgba(240,184,74,.15);color:var(--amber);border:1px solid rgba(240,184,74,.3);border-radius:6px;font-size:11px;font-weight:700';
+    badge.textContent = '👁 보기 전용';
+    tbRight.insertBefore(badge, tbRight.firstChild);
+  }
+}
+
 function setUser(account) {
   const name = account.name || account.username.split('@')[0];
   const email = account.username;
   const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  // 관리자 여부 확인
+  isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
   // 로그인 화면 즉시 숨기고 앱 표시
   const ls = document.getElementById('login-screen');
   if(ls) ls.style.display = 'none';
@@ -1125,6 +1178,8 @@ function setUser(account) {
   document.getElementById('sb-uname').textContent = name;
   document.getElementById('sb-uemail').textContent = email;
   document.getElementById('tb-av').textContent = initials;
+  // 뷰어 모드 적용
+  if(!isAdmin) applyViewerMode();
   // 화면 먼저 띄우고
   const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
   if(!isMobile) go('dashboard');
@@ -1818,6 +1873,7 @@ window.addWorker=async function(){
   if(res){cachedNames=res;renderWorkerGrid();renderWorkerListPage();inp.value='';showToast(`[${val}] 추가됨`);}
 };
 window.deleteWorker=async function(name){
+  if(!isAdmin){ showToast('편집 권한이 없습니다'); return; }
   if(!confirm(`[${name}] 작업자를 삭제하시겠습니까?\n해당 작업자의 상태, 작업 기록, 휴무 데이터도 모두 삭제됩니다.`))return;
   if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
   _pollingLocked=true;
@@ -1915,6 +1971,7 @@ window.submitPlanDate = async function() {
 
 /* ══ 생산계획 ══ */
 window.submitPlan=async function(){
+  if(!isAdmin){ showToast('편집 권한이 없습니다'); return; }
   const code=document.getElementById('pf-code').value.trim();
   const date=document.getElementById('pf-date').value;
   const qty=Number(document.getElementById('pf-qty').value)||0;
@@ -2063,6 +2120,7 @@ function updatePlanKPI(plans){
 
 
 window.planAction = function(type, id) {
+  if(!isAdmin){ showToast('편집 권한이 없습니다'); return; }
   const plan = cachedPlans[id] || Object.values(cachedPlans).find(p=>p.id===id) || {};
   const st = getPlanStatus(plan);
   // 작업 로그가 있으면 작업이 시작된 것으로 간주
@@ -3766,6 +3824,7 @@ window.confirmResetPw = function() {
   deleteAllPlans();
 };
 window.deleteAllPlans = async function() {
+  if(!isAdmin){ showToast('편집 권한이 없습니다'); return; }
   if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
   _pollingLocked = true;
   showToast('전체 데이터 삭제 중...');
