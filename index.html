@@ -2505,7 +2505,7 @@ function renderDashboard(){
           <td style="font-family:var(--mono);padding:8px 12px">${(p.planQty||0).toLocaleString()}</td>
           <td style="font-family:var(--mono);color:var(--green);padding:8px 12px">${(p.actQty||0).toLocaleString()}</td>
           <td style="padding:8px 12px"><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-family:var(--mono)">${pct}%</span></div></td>
-          <td style="padding:8px 12px"><span class="badge ${sc[st]}" style="${st==='running'?'font-size:10px;padding:1px 5px':'''}">${sm[st]}</span></td>
+          <td style="padding:8px 12px"><span class="badge ${sc[st]}" style="${st==='running'?'font-size:10px;padding:1px 5px':''}">${sm[st]}</span></td>
         </tr>`;
       }).join('');
     }
