@@ -1809,13 +1809,21 @@ window.openNoteEdit = async function(id) {
   const p = cachedPlans[id] || Object.values(cachedPlans).find(x=>x.id===id);
   if(!p) return;
   const note = prompt(`[${p.code}] 비고 (지우려면 빈칸으로 확인):`, p.note||'');
-  if(note === null) return; // 취소
+  if(note === null) return;
   if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
   _pollingLocked = true;
-  const updated = {...p, id, note: note.trim()};
-  const res = await API.put('/api/plans', updated);
-  if(res && !res.error){ cachedPlans=res; refreshUI(); showToast(note.trim()?'비고 저장됨':'비고 삭제됨'); }
-  else showToast('저장 실패');
+  try {
+    const updated = {...p, id, note: note.trim()};
+    const r = await fetch('/api/plans', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(updated)});
+    const res = await r.json();
+    if(res && !res.error){
+      cachedPlans = res;
+      refreshUI();
+      showToast(note.trim() ? '비고 저장됨' : '비고 삭제됨');
+    } else {
+      showToast('저장 실패: ' + (res?.error||''));
+    }
+  } catch(e){ showToast('저장 실패'); }
   restartPollingDelayed(2000);
 };
 
