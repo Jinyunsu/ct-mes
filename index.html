@@ -3338,7 +3338,7 @@ function orPlanRow(p, no) {
   const isOverdue = p.dueDate && p.dueDate < today && st!=='done' && st!=='shipped';
   const dueCls = isOverdue ? 'color:var(--red)' : 'color:var(--text3)';
   const isDeleted = p.status === 'deleted';
-  return `<tr${isDeleted?' style="opacity:.6;background:rgba(239,68,68,.04)"':isOverdue?' style="background:rgba(239,68,68,.04)"':''}>
+  return `<tr${isDeleted?' style="background:rgba(239,68,68,.08);text-decoration:line-through;color:var(--text3)"':''}>
     <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${no||''}</td>
     <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
     <td>${esc(p.customer||'—')}</td>
@@ -3466,7 +3466,7 @@ window.renderOrAll = function() {
     const st=p.shippedAt?'shipped':getPlanStatus(p);
     const isOverdue=p.dueDate&&p.dueDate<today&&st!=='done'&&st!=='shipped';
     const dueCls=isOverdue?'color:var(--red)':'color:var(--text3)';
-    return `<tr${isOverdue?' style="background:rgba(239,68,68,.04)"':''}>
+    return `<tr${isDeleted?' style="background:rgba(239,68,68,.08);text-decoration:line-through;color:var(--text3)"':''}>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${idx+1}</td>
       <td style="font-size:12px;color:var(--text3)">${p.date||'—'}</td>
       <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
