@@ -933,6 +933,19 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   </div>
 </div>
 
+<!-- 생산계획일 지정 모달 -->
+<div class="modal-overlay" id="plan-date-modal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-title"><i class="ti ti-calendar"></i> 생산계획일 지정 <button class="modal-close" onclick="closeModal('plan-date-modal')"><i class="ti ti-x"></i></button></div>
+    <div id="plan-date-code-label" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px"></div>
+    <div><label class="label">생산계획일 *</label><input class="input" type="date" id="plan-date-input"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('plan-date-modal')">취소</button>
+      <button class="btn btn-primary" onclick="submitPlanDate()"><i class="ti ti-check"></i> 적용</button>
+    </div>
+  </div>
+</div>
+
 <!-- 생산계획 등록 모달 -->
 <div class="modal-overlay" id="plan-modal">
   <div class="modal">
@@ -1788,6 +1801,37 @@ window.deleteWorker=async function(name){
   restartPollingDelayed(1000);
 };
 
+/* ══ 생산계획일 지정 ══ */
+let _planDateId = null;
+window.openPlanDateModal = function(id) {
+  _planDateId = id;
+  const p = cachedPlans[id] || Object.values(cachedPlans).find(x=>x.id===id);
+  if(!p) { showToast('계획을 찾을 수 없습니다'); return; }
+  document.getElementById('plan-date-code-label').textContent = p.code + (p.customer ? ' · ' + p.customer : '');
+  document.getElementById('plan-date-input').value = p.date || new Date().toISOString().slice(0,10);
+  openModal('plan-date-modal');
+  setTimeout(()=>document.getElementById('plan-date-input').focus(), 150);
+};
+window.submitPlanDate = async function() {
+  const date = document.getElementById('plan-date-input').value;
+  if(!date) { showToast('날짜를 선택하세요'); return; }
+  const p = cachedPlans[_planDateId] || Object.values(cachedPlans).find(x=>x.id===_planDateId);
+  if(!p) { showToast('계획을 찾을 수 없습니다'); return; }
+  if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
+  _pollingLocked = true;
+  const updated = {...p, id:_planDateId, date};
+  const res = await API.put('/api/plans', updated);
+  if(res && !res.error) {
+    cachedPlans = res;
+    closeModal('plan-date-modal');
+    showToast(`생산계획일이 ${date}로 지정됐습니다`);
+    refreshUI();
+  } else {
+    showToast('저장 실패');
+  }
+  restartPollingDelayed(2000);
+};
+
 /* ══ 생산계획 ══ */
 window.submitPlan=async function(){
   const code=document.getElementById('pf-code').value.trim();
@@ -1894,6 +1938,7 @@ function renderPlanTable(filterFn){
         const _title=_st==='running'?'작업중인 계획은 수정할 수 없습니다':_st==='done'?'완료된 계획은 수정할 수 없습니다':(!_can)?'작업이 시작된 계획은 수정할 수 없습니다':'수정';
         const _titleD=_st==='running'?'작업중인 계획은 삭제할 수 없습니다':_st==='done'?'완료된 계획은 삭제할 수 없습니다':(!_can)?'작업이 시작된 계획은 삭제할 수 없습니다':'삭제';
         return `
+        <button class="btn btn-secondary btn-sm" style="margin-right:4px" onclick="openPlanDateModal('${esc(p.id)}')" title="생산계획일 지정"><i class="ti ti-calendar"></i></button>
         <button class="btn btn-secondary btn-sm" style="margin-right:4px${_can?'':_dis}" onclick="planAction('edit','${esc(p.id)}')" title="${_title}"><i class="ti ti-edit"></i></button>
         <button class="btn btn-secondary btn-sm" style="color:#dc2626${_can?'':_dis}" onclick="planAction('delete','${esc(p.id)}')" title="${_titleD}"><i class="ti ti-trash"></i></button>`;
       })()}</td>
