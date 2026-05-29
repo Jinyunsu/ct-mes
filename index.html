@@ -2099,7 +2099,7 @@ function renderPlanTable(filterFn){
         const _hasNote=!!(p.note&&p.note.trim());
         return `
         <button class="btn btn-secondary btn-sm" style="margin-right:4px;${_hasNote?'background:#dc2626;color:#fff;border-color:#dc2626':'color:var(--text3)'}" onclick="openNoteEdit('${esc(p.id)}')" title="${_hasNote?'지연사유: '+esc(p.note):'지연사유 작성'}"><i class="ti ti-notes" style="font-size:13px"></i></button>
-        <button class="btn btn-secondary btn-sm" style="margin-right:4px" onclick="openPlanDateModal('${esc(p.id)}')" title="생산계획일 지정"><i class="ti ti-calendar"></i></button>
+        <button class="btn btn-secondary btn-sm" style="margin-right:4px${_can?'':_dis}" onclick="${_can?`openPlanDateModal('${esc(p.id)}')`:'void(0)'}" title="${_can?'생산계획일 지정':'작업이 시작된 계획은 변경할 수 없습니다'}"><i class="ti ti-calendar"></i></button>
         <button class="btn btn-secondary btn-sm" style="margin-right:4px${_can?'':_dis}" onclick="planAction('edit','${esc(p.id)}')" title="${_title}"><i class="ti ti-edit"></i></button>
         <button class="btn btn-secondary btn-sm" style="color:#dc2626${_can?'':_dis}" onclick="planAction('delete','${esc(p.id)}')" title="${_titleD}"><i class="ti ti-trash"></i></button>`;
       })()}</td>
