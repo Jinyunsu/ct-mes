@@ -518,7 +518,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>등록일</th><th>생산계획일</th><th>납기일</th><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
+            <thead><tr><th>등록일</th><th>생산계획일</th><th>납기일</th><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>요청사항</th><th>비고</th><th style="width:80px">관리</th></tr></thead>
             <tbody id="plan-tbl"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
           </table>
         </div>
@@ -958,7 +958,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       <div class="full"><label class="label">제품사양</label><input id="pf-spec" class="input" placeholder="예) 200x300x50mm, SUS304"></div>
       <div><label class="label">고객사</label><input id="pf-customer" class="input" placeholder="예) 현대자동차"></div>
       <div><label class="label">납기일자</label><input id="pf-duedate" class="input" type="date"></div>
-      <div><label class="label">비고</label><input id="pf-remark" class="input" placeholder="특이사항"></div>
+      <div><label class="label">요청사항</label><input id="pf-remark" class="input" placeholder="생산 요청사항"></div>
+      <div><label class="label">비고</label><input id="pf-note" class="input" placeholder="기타 특이사항"></div>
     </div>
     <div class="modal-btns">
       <button class="btn btn-secondary" onclick="closeModal('plan-modal')">취소</button>
@@ -982,7 +983,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       <div class="full"><label class="label">제품사양</label><input id="ef-spec" class="input" placeholder="예) 200x300x50mm, SUS304"></div>
       <div><label class="label">고객사</label><input id="ef-customer" class="input" placeholder="예) 현대자동차"></div>
       <div><label class="label">납기일자</label><input id="ef-duedate" class="input" type="date"></div>
-      <div><label class="label">비고</label><input id="ef-remark" class="input" placeholder="특이사항"></div>
+      <div><label class="label">요청사항</label><input id="ef-remark" class="input" placeholder="생산 요청사항"></div>
+      <div><label class="label">비고</label><input id="ef-note" class="input" placeholder="기타 특이사항"></div>
     </div>
     <div class="modal-btns">
       <button class="btn btn-secondary" onclick="closeModal('plan-edit-modal')">취소</button>
@@ -1308,6 +1310,7 @@ function openModal(id){
     if(cuf) cuf.value='';
     const rf = document.getElementById('pf-remark');
     if(rf) rf.value='';
+    const nf = document.getElementById('pf-note'); if(nf) nf.value='';
     setTimeout(()=>document.getElementById('pf-code')?.focus(),150);
   }
 }
@@ -1801,6 +1804,21 @@ window.deleteWorker=async function(name){
   restartPollingDelayed(1000);
 };
 
+/* ══ 비고 인라인 편집 ══ */
+window.openNoteEdit = async function(id) {
+  const p = cachedPlans[id] || Object.values(cachedPlans).find(x=>x.id===id);
+  if(!p) return;
+  const note = prompt(`[${p.code}] 비고 입력:`, p.note||'');
+  if(note === null) return; // 취소
+  if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
+  _pollingLocked = true;
+  const updated = {...p, id, note};
+  const res = await API.put('/api/plans', updated);
+  if(res && !res.error){ cachedPlans=res; refreshUI(); showToast('비고 저장됨'); }
+  else showToast('저장 실패');
+  restartPollingDelayed(2000);
+};
+
 /* ══ 생산계획일 지정 ══ */
 let _planDateId = null;
 window.openPlanDateModal = function(id) {
@@ -1840,7 +1858,7 @@ window.submitPlan=async function(){
   if(!code){showToast('작업코드 입력');return;}
   if(qty<=0){showToast('계획수량 입력');return;}
   const today=new Date().toISOString().slice(0,10);
-  const newPlan={code,date:'',createdAt:today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',status:'planned',dueDate:document.getElementById('pf-duedate')?.value||''};
+  const newPlan={code,date:'',createdAt:today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',note:document.getElementById('pf-note').value.trim()||'',status:'planned',dueDate:document.getElementById('pf-duedate')?.value||''};
   closeModal('plan-modal');
   // 폴링 완전 중단
   if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
@@ -1930,6 +1948,7 @@ function renderPlanTable(filterFn){
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${typeof wHrs==='object'?wHrs.str:wHrs}</td>
       <td><span class="badge ${sc[getPlanStatus(p)]||'badge-gray'}">${sm[getPlanStatus(p)]||'예정'}</span></td>
       <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
+      <td style="color:var(--text3);font-size:11px;cursor:pointer" onclick="openNoteEdit('${esc(p.id)}')" title="클릭하여 비고 편집">${p.note?esc(p.note):'<span style="color:var(--border2)">—</span>'}</td>
       <td style="white-space:nowrap">${(()=>{
         const _st=getPlanStatus(p);
         const _hasLog=Object.values(cachedLogs||{}).some(wl=>Object.values(wl||{}).some(l=>l.code?.toLowerCase()===p.code?.toLowerCase()));
@@ -3064,6 +3083,7 @@ window.openEditPlanModal = function(id) {
   document.getElementById('ef-spec').value = p.spec||'';
   document.getElementById('ef-customer').value = p.customer||'';
   document.getElementById('ef-remark').value = p.remark||'';
+  document.getElementById('ef-note').value = p.note||'';
   document.getElementById('ef-duedate').value = p.dueDate||'';
   openModal('plan-edit-modal');
   setTimeout(() => document.getElementById('ef-code').focus(), 150);
@@ -3083,6 +3103,7 @@ window.submitEditPlan = async function() {
     spec: document.getElementById('ef-spec').value.trim(),
     customer: document.getElementById('ef-customer').value.trim(),
     remark: document.getElementById('ef-remark').value.trim(),
+    note: document.getElementById('ef-note').value.trim(),
     dueDate: document.getElementById('ef-duedate')?.value||'',
   };
   const res = await API.put('/api/plans', data);
