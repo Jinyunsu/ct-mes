@@ -698,6 +698,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="ph-left"><div class="page-title">고객사 관리</div><div class="page-desc">고객사별 수주 이력 및 실적</div></div>
         <div class="ph-right">
           <input id="customer-search" class="input" style="width:160px;font-size:12px" placeholder="고객사 검색" oninput="renderCustomers()">
+          <button class="btn btn-secondary btn-sm" onclick="exportCustomerExcel()"><i class="ti ti-file-spreadsheet"></i> 엑셀</button>
         </div>
       </div>
       <div class="metrics" style="grid-template-columns:repeat(3,1fr)">
@@ -770,8 +771,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="background:rgba(239,68,68,.06);border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(239,68,68,.2)"><div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:4px">취소건수</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="dk-cancel">—</div></div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
-        <tbody id="or-day-tbody"><tr><td colspan="13" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
+        <thead><tr><th>NO</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
+        <tbody id="or-day-tbody"><tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
   </div>
@@ -2832,7 +2833,42 @@ function renderPerformance(){
 
 // ── 고객사 관리 ──
 let custTab = 'all';
-window.switchCustTab = function(tab) {
+window.exportCustomerExcel = function() {
+  const search=(document.getElementById('customer-search')?.value||'').toLowerCase();
+  const ms=custTab==='monthly'?(document.getElementById('cust-month-picker')?.value||new Date().toISOString().slice(0,7)):null;
+  let plans=activePlans().filter(p=>p.customer);
+  if(ms) plans=plans.filter(p=>(p.date||p.createdAt||'').startsWith(ms));
+
+  const map={};
+  plans.forEach(p=>{
+    const c=p.customer.trim();
+    if(!map[c]) map[c]={name:c,count:0,totalPlan:0,totalAct:0};
+    map[c].count++;
+    map[c].totalPlan+=Number(p.planQty)||0;
+    map[c].totalAct+=Number(p.actQty)||0;
+  });
+
+  let customers=Object.values(map).filter(c=>!search||c.name.toLowerCase().includes(search));
+  customers.sort((a,b)=>b.count-a.count);
+
+  const label=ms?ms:(custTab==='all'?'전체':'전체');
+  const rows=[['고객사명','총 수주건수','총 계획수량(EA)','총 실적수량(EA)','달성률(%)']];
+  customers.forEach(c=>{
+    const rate=c.totalPlan>0?Math.round(c.totalAct/c.totalPlan*100):0;
+    rows.push([c.name, c.count, c.totalPlan, c.totalAct, rate]);
+  });
+
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const bom='\uFEFF';
+  const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`고객사관리_${label}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  showToast(`고객사 데이터 엑셀 저장됨 (${customers.length}개 고객사)`);
+};
+
+
   custTab = tab;
   ['all','monthly'].forEach(t=>{
     const btn=document.getElementById(`cust-tab-btn-${t}`);
@@ -3355,7 +3391,7 @@ window.renderOrDay = function() {
   const tbody = el('or-day-tbody'); if(!tbody) return;
   tbody.innerHTML = plans.length
     ? plans.map((p,i)=>orPlanRow(p,i+1)).join('')
-    : '<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr>';
+    : '<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr>';
 };
 
 window.orChMonth = function(d) {
