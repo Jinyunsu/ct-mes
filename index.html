@@ -743,16 +743,16 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   </div>
   <!-- 탭 버튼 -->
   <div style="display:flex;gap:3px;margin-bottom:16px;background:var(--bg3);padding:4px;border-radius:10px;width:fit-content;border:1px solid var(--border)">
-    <button id="or-tab-btn-daily" onclick="switchOrderTab('daily')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);background:var(--accent);color:#fff;transition:all .2s">일별 수주관리</button>
-    <button id="or-tab-btn-monthly" onclick="switchOrderTab('monthly')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--text3);transition:all .2s">월별 수주관리</button>
-    <button id="or-tab-btn-all" onclick="switchOrderTab('all')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--text3);transition:all .2s">전체 수주관리</button>
+    <button id="or-tab-btn-daily" onclick="switchOrderTab('daily')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);background:var(--accent);color:#fff;transition:all .2s">일별</button>
+    <button id="or-tab-btn-monthly" onclick="switchOrderTab('monthly')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--text3);transition:all .2s">월별</button>
+    <button id="or-tab-btn-all" onclick="switchOrderTab('all')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--text3);transition:all .2s">전체</button>
   </div>
 
   <!-- 일별 탭 -->
   <div id="or-tab-daily">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin:0"><i class="ti ti-calendar-day"></i> 일별 수주관리</div>
+        <div class="card-title" style="margin:0"><i class="ti ti-calendar-day"></i> 일별</div>
         <div style="display:flex;align-items:center;gap:6px">
           <button class="btn btn-secondary btn-sm" onclick="orChDay(-1)">◀</button>
           <input type="date" id="or-day-picker" onchange="renderOrDay()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);outline:none;background:var(--bg2);color:var(--text)">
@@ -768,8 +768,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">납기준수율</div><div style="font-size:20px;font-weight:800;color:var(--cyan,#06b6d4)" id="dk-comply">—</div></div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>지연사유</th><th>비고</th></tr></thead>
-        <tbody id="or-day-tbody"><tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
+        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
+        <tbody id="or-day-tbody"><tr><td colspan="13" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
   </div>
@@ -778,7 +778,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   <div id="or-tab-monthly" style="display:none">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin:0"><i class="ti ti-calendar-month"></i> 월별 수주관리</div>
+        <div class="card-title" style="margin:0"><i class="ti ti-calendar-month"></i> 월별</div>
         <div style="display:flex;align-items:center;gap:6px">
           <button class="btn btn-secondary btn-sm" onclick="orChMonth(-1)">◀</button>
           <input type="month" id="or-month-picker" onchange="renderOrMonth()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);outline:none;background:var(--bg2);color:var(--text)">
@@ -801,7 +801,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   <div id="or-tab-all" style="display:none">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin:0"><i class="ti ti-list-details"></i> 전체 수주관리</div>
+        <div class="card-title" style="margin:0"><i class="ti ti-list-details"></i> 전체</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <input id="or-search" placeholder="🔍 작업코드/고객사 검색" oninput="renderOrAll()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);outline:none;width:180px;background:var(--bg2);color:var(--text)">
           <select id="or-status-f" onchange="renderOrAll()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);background:var(--bg2);color:var(--text)">
@@ -814,8 +814,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>지연사유</th><th>비고</th></tr></thead>
-        <tbody id="or-all-tbody"><tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
+        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
+        <tbody id="or-all-tbody"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
   </div>
@@ -3305,8 +3305,9 @@ function orPlanRow(p, no) {
     <td style="white-space:nowrap">
       ${st==='shipped'?'<span style="font-size:10px;color:var(--green);font-weight:700">✓ 출하완료</span>':st==='done'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer;white-space:nowrap">출하</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}
     </td>
+    <td style="font-size:11px;color:var(--text3);max-width:120px">${esc(p.remark||'—')}</td>
     <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
-    <td style="font-size:11px;color:var(--text3)">${esc(p.remark||'—')}</td>
+    <td style="font-size:11px;color:var(--text3)">—</td>
   </tr>`;
 }
 
@@ -3338,7 +3339,7 @@ window.renderOrDay = function() {
   const tbody = el('or-day-tbody'); if(!tbody) return;
   tbody.innerHTML = plans.length
     ? plans.map((p,i)=>orPlanRow(p,i+1)).join('')
-    : '<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr>';
+    : '<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr>';
 };
 
 window.orChMonth = function(d) {
@@ -3388,7 +3389,7 @@ window.renderOrMonth = function() {
         <span style="font-size:11px;font-weight:700;color:${dr>=100?'var(--green)':dr>0?'var(--amber)':'var(--text3)'}">${dr}%</span>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>NO</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>지연사유</th><th>비고</th></tr></thead>
+        <thead><tr><th>NO</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
         <tbody>${dp.map((p,i)=>orPlanRow(p,i+1)).join('')}</tbody>
       </table></div>
     </div>`;
@@ -3405,17 +3406,20 @@ window.renderOrAll = function() {
   updateOrTopKPI(plans);
   const tbody = document.getElementById('or-all-tbody'); if(!tbody) return;
   const today=new Date().toISOString().slice(0,10);
-  if(!plans.length) { tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>'; return; }
+  if(!plans.length) { tbody.innerHTML='<tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>'; return; }
   tbody.innerHTML = plans.map((p,idx)=>{
     const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
-    const st=getPlanStatus(p);
+    const st=p.shippedAt?'shipped':getPlanStatus(p);
     const isOverdue=p.dueDate&&p.dueDate<today&&st!=='done'&&st!=='shipped';
+    const dueCls=isOverdue?'color:var(--red)':'color:var(--text3)';
     return `<tr${isOverdue?' style="background:rgba(239,68,68,.04)"':''}>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${idx+1}</td>
       <td style="font-size:12px;color:var(--text3)">${p.date||'—'}</td>
       <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
       <td>${esc(p.customer||'—')}</td>
-      <td style="font-size:11px">${esc(p.productCode||'—')}</td>
+      <td style="font-size:11px;color:var(--text3)">${esc(p.productCode||'—')}</td>
+      <td style="font-size:11px;color:var(--text3)">${esc(p.spec||'—')}</td>
+      <td style="font-family:var(--mono);font-size:11px;${dueCls}">${p.dueDate||'—'}${isOverdue?` <span style="font-size:9px;color:var(--red)">(D+${Math.floor((new Date(today)-new Date(p.dueDate))/86400000)})</span>`:''}</td>
       <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()} EA</td>
       <td style="font-family:var(--mono);color:${(p.actQty||0)>0?'var(--green)':'var(--text3)'}">${(p.actQty||0).toLocaleString()} EA</td>
       <td><div style="display:flex;align-items:center;gap:5px">
@@ -3424,9 +3428,11 @@ window.renderOrAll = function() {
         </div>
         <span style="font-size:11px">${pct}%</span>
       </div></td>
-      <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span></td>
+      <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${p.shippedAt?`<div style="font-size:9px;color:var(--text3)">${p.shippedAt}</div>`:''}</td>
+      <td style="white-space:nowrap">${st==='shipped'?'<span style="font-size:10px;color:var(--green);font-weight:700">✓ 출하완료</span>':st==='done'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer">출하</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}</td>
+      <td style="font-size:11px;color:var(--text3);max-width:120px">${esc(p.remark||'—')}</td>
       <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
-      <td style="font-size:11px;color:var(--text3)">${esc(p.remark||'—')}</td>
+      <td style="font-size:11px;color:var(--text3)">—</td>
     </tr>`;
   }).join('');
 };
