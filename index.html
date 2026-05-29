@@ -3426,10 +3426,14 @@ window.renderOrMonth = function() {
   const wrap = el('or-month-wrap'); if(!wrap) return;
   if(!plans.length) { wrap.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px">해당 월 계획이 없습니다</div>'; return; }
   const byDate = {};
-  plans.forEach(p=>{if(!byDate[p.date])byDate[p.date]=[];byDate[p.date].push(p);});
+  plans.forEach(p=>{
+    const key=p.date||p.createdAt||'미지정';
+    if(!byDate[key])byDate[key]=[];
+    byDate[key].push(p);
+  });
   const wds = ['일','월','화','수','목','금','토'];
-  wrap.innerHTML = Object.entries(byDate).map(([date,dp])=>{
-    const dow = new Date(date).getDay();
+  wrap.innerHTML = Object.entries(byDate).sort(([a],[b])=>a>b?1:-1).map(([date,dp])=>{
+    const dow = date==='미지정'?-1:new Date(date).getDay();
     const dc = dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text)';
     const dtp=dp.reduce((s,x)=>s+(x.planQty||0),0);
     const dta=dp.reduce((s,x)=>s+(x.actQty||0),0);
