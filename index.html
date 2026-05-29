@@ -576,18 +576,18 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
       </div>
       <div class="grid-2">
-        <div class="card">
+        <div class="card" style="max-height:400px;overflow:hidden">
           <div class="card-title"><i class="ti ti-users"></i> 작업자별 현재 상태</div>
-          <div class="tbl-wrap">
+          <div class="tbl-wrap" style="overflow-y:auto;max-height:340px">
             <table>
               <thead><tr><th>작업자</th><th>현재 코드</th><th>상태</th><th>시작시각</th><th>투입시간</th></tr></thead>
               <tbody><tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr></tbody>
             </table>
           </div>
         </div>
-        <div class="card">
-          <div class="card-title"><i class="ti ti-timeline"></i> 오늘 작업 타임라인</div>
-          <div id="d-timeline">
+        <div class="card" style="display:flex;flex-direction:column;max-height:400px">
+          <div class="card-title" style="flex-shrink:0"><i class="ti ti-timeline"></i> 오늘 작업 타임라인</div>
+          <div id="d-timeline" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0">
             <div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">기록 없음</div>
           </div>
         </div>
