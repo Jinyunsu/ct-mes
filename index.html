@@ -480,7 +480,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="card">
           <div class="card-title"><i class="ti ti-bell"></i> 알림·이슈</div>
           <div style="display:flex;flex-direction:column;gap:8px">
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(167,139,250,.15);color:#a78bfa"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">출고 지연</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge" style="margin-left:auto;background:rgba(167,139,250,.15);color:#a78bfa">확인필요</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(167,139,250,.15);color:#a78bfa"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">납기지연</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge" style="margin-left:auto;background:rgba(167,139,250,.15);color:#a78bfa">납기지연</span></div>
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-player-pause"></i></div><div><div class="kpi-label">작업 중 정지</div><div class="kpi-val" id="d-alert-paused">0건</div></div><span class="badge badge-amber" style="margin-left:auto">정지</span></div>
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div class="kpi-val" id="d-alert-done">0건</div></div><span class="badge badge-green" style="margin-left:auto">금일</span></div>
           </div>
@@ -2693,8 +2693,8 @@ function renderDashboard(){
   // 알림/이슈 카운팅
   const today2 = new Date().toISOString().slice(0,10);
   const allPlans = activePlans();
-  // 출고 지연: 납기일 < 오늘, 미완료
-  const delayedCnt = allPlans.filter(p=>getPlanStatus(p)==='overdue').length;
+  // 납기지연: 납기일 < 오늘, 미완료
+  const delayedCnt = allPlans.filter(p=>p.dueDate && p.dueDate<today2 && p.status!=='shipped').length;
   // 납기 초과: 동일
   // 완료: 오늘 완료된 계획
   const doneTodayCnt = allPlans.filter(p=>getPlanStatus(p)==='done' && (p.date===today2 || p.createdAt===today2)).length;
@@ -2741,10 +2741,17 @@ function renderProgress(){
       const activeCodes=new Map();
       Object.entries(cachedStates).forEach(([w,codes])=>{
         Object.entries(codes).forEach(([c,s])=>{
-          if(!todayCodes.has(c.toLowerCase())) return; // runPlans에 있는 코드만
-          if(!activeCodes.has(c))activeCodes.set(c,{workers:[w],action:s.action,since:s.since});
-          else activeCodes.get(c).workers.push(w);
+          if(!todayCodes.has(c.toLowerCase())) return;
+          if(!activeCodes.has(c)) activeCodes.set(c,{workers:[],hasRunning:false,hasPaused:false,since:s.since});
+          const info=activeCodes.get(c);
+          info.workers.push(w);
+          if(s.action==='start') info.hasRunning=true;
+          if(s.action==='pause') info.hasPaused=true;
         });
+      });
+      // 각 코드의 최종 action 결정: start 있으면 running, 없고 pause 있으면 paused
+      activeCodes.forEach((info,c)=>{
+        info.action = info.hasRunning ? 'start' : (info.hasPaused ? 'pause' : 'end');
       });
       const rows=[];
       activeCodes.forEach((info,code)=>{
