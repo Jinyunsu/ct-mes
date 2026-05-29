@@ -472,19 +472,19 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           </div>
         </div>
       </div>
-      <div class="grid-2" style="margin-top:14px;align-items:stretch">
-        <div class="card" style="display:flex;flex-direction:column">
+      <div class="grid-2" style="margin-top:14px">
+        <div class="card">
           <div class="card-title"><i class="ti ti-bell"></i> 알림·이슈</div>
-          <div style="display:flex;flex-direction:column;gap:8px;flex:1">
+          <div style="display:flex;flex-direction:column;gap:8px">
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">지연 작업</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge badge-amber" style="margin-left:auto">확인필요</span></div>
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="ti ti-bug"></i></div><div><div class="kpi-label">납기 초과</div><div class="kpi-val" id="d-alert-overdue">0건</div></div><span class="badge badge-red" style="margin-left:auto">주의</span></div>
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(59,130,246,.1);color:var(--accent)"><i class="ti ti-player-pause"></i></div><div><div class="kpi-label">작업 중 정지</div><div class="kpi-val" id="d-alert-paused">0건</div></div><span class="badge badge-blue" style="margin-left:auto">중지</span></div>
             <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div class="kpi-val" id="d-alert-done">0건</div></div><span class="badge badge-green" style="margin-left:auto">금일</span></div>
           </div>
         </div>
-        <div class="card" style="display:flex;flex-direction:column">
+        <div class="card">
           <div class="card-title"><i class="ti ti-clock-hour-3"></i> 최근 작업 활동 <span style="font-size:11px;font-weight:400;color:var(--text3)">(최근 10일)</span></div>
-          <div id="d-recent" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0">
+          <div id="d-recent" style="max-height:200px;overflow-y:auto;-webkit-overflow-scrolling:touch">
             <div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">활동 없음</div>
           </div>
         </div>
@@ -585,9 +585,9 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
             </table>
           </div>
         </div>
-        <div class="card" style="display:flex;flex-direction:column;flex:1">
+        <div class="card">
           <div class="card-title"><i class="ti ti-timeline"></i> 오늘 작업 타임라인</div>
-          <div id="d-timeline" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0">
+          <div id="d-timeline" style="overflow-y:auto;-webkit-overflow-scrolling:touch">
             <div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">기록 없음</div>
           </div>
         </div>
