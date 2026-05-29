@@ -2644,14 +2644,7 @@ function renderProgress(){
     Object.values(cachedStates).forEach(codes=>{
       Object.keys(codes||{}).forEach(c=>activePlanCodes.add(c.toLowerCase()));
     });
-    const runPlans=plans.filter(p=>{
-      if(p.date===today) return true; // 오늘 계획
-      const st=getPlanStatus(p);
-      if(activePlanCodes.has((p.code||'').toLowerCase())) return true; // 현재 작업중/정지
-      if(st!=='planned'&&st!=='done'&&st!=='shipped') return true; // 대기/작업중/미달성
-      if((p.actQty||0)>0&&(p.actQty||0)<(p.planQty||0)) return true; // 실적 있으나 미달
-      return false;
-    });
+    const runPlans=plans.filter(p=>p.date===today);
     if(!runPlans.length){
       ptbl.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">오늘 작업 내역이 없습니다</td></tr>';
     }else{
