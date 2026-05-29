@@ -946,6 +946,20 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   </div>
 </div>
 
+<!-- 지연사유 모달 -->
+<div class="modal-overlay" id="note-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-title"><i class="ti ti-notes"></i> 지연사유 <button class="modal-close" onclick="closeModal('note-modal')"><i class="ti ti-x"></i></button></div>
+    <div id="note-plan-label" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px"></div>
+    <div><label class="label">지연사유</label><textarea id="note-input" class="input" style="height:80px;resize:vertical" placeholder="지연사유를 입력하세요"></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('note-modal')">취소</button>
+      <button id="note-clear-btn" class="btn btn-secondary" style="color:#dc2626;display:none" onclick="clearNote()">사유 삭제</button>
+      <button class="btn btn-primary" onclick="submitNote()"><i class="ti ti-check"></i> <span id="note-save-label">저장</span></button>
+    </div>
+  </div>
+</div>
+
 <!-- 생산계획 등록 모달 -->
 <div class="modal-overlay" id="plan-modal">
   <div class="modal">
@@ -1805,27 +1819,43 @@ window.deleteWorker=async function(name){
 };
 
 /* ══ 비고 인라인 편집 ══ */
-window.openNoteEdit = async function(id) {
+let _noteId = null;
+window.openNoteEdit = function(id) {
+  _noteId = id;
   const p = cachedPlans[id] || Object.values(cachedPlans).find(x=>x.id===id);
   if(!p) return;
-  const note = prompt(`[${p.code}] 지연사유 (지우려면 빈칸으로 확인):`, p.note||'');
-  if(note === null) return;
+  const hasNote = !!(p.note && p.note.trim());
+  document.getElementById('note-plan-label').textContent = p.code + (p.customer ? ' · ' + p.customer : '');
+  document.getElementById('note-input').value = p.note || '';
+  document.getElementById('note-save-label').textContent = hasNote ? '수정' : '저장';
+  document.getElementById('note-clear-btn').style.display = hasNote ? 'inline-flex' : 'none';
+  openModal('note-modal');
+  setTimeout(()=>document.getElementById('note-input').focus(), 150);
+};
+window.clearNote = async function() {
+  if(!confirm('지연사유를 삭제하시겠습니까?')) return;
+  closeModal('note-modal');
+  await _saveNote('');
+};
+window.submitNote = async function() {
+  const note = document.getElementById('note-input').value.trim();
+  closeModal('note-modal');
+  await _saveNote(note);
+};
+async function _saveNote(note) {
+  const p = cachedPlans[_noteId] || Object.values(cachedPlans).find(x=>x.id===_noteId);
+  if(!p) return;
   if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
   _pollingLocked = true;
   try {
-    const updated = {...p, id, note: note.trim()};
+    const updated = {...p, id:_noteId, note};
     const r = await fetch('/api/plans', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(updated)});
     const res = await r.json();
-    if(res && !res.error){
-      cachedPlans = res;
-      refreshUI();
-      showToast(note.trim() ? '비고 저장됨' : '비고 삭제됨');
-    } else {
-      showToast('저장 실패: ' + (res?.error||''));
-    }
+    if(res && !res.error){ cachedPlans=res; refreshUI(); showToast(note ? '지연사유 저장됨' : '지연사유 삭제됨'); }
+    else showToast('저장 실패: ' + (res?.error||''));
   } catch(e){ showToast('저장 실패'); }
   restartPollingDelayed(2000);
-};
+}
 
 /* ══ 생산계획일 지정 ══ */
 let _planDateId = null;
