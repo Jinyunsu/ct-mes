@@ -740,6 +740,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
     <div class="metric amber"><div class="metric-label">총 실적수량</div><div class="metric-value-row"><div class="metric-value" id="or-actqty">—</div><span class="metric-sub">EA</span></div></div>
     <div class="metric red"><div class="metric-label">전체 달성률</div><div class="metric-value-row"><div class="metric-value" id="or-rate">—</div><span class="metric-sub">%</span></div></div>
     <div class="metric cyan"><div class="metric-label">납기준수율</div><div class="metric-value-row"><div class="metric-value" id="or-comply">—</div><span class="metric-sub">%</span></div></div>
+    <div class="metric" style="border-top:3px solid var(--red)"><div class="metric-label" style="color:var(--red)">취소건수</div><div class="metric-value" id="or-cancel" style="color:var(--red)">—</div></div>
   </div>
   <!-- 탭 버튼 -->
   <div style="display:flex;gap:3px;margin-bottom:16px;background:var(--bg3);padding:4px;border-radius:10px;width:fit-content;border:1px solid var(--border)">
@@ -766,6 +767,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">실적수량</div><div style="font-size:20px;font-weight:800;color:var(--amber)" id="dk-act">—</div></div>
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">달성률</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="dk-rate">—</div></div>
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">납기준수율</div><div style="font-size:20px;font-weight:800;color:var(--cyan,#06b6d4)" id="dk-comply">—</div></div>
+        <div style="background:rgba(239,68,68,.06);border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(239,68,68,.2)"><div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:4px">취소건수</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="dk-cancel">—</div></div>
       </div>
       <div class="tbl-wrap"><table>
         <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
@@ -792,6 +794,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">총 실적수량</div><div style="font-size:20px;font-weight:800;color:var(--amber)" id="mk-act">—</div></div>
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">달성률</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="mk-rate">—</div></div>
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">납기준수율</div><div style="font-size:20px;font-weight:800;color:var(--cyan,#06b6d4)" id="mk-comply">—</div></div>
+        <div style="background:rgba(239,68,68,.06);border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(239,68,68,.2)"><div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:4px">취소건수</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="mk-cancel">—</div></div>
       </div>
       <div id="or-month-wrap"><div style="text-align:center;color:var(--text3);padding:24px">해당 월 계획이 없습니다</div></div>
     </div>
@@ -3256,29 +3259,35 @@ function calcComply(plans){
 
 function renderOrKPIs() {
   const plans = allOrderPlans();
-  const tp = plans.reduce((s,p)=>s+(p.planQty||0),0);
-  const ta = plans.reduce((s,p)=>s+(p.actQty||0),0);
+  const active = plans.filter(p=>p.status!=='deleted');
+  const tp = active.reduce((s,p)=>s+(p.planQty||0),0);
+  const ta = active.reduce((s,p)=>s+(p.actQty||0),0);
   const rate = tp>0 ? Math.round(ta/tp*100) : 0;
-  const comply = calcComply(plans);
+  const comply = calcComply(active);
+  const cancelCnt = plans.filter(p=>p.status==='deleted').length;
   const el = id => document.getElementById(id);
-  if(el('or-cnt')) el('or-cnt').textContent = plans.length;
+  if(el('or-cnt')) el('or-cnt').textContent = active.length;
   if(el('or-planqty')) el('or-planqty').textContent = tp.toLocaleString();
   if(el('or-actqty')) el('or-actqty').textContent = ta.toLocaleString();
   if(el('or-rate')) el('or-rate').textContent = rate;
   if(el('or-comply')) el('or-comply').textContent = comply;
+  if(el('or-cancel')) el('or-cancel').textContent = cancelCnt+'건';
 }
 
 function updateOrTopKPI(plans){
-  const tp=plans.reduce((s,p)=>s+(p.planQty||0),0);
-  const ta=plans.reduce((s,p)=>s+(p.actQty||0),0);
+  const active=plans.filter(p=>p.status!=='deleted');
+  const tp=active.reduce((s,p)=>s+(p.planQty||0),0);
+  const ta=active.reduce((s,p)=>s+(p.actQty||0),0);
   const rate=tp>0?Math.round(ta/tp*100):0;
-  const comply=calcComply(plans);
+  const comply=calcComply(active);
+  const cancelCnt=plans.filter(p=>p.status==='deleted').length;
   const el=id=>document.getElementById(id);
-  if(el('or-cnt')) el('or-cnt').textContent=plans.length;
+  if(el('or-cnt')) el('or-cnt').textContent=active.length;
   if(el('or-planqty')) el('or-planqty').textContent=tp.toLocaleString();
   if(el('or-actqty')) el('or-actqty').textContent=ta.toLocaleString();
   if(el('or-rate')) el('or-rate').textContent=rate;
   if(el('or-comply')) el('or-comply').textContent=comply;
+  if(el('or-cancel')) el('or-cancel').textContent=cancelCnt+'건';
 }
 
 const OR_SM = {done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'중지',shipped:'출하완료',deleted:'계획취소'};
@@ -3341,6 +3350,7 @@ window.renderOrDay = function() {
   if(el('dk-act')) el('dk-act').textContent = ta.toLocaleString();
   if(el('dk-rate')) el('dk-rate').textContent = rate+'%';
   if(el('dk-comply')) el('dk-comply').textContent = comply+'%';
+  if(el('dk-cancel')) el('dk-cancel').textContent = plans.filter(p=>p.status==='deleted').length+'건';
   updateOrTopKPI(plans);
   const tbody = el('or-day-tbody'); if(!tbody) return;
   tbody.innerHTML = plans.length
@@ -3373,7 +3383,8 @@ window.renderOrMonth = function() {
   if(el('mk-plan')) el('mk-plan').textContent = tp.toLocaleString();
   if(el('mk-act')) el('mk-act').textContent = ta.toLocaleString();
   if(el('mk-rate')) el('mk-rate').textContent = rate+'%';
-  if(el('mk-comply')) el('mk-comply').textContent = calcComply(plans)+'%';
+  if(el('mk-comply')) el('mk-comply').textContent = calcComply(plans.filter(p=>p.status!=='deleted'))+'%';
+  if(el('mk-cancel')) el('mk-cancel').textContent = plans.filter(p=>p.status==='deleted').length+'건';
   updateOrTopKPI(plans);
   const wrap = el('or-month-wrap'); if(!wrap) return;
   if(!plans.length) { wrap.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px">해당 월 계획이 없습니다</div>'; return; }
