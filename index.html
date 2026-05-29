@@ -797,6 +797,9 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">납기준수율</div><div style="font-size:20px;font-weight:800;color:var(--cyan,#06b6d4)" id="mk-comply">—</div></div>
         <div style="background:rgba(239,68,68,.06);border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(239,68,68,.2)"><div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:4px">취소건수</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="mk-cancel">—</div></div>
       </div>
+      <div class="tbl-wrap" style="margin-bottom:0;border-bottom:none"><table>
+        <thead><tr><th>NO</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
+      </table></div>
       <div id="or-month-wrap"><div style="text-align:center;color:var(--text3);padding:24px">해당 월 계획이 없습니다</div></div>
     </div>
   </div>
@@ -3440,7 +3443,7 @@ window.renderOrMonth = function() {
     const dr=dtp>0?Math.round(dta/dtp*100):0;
     return `<div style="margin-bottom:14px">
       <div class="tbl-wrap"><table>
-        <thead style="display:none"><tr><th>NO</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
+        <thead><tr><th>NO</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
         <tbody>${dp.map((p,i)=>orPlanRow(p,i+1)).join('')}</tbody>
       </table></div>
     </div>`;
