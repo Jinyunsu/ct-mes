@@ -1124,38 +1124,59 @@ const ADMIN_EMAILS = [
 let isAdmin = false;
 
 function applyViewerMode() {
-  // 뷰어 모드: 편집 관련 버튼 숨김
   const style = document.createElement('style');
   style.id = 'viewer-mode-style';
   style.textContent = `
-    /* 생산계획 신규등록/수정/삭제/날짜지정/비고 버튼 */
-    .btn-primary[onclick*="plan-modal"],
-    button[onclick*="planAction"],
-    button[onclick*="openPlanDateModal"],
-    button[onclick*="openNoteEdit"],
-    button[onclick*="openEditPlanModal"],
-    button[onclick*="deletePlan"],
-    button[onclick*="shipPlan"],
-    /* 작업관리 */
-    .jbtn-start, .jbtn-pause, .jbtn-end,
-    #code-inp, button[onclick*="addCode"],
-    /* 작업자 현황 - 추가/삭제/휴무등록 */
-    button[onclick*="deleteWorker"],
-    button[onclick*="openOffday"],
-    #worker-name-inp, button[onclick*="addWorker"],
-    /* 설정 */
-    button[onclick*="changeResetPassword"],
-    button[onclick*="openResetModal"],
-    button[onclick*="openPwChangeModal"],
-    /* 출하 버튼 */
-    button[onclick*="shipPlan"]
-    { display: none !important; }
-    /* 모바일 작업관리 진입 차단 메시지 */
-    #viewer-notice { display: block !important; }
+    .viewer-disabled {
+      opacity: 0.35 !important;
+      cursor: not-allowed !important;
+      pointer-events: none !important;
+    }
   `;
   document.head.appendChild(style);
 
-  // 상단에 뷰어 모드 배지 표시
+  // 버튼들에 viewer-disabled 적용 (DOM 로드 후 + 폴링 후에도 적용되도록 MutationObserver 사용)
+  function disableButtons() {
+    const selectors = [
+      'button[onclick*="plan-modal"]',
+      'button[onclick*="planAction"]',
+      'button[onclick*="openPlanDateModal"]',
+      'button[onclick*="openNoteEdit"]',
+      'button[onclick*="openEditPlanModal"]',
+      'button[onclick*="deletePlan"]',
+      'button[onclick*="shipPlan"]',
+      '.jbtn-start', '.jbtn-pause', '.jbtn-end',
+      'button[onclick*="addCode"]',
+      'button[onclick*="deleteWorker"]',
+      'button[onclick*="openOffday"]',
+      'button[onclick*="addWorker"]',
+      'button[onclick*="changeResetPassword"]',
+      'button[onclick*="openResetModal"]',
+      'button[onclick*="openPwChangeModal"]',
+      'button[onclick*="deleteAllPlans"]',
+      'button[onclick*="submitPlan"]',
+      'button[onclick*="submitEditPlan"]',
+    ];
+    selectors.forEach(sel => {
+      document.querySelectorAll(sel).forEach(btn => {
+        btn.classList.add('viewer-disabled');
+        btn.title = '권한 없음';
+        btn.setAttribute('onclick', 'event.stopPropagation();showToast("편집 권한이 없습니다")');
+      });
+    });
+    // 입력 필드도 readonly
+    ['code-inp','worker-name-inp','pf-code','ef-code'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){el.readOnly=true;el.style.opacity='.4';el.style.cursor='not-allowed';}
+    });
+  }
+
+  // 초기 + DOM 변경 시마다 적용
+  setTimeout(disableButtons, 500);
+  const observer = new MutationObserver(()=>setTimeout(disableButtons, 100));
+  observer.observe(document.body, {childList:true, subtree:true});
+
+  // 상단 뷰어 배지
   const tbRight = document.querySelector('.tb-right');
   if(tbRight) {
     const badge = document.createElement('div');
