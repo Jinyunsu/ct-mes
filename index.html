@@ -2420,26 +2420,27 @@ function getPlanStatus(p){
   const today=new Date().toISOString().slice(0,10);
   if(p.status==='deleted') return 'deleted';
   if(p.status==='shipped') return 'shipped';
-  // 실적 >= 계획 → 완료
   if(p.planQty>0 && (p.actQty||0)>=p.planQty) return 'done';
   if(p.status==='done') return 'done';
   if(!p.date) return 'planned';
   const dueDate = p.dueDate||'';
   // 납기일 초과 (미완료) → 출고지연
   if(dueDate && dueDate<today && (p.actQty||0)<(p.planQty||0)) return 'overdue';
+  // 현재 states 체크 - running 있으면 running, running 없고 pause 있으면 paused
+  const lc=(p.code||'').toLowerCase();
+  let hasRunning=false, hasPaused=false;
+  Object.values(cachedStates).forEach(codes=>{
+    Object.entries(codes).forEach(([c,s])=>{
+      if(c.toLowerCase()!==lc) return;
+      if(s.action==='start') hasRunning=true;
+      if(s.action==='pause') hasPaused=true;
+    });
+  });
+  if(hasRunning) return 'running';
+  if(hasPaused) return 'paused';
   // 작업일 지났는데 미완료 → 미달성
   if(p.date<today && (p.actQty||0)<(p.planQty||0)) return 'failed';
-  if(p.date===today){
-    const isRunning=Object.values(cachedStates).some(codes=>
-      Object.entries(codes).some(([c,s])=>c.toLowerCase()===p.code?.toLowerCase()&&s.action==='start')
-    );
-    if(isRunning) return 'running';
-    const isPaused=Object.values(cachedStates).some(codes=>
-      Object.entries(codes).some(([c,s])=>c.toLowerCase()===p.code?.toLowerCase()&&s.action==='pause')
-    );
-    if(isPaused) return 'paused';
-    return 'waiting';
-  }
+  if(p.date===today) return 'waiting';
   return 'planned';
 }
 
