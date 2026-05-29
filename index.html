@@ -480,9 +480,11 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="card">
           <div class="card-title"><i class="ti ti-bell"></i> 알림·이슈</div>
           <div style="display:flex;flex-direction:column;gap:8px">
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(167,139,250,.15);color:#a78bfa"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">납기지연</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge" style="margin-left:auto;background:rgba(167,139,250,.15);color:#a78bfa">납기지연</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-player-pause"></i></div><div><div class="kpi-label">작업 중 정지</div><div class="kpi-val" id="d-alert-paused">0건</div></div><span class="badge badge-amber" style="margin-left:auto">정지</span></div>
-            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div class="kpi-val" id="d-alert-done">0건</div></div><span class="badge badge-green" style="margin-left:auto">금일</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(59,130,246,.1);color:var(--accent)"><i class="ti ti-player-play"></i></div><div><div class="kpi-label">작업 중</div><div style="font-size:10px;color:var(--text3);margin-top:1px">현재 진행 중인 작업 코드</div><div class="kpi-val" id="d-alert-running">0건</div></div><span class="badge badge-blue" style="margin-left:auto;flex-shrink:0">작업중</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(167,139,250,.15);color:#a78bfa"><i class="ti ti-alert-triangle"></i></div><div><div class="kpi-label">납기지연</div><div style="font-size:10px;color:var(--text3);margin-top:1px">납기일이 오늘을 지난 미출하 계획</div><div class="kpi-val" id="d-alert-delayed">0건</div></div><span class="badge" style="margin-left:auto;background:rgba(167,139,250,.15);color:#a78bfa;flex-shrink:0">납기지연</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="ti ti-player-pause"></i></div><div><div class="kpi-label">작업 중 정지</div><div style="font-size:10px;color:var(--text3);margin-top:1px">현재 정지 상태인 작업 코드</div><div class="kpi-val" id="d-alert-paused">0건</div></div><span class="badge badge-amber" style="margin-left:auto;flex-shrink:0">정지</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:var(--green)"><i class="ti ti-circle-check"></i></div><div><div class="kpi-label">완료 작업</div><div style="font-size:10px;color:var(--text3);margin-top:1px">오늘 완료된 작업 코드</div><div class="kpi-val" id="d-alert-done">0건</div></div><span class="badge badge-green" style="margin-left:auto;flex-shrink:0">금일</span></div>
+            <div class="kpi-row"><div class="kpi-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="ti ti-trash"></i></div><div><div class="kpi-label">계획 취소</div><div style="font-size:10px;color:var(--text3);margin-top:1px">오늘 등록일 기준 취소된 계획</div><div class="kpi-val" id="d-alert-cancel">0건</div></div><span class="badge badge-red" style="margin-left:auto;flex-shrink:0">취소</span></div>
           </div>
         </div>
         <div class="card" style="display:flex;flex-direction:column;max-height:400px">
@@ -2102,8 +2104,8 @@ function renderPlanTable(filterFn){
   if(filterFn)plans=plans.filter(filterFn);
   plans.sort((a,b)=>a.date>b.date?1:-1);
   if(!plans.length){tbody.innerHTML='<tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
-  const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'출고지연'};
-  const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-purple'};
+  const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'미달성'};
+  const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-red'};
   // 작업자 투입 정보 계산
   function getWorkerCount(code){
     const cnt=new Set();
@@ -2429,10 +2431,7 @@ function getPlanStatus(p){
   if(p.planQty>0 && (p.actQty||0)>=p.planQty) return 'done';
   if(p.status==='done') return 'done';
   if(!p.date) return 'planned';
-  const dueDate = p.dueDate||'';
-  // 납기일 초과 (미완료) → 출고지연
-  if(dueDate && dueDate<today && (p.actQty||0)<(p.planQty||0)) return 'overdue';
-  // 현재 states 체크 - running 있으면 running, running 없고 pause 있으면 paused
+  // 현재 states 체크 (날짜 무관) - running 있으면 running, running 없고 pause 있으면 paused
   const lc=(p.code||'').toLowerCase();
   let hasRunning=false, hasPaused=false;
   Object.values(cachedStates).forEach(codes=>{
@@ -2576,8 +2575,8 @@ function renderDashboard(){
   if(ptbl){
     if(!todayPlans.length){ptbl.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">오늘 등록된 계획이 없습니다</td></tr>';
     }else{
-      const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'출고지연'};
-      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-purple'};
+      const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'미달성'};
+      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-red'};
       ptbl.innerHTML=todayPlans.map(p=>{
         const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
         const wCnt=getWorkerCountForCode(p.code);
@@ -2700,9 +2699,13 @@ function renderDashboard(){
   const doneTodayCnt = allPlans.filter(p=>getPlanStatus(p)==='done' && (p.date===today2 || p.createdAt===today2)).length;
   const pausedCnt = allPlans.filter(p=>getPlanStatus(p)==='paused').length;
   const el2=id=>document.getElementById(id);
+  const runningCnt = allPlans.filter(p=>getPlanStatus(p)==='running').length;
+  const cancelCnt = Object.values(cachedPlans).filter(p=>p.status==='deleted'&&(p.createdAt===today2||p.date===today2)).length;
+  if(el2('d-alert-running')) el2('d-alert-running').textContent=runningCnt+'건';
   if(el2('d-alert-delayed')) el2('d-alert-delayed').textContent=delayedCnt+'건';
   if(el2('d-alert-paused')) el2('d-alert-paused').textContent=pausedCnt+'건';
-  if(el2('d-alert-done')) el2('d-alert-done').textContent=doneTodayCnt+'건';}
+  if(el2('d-alert-done')) el2('d-alert-done').textContent=doneTodayCnt+'건';
+  if(el2('d-alert-cancel')) el2('d-alert-cancel').textContent=cancelCnt+'건';}
 
 // ── 진행현황 ──
 function renderProgress(){
@@ -2734,8 +2737,8 @@ function renderProgress(){
     if(!runPlans.length){
       ptbl.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">오늘 작업 내역이 없습니다</td></tr>';
     }else{
-      const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'출고지연'};
-      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-purple'};
+      const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'미달성'};
+      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-red'};
       // Collect all active codes from states
       const todayCodes=new Set(runPlans.map(p=>p.code?.toLowerCase()));
       const activeCodes=new Map();
@@ -2765,6 +2768,7 @@ function renderProgress(){
         const hrs=calcWorkHours(code);
         const wCnt=getWorkerCountForCode(code);
         const recentLog=Object.values(cachedLogs||{}).flatMap(wl=>Object.values(wl||{})).filter(l=>l.code===code).sort((a,b)=>b.ts-a.ts)[0];
+        const st=getPlanStatus(plan);
         rows.push(`<tr>
           <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(code)}</td>
           <td style="font-size:11px">${esc(plan.productCode||'—')}</td>
@@ -2775,7 +2779,7 @@ function renderProgress(){
           <td style="font-family:var(--mono)">${(plan.planQty||0).toLocaleString()}</td>
           <td style="font-family:var(--mono);color:var(--green)">${(plan.actQty||0).toLocaleString()}</td>
           <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-family:var(--mono)">${pct}%</span></div></td>
-          <td><span class="badge ${info.action==='start'?'badge-blue':'badge-amber'}" style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:${info.action==='start'?'var(--green)':'var(--amber)'};${info.action==='start'?'animation:pulse 1.4s infinite;':''}display:inline-block"></span>${info.action==='start'?'작업중':'정지'}</span></td>
+          <td style="white-space:nowrap"><span class="badge ${sc[st]||'badge-gray'}">${sm[st]||'—'}</span>${dueBadge(plan)}</td>
           <td style="font-size:11px;color:var(--text3)">${recentLog?recentLog.time:'—'}</td>
         </tr>`);
       });
@@ -2831,7 +2835,7 @@ function renderProgress(){
             rows.push(`<tr>
               ${i===0?`<td style="font-weight:600" rowspan="${allEntries.length}">${esc(n)}</td>`:''}
               <td style="font-family:var(--mono);font-weight:700;color:var(--accent)">${esc(code)}</td>
-              <td><span class="badge ${action==='start'?'badge-green':'badge-amber'}">${action==='start'?'작업중':'정지'}</span></td>
+              <td><span class="badge ${action==='start'?'badge-blue':'badge-amber'}">${action==='start'?'작업중':'정지'}</span></td>
               <td style="font-family:var(--mono);font-size:11px">${since}</td>
               <td style="font-family:var(--mono);font-size:11px">${fmtElapsed(calcWorkerCodeHours(n,code))}</td>
             </tr>`);
@@ -2934,8 +2938,8 @@ function renderPerformance(){
     const sorted=[...monthPlans].sort((a,b)=>(b.actQty||0)-(a.actQty||0));
     if(!sorted.length)codeTbl.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr>';
     else{
-      const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'출고지연'};
-      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-purple'};
+      const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'미달성'};
+      const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-red'};
       codeTbl.innerHTML=sorted.map(p=>{
         const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
         const st=getPlanStatus(p);
@@ -3214,7 +3218,7 @@ function renderWorkerStats(){
       <td style="font-family:var(--mono)">${codeSet.size}</td>
       <td style="font-family:var(--mono)">${wHrsStr}</td>
       <td style="font-family:var(--mono);color:var(--green)">${totalQty>0?totalQty.toLocaleString()+' EA':'—'}</td>
-      <td><span class="badge ${isWorking?'badge-green':activeCodes.length?'badge-amber':'badge-gray'}">${isWorking?'작업중':activeCodes.length?'정지':'대기'}</span></td>
+      <td><span class="badge ${isWorking?'badge-blue':activeCodes.length?'badge-amber':'badge-gray'}">${isWorking?'작업중':activeCodes.length?'정지':'대기'}</span></td>
     </tr>`;
   }).join('');
 }
@@ -3286,8 +3290,8 @@ function renderDailyReport(dateStr){
   // 작업코드별 현황
   const ctbl=document.querySelectorAll('#page-daily .tbl-wrap')[0]?.querySelector('tbody');
   if(ctbl){
-    const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'출고지연'};
-    const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-purple'};
+    const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'미달성'};
+    const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-red'};
     if(!plans.length)ctbl.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr>';
     else ctbl.innerHTML=plans.map(p=>{
       const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
@@ -3492,8 +3496,8 @@ function updateOrTopKPI(plans){
   if(el('or-cancel')) el('or-cancel').textContent=cancelCnt+'건';
 }
 
-const OR_SM = {done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'출고지연',shipped:'출하완료',deleted:'계획취소'};
-const OR_SC = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-purple',shipped:'badge-green',deleted:'badge-red'};
+const OR_SM = {done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'미달성',shipped:'출하완료',deleted:'계획취소'};
+const OR_SC = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-red',shipped:'badge-green',deleted:'badge-red'};
 
 function orPlanRow(p, no) {
   const pct = p.planQty>0 ? Math.round((p.actQty||0)/p.planQty*100) : 0;
@@ -3794,7 +3798,7 @@ window.exportDailyExcel = function() {
   plans.forEach(p=>{
     const pct = p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
     const hrs = calcWorkHours(p.code);
-    const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'출고지연'};
+    const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'미달성'};
     rows.push([
       p.code||'', p.productCode||'', p.spec||'', p.customer||'',
       p.planQty||0, p.actQty||0, pct+'%',
