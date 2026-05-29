@@ -3439,15 +3439,8 @@ window.renderOrMonth = function() {
     const dta=dp.reduce((s,x)=>s+(x.actQty||0),0);
     const dr=dtp>0?Math.round(dta/dtp*100):0;
     return `<div style="margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--bg3);border-radius:8px;border-left:3px solid ${dc};margin-bottom:6px">
-        <span style="font-size:14px;font-weight:800;color:${dc}">${date}</span>
-        <span style="font-size:12px;color:var(--text3)">(${wds[dow]})</span>
-        <span style="font-size:11px;background:var(--accent-bg,rgba(59,130,246,.1));color:var(--accent);padding:2px 8px;border-radius:4px;font-weight:600;margin-left:auto">${dp.length}건</span>
-        <span style="font-size:11px;color:var(--text3)">${dtp.toLocaleString()} EA</span>
-        <span style="font-size:11px;font-weight:700;color:${dr>=100?'var(--green)':dr>0?'var(--amber)':'var(--text3)'}">${dr}%</span>
-      </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>NO</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
+        <thead style="display:none"><tr><th>NO</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
         <tbody>${dp.map((p,i)=>orPlanRow(p,i+1)).join('')}</tbody>
       </table></div>
     </div>`;
