@@ -701,9 +701,22 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
       </div>
       <div class="metrics" style="grid-template-columns:repeat(3,1fr)">
-        <div class="metric blue"><div class="metric-label">전체 고객사</div><div class="metric-value" id="cust-total">—</div></div>
+        <div class="metric blue"><div class="metric-label">고객사 수</div><div class="metric-value" id="cust-total">—</div></div>
         <div class="metric green"><div class="metric-label">총 수주 건수</div><div class="metric-value" id="cust-orders">—</div></div>
         <div class="metric amber"><div class="metric-label">전체 달성률</div><div class="metric-value-row"><div class="metric-value" id="cust-rate">—</div><span class="metric-sub">%</span></div></div>
+      </div>
+      <!-- 탭 + 월 선택 -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="display:flex;gap:3px;background:var(--bg3);padding:4px;border-radius:10px;border:1px solid var(--border)">
+          <button id="cust-tab-btn-all" onclick="switchCustTab('all')" style="padding:6px 16px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);background:var(--accent);color:#fff;transition:all .2s">전체</button>
+          <button id="cust-tab-btn-monthly" onclick="switchCustTab('monthly')" style="padding:6px 16px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--text3);transition:all .2s">월별</button>
+        </div>
+        <div id="cust-month-wrap" style="display:none;align-items:center;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="custChMonth(-1)">◀</button>
+          <input type="month" id="cust-month-picker" onchange="renderCustomers()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);outline:none;background:var(--bg2);color:var(--text)">
+          <button class="btn btn-secondary btn-sm" onclick="custChMonth(1)">▶</button>
+          <button class="btn btn-secondary btn-sm" onclick="custGoThisMonth()">이번달</button>
+        </div>
       </div>
       <div class="card">
         <div id="customer-list" style="display:flex;flex-direction:column;gap:12px">
@@ -717,7 +730,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   <div class="page-header">
     <div class="ph-left">
       <div class="page-title">수주관리</div>
-      <div class="page-desc">생산계획에 등록된 작업을 일별·월별로 조회합니다</div>
+      <div class="page-desc">생산계획에 등록된 수주를 일별·월별로 조회합니다</div>
     </div>
   </div>
   <!-- KPI -->
@@ -726,19 +739,20 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
     <div class="metric green"><div class="metric-label">총 계획수량</div><div class="metric-value-row"><div class="metric-value" id="or-planqty">—</div><span class="metric-sub">EA</span></div></div>
     <div class="metric amber"><div class="metric-label">총 실적수량</div><div class="metric-value-row"><div class="metric-value" id="or-actqty">—</div><span class="metric-sub">EA</span></div></div>
     <div class="metric red"><div class="metric-label">전체 달성률</div><div class="metric-value-row"><div class="metric-value" id="or-rate">—</div><span class="metric-sub">%</span></div></div>
+    <div class="metric cyan"><div class="metric-label">납기준수율</div><div class="metric-value-row"><div class="metric-value" id="or-comply">—</div><span class="metric-sub">%</span></div></div>
   </div>
   <!-- 탭 버튼 -->
   <div style="display:flex;gap:3px;margin-bottom:16px;background:var(--bg3);padding:4px;border-radius:10px;width:fit-content;border:1px solid var(--border)">
-    <button id="or-tab-btn-daily" onclick="switchOrderTab('daily')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);background:var(--accent);color:#fff;transition:all .2s">일별 조회</button>
-    <button id="or-tab-btn-monthly" onclick="switchOrderTab('monthly')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--text3);transition:all .2s">월별 조회</button>
-    <button id="or-tab-btn-all" onclick="switchOrderTab('all')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--text3);transition:all .2s">전체 목록</button>
+    <button id="or-tab-btn-daily" onclick="switchOrderTab('daily')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);background:var(--accent);color:#fff;transition:all .2s">일별 수주관리</button>
+    <button id="or-tab-btn-monthly" onclick="switchOrderTab('monthly')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--text3);transition:all .2s">월별 수주관리</button>
+    <button id="or-tab-btn-all" onclick="switchOrderTab('all')" style="padding:7px 20px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--text3);transition:all .2s">전체 수주관리</button>
   </div>
 
   <!-- 일별 탭 -->
   <div id="or-tab-daily">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin:0"><i class="ti ti-calendar-day"></i> 일별 생산계획</div>
+        <div class="card-title" style="margin:0"><i class="ti ti-calendar-day"></i> 일별 수주관리</div>
         <div style="display:flex;align-items:center;gap:6px">
           <button class="btn btn-secondary btn-sm" onclick="orChDay(-1)">◀</button>
           <input type="date" id="or-day-picker" onchange="renderOrDay()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);outline:none;background:var(--bg2);color:var(--text)">
@@ -751,10 +765,11 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">계획수량</div><div style="font-size:20px;font-weight:800;color:var(--green)" id="dk-plan">—</div></div>
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">실적수량</div><div style="font-size:20px;font-weight:800;color:var(--amber)" id="dk-act">—</div></div>
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">달성률</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="dk-rate">—</div></div>
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">납기준수율</div><div style="font-size:20px;font-weight:800;color:var(--cyan,#06b6d4)" id="dk-comply">—</div></div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>비고</th></tr></thead>
-        <tbody id="or-day-tbody"><tr><td colspan="11" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
+        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>지연사유</th><th>비고</th></tr></thead>
+        <tbody id="or-day-tbody"><tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
   </div>
@@ -763,7 +778,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   <div id="or-tab-monthly" style="display:none">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin:0"><i class="ti ti-calendar-month"></i> 월별 생산계획</div>
+        <div class="card-title" style="margin:0"><i class="ti ti-calendar-month"></i> 월별 수주관리</div>
         <div style="display:flex;align-items:center;gap:6px">
           <button class="btn btn-secondary btn-sm" onclick="orChMonth(-1)">◀</button>
           <input type="month" id="or-month-picker" onchange="renderOrMonth()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);outline:none;background:var(--bg2);color:var(--text)">
@@ -776,6 +791,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">총 계획수량</div><div style="font-size:20px;font-weight:800;color:var(--green)" id="mk-plan">—</div></div>
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">총 실적수량</div><div style="font-size:20px;font-weight:800;color:var(--amber)" id="mk-act">—</div></div>
         <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">달성률</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="mk-rate">—</div></div>
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">납기준수율</div><div style="font-size:20px;font-weight:800;color:var(--cyan,#06b6d4)" id="mk-comply">—</div></div>
       </div>
       <div id="or-month-wrap"><div style="text-align:center;color:var(--text3);padding:24px">해당 월 계획이 없습니다</div></div>
     </div>
@@ -785,7 +801,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   <div id="or-tab-all" style="display:none">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin:0"><i class="ti ti-list-details"></i> 전체 생산계획 목록</div>
+        <div class="card-title" style="margin:0"><i class="ti ti-list-details"></i> 전체 수주관리</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <input id="or-search" placeholder="🔍 작업코드/고객사 검색" oninput="renderOrAll()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);outline:none;width:180px;background:var(--bg2);color:var(--text)">
           <select id="or-status-f" onchange="renderOrAll()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);background:var(--bg2);color:var(--text)">
@@ -798,8 +814,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>비고</th></tr></thead>
-        <tbody id="or-all-tbody"><tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
+        <thead><tr><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>지연사유</th><th>비고</th></tr></thead>
+        <tbody id="or-all-tbody"><tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
   </div>
@@ -2807,9 +2823,39 @@ function renderPerformance(){
   }}
 
 // ── 고객사 관리 ──
+let custTab = 'all';
+window.switchCustTab = function(tab) {
+  custTab = tab;
+  ['all','monthly'].forEach(t=>{
+    const btn=document.getElementById(`cust-tab-btn-${t}`);
+    if(btn){ btn.style.background=t===tab?'var(--accent)':'transparent'; btn.style.color=t===tab?'#fff':'var(--text3)'; btn.style.fontWeight=t===tab?'700':'600'; }
+  });
+  const mw=document.getElementById('cust-month-wrap');
+  if(mw) mw.style.display=tab==='monthly'?'flex':'none';
+  if(tab==='monthly'){
+    const mp=document.getElementById('cust-month-picker');
+    if(mp&&!mp.value){ const n=new Date(); mp.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
+  }
+  renderCustomers();
+};
+window.custChMonth = function(d) {
+  const p=document.getElementById('cust-month-picker'); if(!p) return;
+  const [y,m]=(p.value||new Date().toISOString().slice(0,7)).split('-').map(Number);
+  const dt=new Date(y,m-1+d,1);
+  p.value=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
+  renderCustomers();
+};
+window.custGoThisMonth = function() {
+  const p=document.getElementById('cust-month-picker'); if(!p) return;
+  const n=new Date(); p.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;
+  renderCustomers();
+};
+
 function renderCustomers(){
   const search=(document.getElementById('customer-search')?.value||'').toLowerCase();
-  const plans=Object.values(cachedPlans).filter(p=>p.customer);
+  const ms=custTab==='monthly'?(document.getElementById('cust-month-picker')?.value||new Date().toISOString().slice(0,7)):null;
+  let plans=Object.values(cachedPlans).filter(p=>p.customer);
+  if(ms) plans=plans.filter(p=>(p.date||p.createdAt||'').startsWith(ms));
 
   // 고객사별 그룹핑
   const map={};
@@ -2826,28 +2872,33 @@ function renderCustomers(){
 
   // KPI
   const el=id=>document.getElementById(id);
-  if(el('cust-total')) el('cust-total').textContent=Object.keys(map).length;
-  if(el('cust-orders')) el('cust-orders').textContent=plans.length+'건';
-  const totalP=Object.values(map).reduce((s,c)=>s+c.totalPlan,0);
-  const totalA=Object.values(map).reduce((s,c)=>s+c.totalAct,0);
+  if(el('cust-total')) el('cust-total').textContent=customers.length;
+  const totalOrders=customers.reduce((s,c)=>s+c.plans.length,0);
+  if(el('cust-orders')) el('cust-orders').textContent=totalOrders+'건';
+  const totalP=customers.reduce((s,c)=>s+c.totalPlan,0);
+  const totalA=customers.reduce((s,c)=>s+c.totalAct,0);
   if(el('cust-rate')) el('cust-rate').textContent=totalP>0?Math.round(totalA/totalP*100):0;
 
   const list=document.getElementById('customer-list');
   if(!list) return;
-  if(!customers.length){list.innerHTML='<div style="text-align:center;color:var(--text3);padding:40px">등록된 고객사가 없습니다</div>';return;}
+  if(!customers.length){
+    list.innerHTML=`<div style="text-align:center;color:var(--text3);padding:40px">${ms?ms+' 수주 내역이 없습니다':'등록된 고객사가 없습니다'}</div>`;
+    return;
+  }
 
-  list.innerHTML=customers.map(c=>{
+  list.innerHTML=customers.map((c,rank)=>{
     const rate=c.totalPlan>0?Math.round(c.totalAct/c.totalPlan*100):0;
-    // 날짜 정렬
     const dates=[...new Set(c.plans.map(p=>p.date||p.createdAt).filter(Boolean))].sort();
     const dateHtml=dates.map(d=>`<span style="font-size:10px;background:var(--bg4);color:var(--text3);padding:2px 7px;border-radius:4px;border:1px solid var(--border)">${d}</span>`).join('');
+    const rankColor=rank===0?'#f59e0b':rank===1?'#94a3b8':rank===2?'#cd7c3a':'var(--bg4)';
     return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:12px">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff">${esc(c.name.slice(0,1))}</div>
+          <div style="width:28px;height:28px;border-radius:50%;background:${rankColor};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0">${rank+1}</div>
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0">${esc(c.name.slice(0,1))}</div>
           <div>
             <div style="font-size:15px;font-weight:800;color:var(--text)">${esc(c.name)}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:1px">총 ${c.plans.length}회 수주</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:1px">총 <b style="color:var(--accent)">${c.plans.length}회</b> 수주</div>
           </div>
         </div>
         <div style="display:flex;gap:20px;text-align:right">
@@ -3186,33 +3237,62 @@ window.switchOrderTab = function(tab) {
   if(tab==='all') renderOrAll();
 };
 
+function calcComply(plans){
+  const today=new Date().toISOString().slice(0,10);
+  const withDue=plans.filter(p=>p.dueDate);
+  if(!withDue.length) return 100;
+  const onTime=withDue.filter(p=>{
+    const st=getPlanStatus(p);
+    if(st==='done'||st==='shipped') return p.dueDate>=p.date; // 완료된 것
+    return p.dueDate>=today; // 아직 납기 안 지난 것
+  });
+  return Math.round(onTime.length/withDue.length*100);
+}
+
 function renderOrKPIs() {
   const plans = Object.values(cachedPlans);
   const tp = plans.reduce((s,p)=>s+(p.planQty||0),0);
   const ta = plans.reduce((s,p)=>s+(p.actQty||0),0);
   const rate = tp>0 ? Math.round(ta/tp*100) : 0;
+  const comply = calcComply(plans);
   const el = id => document.getElementById(id);
   if(el('or-cnt')) el('or-cnt').textContent = plans.length;
   if(el('or-planqty')) el('or-planqty').textContent = tp.toLocaleString();
   if(el('or-actqty')) el('or-actqty').textContent = ta.toLocaleString();
   if(el('or-rate')) el('or-rate').textContent = rate;
+  if(el('or-comply')) el('or-comply').textContent = comply;
+}
+
+function updateOrTopKPI(plans){
+  const tp=plans.reduce((s,p)=>s+(p.planQty||0),0);
+  const ta=plans.reduce((s,p)=>s+(p.actQty||0),0);
+  const rate=tp>0?Math.round(ta/tp*100):0;
+  const comply=calcComply(plans);
+  const el=id=>document.getElementById(id);
+  if(el('or-cnt')) el('or-cnt').textContent=plans.length;
+  if(el('or-planqty')) el('or-planqty').textContent=tp.toLocaleString();
+  if(el('or-actqty')) el('or-actqty').textContent=ta.toLocaleString();
+  if(el('or-rate')) el('or-rate').textContent=rate;
+  if(el('or-comply')) el('or-comply').textContent=comply;
 }
 
 const OR_SM = {done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'중지',shipped:'출하완료'};
 const OR_SC = {done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-blue',shipped:'badge-green'};
 
-function orPlanRow(p) {
+function orPlanRow(p, no) {
   const pct = p.planQty>0 ? Math.round((p.actQty||0)/p.planQty*100) : 0;
   const st = p.shippedAt ? 'shipped' : getPlanStatus(p);
   const shippedInfo = p.shippedAt ? `<div style="font-size:9px;color:var(--text3);margin-top:2px">${p.shippedAt}</div>` : '';
   const today = new Date().toISOString().slice(0,10);
-  const dueCls = p.dueDate && p.dueDate < today && st!=='done' && st!=='shipped' ? 'color:var(--red)' : 'color:var(--text3)';
-  return `<tr>
+  const isOverdue = p.dueDate && p.dueDate < today && st!=='done' && st!=='shipped';
+  const dueCls = isOverdue ? 'color:var(--red)' : 'color:var(--text3)';
+  return `<tr${isOverdue?' style="background:rgba(239,68,68,.04)"':''}>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${no||''}</td>
     <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
     <td>${esc(p.customer||'—')}</td>
     <td style="font-size:11px;color:var(--text3)">${esc(p.productCode||'—')}</td>
     <td style="font-size:11px;color:var(--text3)">${esc(p.spec||'—')}</td>
-    <td style="font-family:var(--mono);font-size:11px;${dueCls}">${p.dueDate||'—'}</td>
+    <td style="font-family:var(--mono);font-size:11px;${dueCls}">${p.dueDate||'—'}${isOverdue?` <span style="font-size:9px;color:var(--red)">(D+${Math.floor((new Date(today)-new Date(p.dueDate))/86400000)})</span>`:''}</td>
     <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()} EA</td>
     <td style="font-family:var(--mono);color:${(p.actQty||0)>0?'var(--green)':'var(--text3)'}">${(p.actQty||0).toLocaleString()} EA</td>
     <td><div style="display:flex;align-items:center;gap:6px">
@@ -3221,14 +3301,12 @@ function orPlanRow(p) {
       </div>
       <span style="font-size:12px">${pct}%</span>
     </div></td>
-    <td>
-      <span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>
-      ${shippedInfo}
-    </td>
+    <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${shippedInfo}</td>
     <td style="white-space:nowrap">
       ${st==='shipped'?'<span style="font-size:10px;color:var(--green);font-weight:700">✓ 출하완료</span>':st==='done'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer;white-space:nowrap">출하</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}
     </td>
-    <td style="font-size:12px;color:var(--text3)">${esc(p.remark||'—')}</td>
+    <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
+    <td style="font-size:11px;color:var(--text3)">${esc(p.remark||'—')}</td>
   </tr>`;
 }
 
@@ -3249,15 +3327,18 @@ window.renderOrDay = function() {
   const tp=plans.reduce((s,x)=>s+(x.planQty||0),0);
   const ta=plans.reduce((s,x)=>s+(x.actQty||0),0);
   const rate=tp>0?Math.round(ta/tp*100):0;
+  const comply=calcComply(plans);
   const el = id => document.getElementById(id);
   if(el('dk-cnt')) el('dk-cnt').textContent = plans.length;
   if(el('dk-plan')) el('dk-plan').textContent = tp.toLocaleString();
   if(el('dk-act')) el('dk-act').textContent = ta.toLocaleString();
   if(el('dk-rate')) el('dk-rate').textContent = rate+'%';
+  if(el('dk-comply')) el('dk-comply').textContent = comply+'%';
+  updateOrTopKPI(plans);
   const tbody = el('or-day-tbody'); if(!tbody) return;
   tbody.innerHTML = plans.length
-    ? plans.map(orPlanRow).join('')
-    : '<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr>';
+    ? plans.map((p,i)=>orPlanRow(p,i+1)).join('')
+    : '<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr>';
 };
 
 window.orChMonth = function(d) {
@@ -3285,6 +3366,8 @@ window.renderOrMonth = function() {
   if(el('mk-plan')) el('mk-plan').textContent = tp.toLocaleString();
   if(el('mk-act')) el('mk-act').textContent = ta.toLocaleString();
   if(el('mk-rate')) el('mk-rate').textContent = rate+'%';
+  if(el('mk-comply')) el('mk-comply').textContent = calcComply(plans)+'%';
+  updateOrTopKPI(plans);
   const wrap = el('or-month-wrap'); if(!wrap) return;
   if(!plans.length) { wrap.innerHTML='<div style="text-align:center;color:var(--text3);padding:24px">해당 월 계획이 없습니다</div>'; return; }
   const byDate = {};
@@ -3305,8 +3388,8 @@ window.renderOrMonth = function() {
         <span style="font-size:11px;font-weight:700;color:${dr>=100?'var(--green)':dr>0?'var(--amber)':'var(--text3)'}">${dr}%</span>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>비고</th></tr></thead>
-        <tbody>${dp.map(orPlanRow).join('')}</tbody>
+        <thead><tr><th>NO</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>지연사유</th><th>비고</th></tr></thead>
+        <tbody>${dp.map((p,i)=>orPlanRow(p,i+1)).join('')}</tbody>
       </table></div>
     </div>`;
   }).join('');
@@ -3319,12 +3402,16 @@ window.renderOrAll = function() {
   if(search) plans = plans.filter(p=>p.code?.toLowerCase().includes(search)||p.customer?.toLowerCase().includes(search));
   if(sf) plans = plans.filter(p=>(p.status||'planned')===sf);
   plans.sort((a,b)=>a.date>b.date?1:-1);
+  updateOrTopKPI(plans);
   const tbody = document.getElementById('or-all-tbody'); if(!tbody) return;
-  if(!plans.length) { tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>'; return; }
-  tbody.innerHTML = plans.map(p=>{
+  const today=new Date().toISOString().slice(0,10);
+  if(!plans.length) { tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>'; return; }
+  tbody.innerHTML = plans.map((p,idx)=>{
     const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
     const st=getPlanStatus(p);
-    return `<tr>
+    const isOverdue=p.dueDate&&p.dueDate<today&&st!=='done'&&st!=='shipped';
+    return `<tr${isOverdue?' style="background:rgba(239,68,68,.04)"':''}>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${idx+1}</td>
       <td style="font-size:12px;color:var(--text3)">${p.date||'—'}</td>
       <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
       <td>${esc(p.customer||'—')}</td>
@@ -3338,6 +3425,7 @@ window.renderOrAll = function() {
         <span style="font-size:11px">${pct}%</span>
       </div></td>
       <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span></td>
+      <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
       <td style="font-size:11px;color:var(--text3)">${esc(p.remark||'—')}</td>
     </tr>`;
   }).join('');
