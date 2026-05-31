@@ -2236,9 +2236,10 @@ function filterPlanTable({fromPolling=false}={}){
   }
   renderPlanTable(p=>{
     const st=getPlanStatus(p);
-    const isIncomplete=st!=='done'&&st!=='shipped'&&p.status!=='deleted'&&(p.actQty||0)<(p.planQty||1)&&p.date;
-    // 미완료 계획은 월 필터와 무관하게 항상 표시
-    if(isIncomplete) return true;
+    const today=new Date().toISOString().slice(0,10);
+    const isOverdue=st!=='done'&&st!=='shipped'&&p.status!=='deleted'&&(p.actQty||0)<(p.planQty||1)&&p.date&&p.date<today.slice(0,7)+'-01';
+    // 날짜가 지난 미완료 계획은 항상 표시
+    if(isOverdue&&!codeVal&&!custVal) return true;
     if(dateVal&&p.date&&!p.date.startsWith(dateVal))return false;
     if(codeVal&&!p.code?.toLowerCase().includes(codeVal))return false;
     if(custVal&&!p.customer?.toLowerCase().includes(custVal))return false;
