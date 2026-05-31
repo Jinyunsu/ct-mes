@@ -1536,7 +1536,7 @@ window.selectWorker = async function(idx) {
     const ml=await API.get(`/api/logs?worker=${encodeURIComponent(currentUser)}`);
     if(ml){
       const wl=ml[currentUser]||ml[stKey]||{};
-      const todayIso=new Date().toISOString().slice(0,10);
+      const todayIso=todayISO();
       const todayLocal=new Date().toLocaleDateString('ko-KR');
       logs=Object.values(wl).filter(l=>{
         const li=new Date(l.ts).toISOString().slice(0,10);
@@ -1657,7 +1657,7 @@ function startJobTimer(){
       if(tbody) filterPlanTable();
       // 대시보드 총작업시간 실시간 갱신
       const dh=document.getElementById('d-hours');
-      if(dh){const tMs=_calcTotalMsForDate(new Date().toISOString().slice(0,10));if(tMs>0)dh.textContent=fmtElapsed(tMs);}
+      if(dh){const tMs=_calcTotalMsForDate(todayISO());if(tMs>0)dh.textContent=fmtElapsed(tMs);}
       // 작업일보 총작업시간 실시간 갱신
       const dlh=document.getElementById('dl-hours');
       if(dlh){const ds=document.getElementById('daily-date')?.value;if(ds){const dMs=_calcTotalMsForDate(ds);if(dMs>0)dlh.textContent=fmtElapsed(dMs);}}
@@ -1862,7 +1862,7 @@ function renderWorkerListPage(){
   g.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px">`+cachedNames.map((n,i)=>{
     // 이 작업자의 휴무일 목록
     const offdays=Object.values(cachedOffdays||{}).filter(o=>o.worker===n).sort((a,b)=>a.date>b.date?1:-1);
-    const futureOff=offdays.filter(o=>o.date>=new Date().toISOString().slice(0,10));
+    const futureOff=offdays.filter(o=>o.date>=todayISO());
     return `
     <div style="background:var(--bg3);border-radius:8px;border:1px solid var(--border);padding:9px 12px">
       <div style="display:flex;align-items:center;justify-content:space-between">
@@ -1889,7 +1889,7 @@ let _offdayWorker='';
 window.openOffdayModal=function(name){
   _offdayWorker=name;
   document.getElementById('offday-worker-label').textContent=name;
-  document.getElementById('offday-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('offday-date').value=todayISO();
   document.getElementById('offday-reason').value='';
   openModal('offday-modal');
 };
@@ -2072,7 +2072,7 @@ window.openPlanDateModal = function(id) {
   const p = cachedPlans[id] || Object.values(cachedPlans).find(x=>x.id===id);
   if(!p) { showToast('계획을 찾을 수 없습니다'); return; }
   document.getElementById('plan-date-code-label').textContent = p.code + (p.customer ? ' · ' + p.customer : '');
-  document.getElementById('plan-date-input').value = p.date || new Date().toISOString().slice(0,10);
+  document.getElementById('plan-date-input').value = p.date || todayISO();
   openModal('plan-date-modal');
   setTimeout(()=>document.getElementById('plan-date-input').focus(), 150);
 };
@@ -2167,7 +2167,7 @@ function renderPlanTable(filterFn){
     const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
     const wCnt=getWorkerCount(p.code);
     const wHrs=calcWorkHours(p.code);
-    const isToday=p.date===new Date().toISOString().slice(0,10);
+    const isToday=p.date===todayISO();
     return `<tr style="${isToday?'background:rgba(59,130,246,.04)':''}">
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.createdAt||'—'}</td>
       <td style="font-family:var(--mono);font-size:11px">
@@ -2183,7 +2183,7 @@ function renderPlanTable(filterFn){
           </span>
         </div>
       </td>
-      <td style="font-family:var(--mono);font-size:11px;color:${p.dueDate&&p.dueDate<new Date().toISOString().slice(0,10)&&getPlanStatus(p)!=='done'?'var(--red)':'var(--text3)'}">${p.dueDate||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:${p.dueDate&&p.dueDate<todayISO()&&getPlanStatus(p)!=='done'?'var(--red)':'var(--text3)'}">${p.dueDate||'—'}</td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
       <td style="color:var(--text2)">${esc(p.productCode||'—')}</td>
       <td style="color:var(--text2);font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.spec||'')}">${esc(p.spec||'—')}</td>
@@ -2430,7 +2430,7 @@ window.calNext=function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}rende
 window.calToday=function(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();};
 
 /* ══ 작업일보 초기화 ══ */
-const todayDate=new Date().toISOString().slice(0,10);
+const todayDate=todayISO();
 const dailyDateEl=document.getElementById('daily-date');
 if(dailyDateEl){dailyDateEl.value=todayDate;dailyDateEl.addEventListener('change',e=>renderDailyReport(e.target.value));}
 const dn=new Date();
@@ -2719,7 +2719,7 @@ function renderDashboard(){
 
 
   // 알림/이슈 카운팅
-  const today2 = new Date().toISOString().slice(0,10);
+  const today2 = todayISO();
   const allPlans = activePlans();
   // 납기지연: 납기일 < 오늘, 미완료
   const delayedCnt = allPlans.filter(p=>p.dueDate && p.dueDate<today2 && p.status!=='shipped').length;
@@ -2880,7 +2880,7 @@ function renderProgress(){
   // 타임라인 렌더링
   const tlDiv=document.getElementById('d-timeline');
   if(tlDiv){
-    const todayStr=new Date().toISOString().slice(0,10);
+    const todayStr=todayISO();
     const todayLocal=new Date().toLocaleDateString('ko-KR');
     const allLogs=Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').flatMap(([w,wl])=>
       Object.values(wl||{}).filter(l=>{
@@ -3063,7 +3063,7 @@ window.exportCustomerExcel = function() {
   const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download=`고객사관리_${label}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download=`고객사관리_${label}_${todayISO()}.csv`;
   a.click();
   showToast(`고객사 데이터 엑셀 저장됨 (${customers.length}개 고객사)`);
 };
