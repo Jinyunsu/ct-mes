@@ -1405,9 +1405,9 @@ function go(id) {
   else if(id==='prodplan'){ filterPlanTable(); renderCalendar(); }
   else if(id==='orders'){
     const dp=document.getElementById('or-day-picker');
-    if(dp&&!dp.value) dp.value=todayISO();
+    if(dp) dp.value=todayISO();
     const mp=document.getElementById('or-month-picker');
-    if(mp&&!mp.value){ const t=todayISO(); mp.value=t.slice(0,7); }
+    if(mp){ const t=todayISO(); mp.value=t.slice(0,7); }
     renderOrKPIs();
     if(curOrderTab==='daily') renderOrDay();
     else if(curOrderTab==='monthly') renderOrMonth();
