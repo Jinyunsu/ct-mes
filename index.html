@@ -1162,7 +1162,6 @@ function applyViewerMode() {
   // 버튼들에 viewer-disabled 적용 (DOM 로드 후 + 폴링 후에도 적용되도록 MutationObserver 사용)
   function disableButtons() {
     const selectors = [
-      // 생산계획
       'button[onclick*="plan-modal"]',
       'button[onclick*="openModal"]',
       'button[onclick*="planAction"]',
@@ -1174,40 +1173,34 @@ function applyViewerMode() {
       'button[onclick*="submitPlan"]',
       'button[onclick*="submitEditPlan"]',
       'button[onclick*="deleteAllPlans"]',
-      // 작업관리
       '.jbtn-start', '.jbtn-pause', '.jbtn-end',
       'button[onclick*="addCode"]',
-      // 작업자
       'button[onclick*="deleteWorker"]',
       'button[onclick*="openOffday"]',
       'button[onclick*="addWorker"]',
-      // 설정
       'button[onclick*="changeResetPassword"]',
       'button[onclick*="openResetModal"]',
       'button[onclick*="openPwChangeModal"]',
     ];
     selectors.forEach(sel => {
       document.querySelectorAll(sel).forEach(btn => {
-        if(btn.dataset.viewerDisabled) return; // 이미 처리됨
+        if(btn.dataset.viewerDisabled) return;
         btn.dataset.viewerDisabled = '1';
         btn.style.opacity = '0.35';
         btn.style.cursor = 'not-allowed';
         btn.style.pointerEvents = 'none';
-        btn.title = '권한 없음';
-        // 새 래퍼로 감싸서 클릭 차단
-        const wrapper = document.createElement('span');
-        wrapper.style.cssText = 'display:inline-block;cursor:not-allowed;opacity:.35';
-        wrapper.title = '권한 없음';
-        btn.parentNode.insertBefore(wrapper, btn);
-        wrapper.appendChild(btn);
-        btn.style.opacity = '1';
-        btn.style.pointerEvents = 'none';
+        btn.title = '관리자 전용';
+        // 클릭 차단용 오버레이
+        const wrap = document.createElement('span');
+        wrap.style.cssText = 'position:relative;display:inline-block';
+        wrap.title = '관리자 전용';
+        const overlay = document.createElement('span');
+        overlay.style.cssText = 'position:absolute;inset:0;cursor:not-allowed;z-index:1';
+        overlay.title = '관리자 전용';
+        btn.parentNode.insertBefore(wrap, btn);
+        wrap.appendChild(btn);
+        wrap.appendChild(overlay);
       });
-    });
-    // 입력 필드도 readonly
-    ['code-inp','worker-name-inp','pf-code','ef-code'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el){el.readOnly=true;el.style.opacity='.4';el.style.cursor='not-allowed';}
     });
   }
 
