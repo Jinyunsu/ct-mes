@@ -2262,13 +2262,17 @@ window.planAction = function(type, id) {
   );
   if(type === 'edit') {
     if(st === 'running') { showToast('작업중인 계획은 수정할 수 없습니다'); return; }
+    if(st === 'paused') { showToast('정지 중인 계획은 수정할 수 없습니다'); return; }
     if(st === 'done') { showToast('완료된 계획은 수정할 수 없습니다'); return; }
     if(st === 'waiting' && hasLog) { showToast('작업이 시작된 계획은 수정할 수 없습니다'); return; }
+    if(st === 'failed' && hasLog) { showToast('작업이 시작된 계획은 수정할 수 없습니다'); return; }
     openEditPlanModal(id);
   } else if(type === 'delete') {
     if(st === 'running') { showToast('작업중인 계획은 삭제할 수 없습니다'); return; }
+    if(st === 'paused') { showToast('정지 중인 계획은 삭제할 수 없습니다'); return; }
     if(st === 'done') { showToast('완료된 계획은 삭제할 수 없습니다'); return; }
     if(st === 'waiting' && hasLog) { showToast('작업이 시작된 계획은 삭제할 수 없습니다'); return; }
+    if(st === 'failed' && hasLog) { showToast('작업이 시작된 계획은 삭제할 수 없습니다'); return; }
     deletePlan(id);
   }
 };
