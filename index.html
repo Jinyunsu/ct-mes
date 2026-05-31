@@ -2386,20 +2386,15 @@ function renderCalendar(){
     const dow=new Date(calYear,calMonth,d).getDay();
     const dc=dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text2)';
     const dp=activePlans().filter(p=>p.date&&p.date===ds);
-    // 이전 날짜 미완료 계획 (오늘까지 이어지는 것)
+    // 이전 날짜 미완료 계획 - 완료될 때까지 매일 표시
+    const today2=new Date().toISOString().slice(0,10);
     const prevUnfinished=activePlans().filter(p=>{
       if(!p.date||p.date>=ds)return false;
-      if(getPlanStatus(p)==='done'||p.status==='done')return false;
-      if((p.actQty||0)>=(p.planQty||1))return false; // 수량 완료
-      const allPlanLogs=Object.values(cachedLogs||{}).flatMap(wl=>
-        Object.values(wl||{}).filter(l=>l.code===p.code)
-      );
-      if(!allPlanLogs.length)return false;
-      // ds 날짜에 start 로그가 있어야 이월 표시
-      const dsStartLogs=allPlanLogs.filter(l=>
-        l.action==='start' && new Date(l.ts).toISOString().slice(0,10)===ds
-      );
-      return dsStartLogs.length>0;
+      if(getPlanStatus(p)==='done'||getPlanStatus(p)==='shipped'||p.status==='done')return false;
+      if((p.actQty||0)>=(p.planQty||1))return false;
+      // 미래 날짜는 표시 안 함 (오늘 이후 날짜에는 안 이어짐)
+      if(ds>today2)return false;
+      return true;
     });
     const allDp=[...prevUnfinished.map(p=>({...p,_carry:true})),...dp];
     // 호버 툴팁용 전체 목록
