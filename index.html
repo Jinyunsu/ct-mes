@@ -2391,9 +2391,10 @@ function renderCalendar(){
     const dow=new Date(calYear,calMonth,d).getDay();
     const dc=dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text2)';
     const dp=activePlans().filter(p=>p.date&&p.date===ds);
-    // 미완료 계획 - 완료될 때까지 매일 이어서 표시 (계획일 이후 날짜에만)
+    // 미완료 계획 - 계획일 다음날부터 오늘까지만 이어서 표시
     const prevUnfinished=activePlans().filter(p=>{
       if(!p.date||p.date>=ds)return false;
+      if(ds>today)return false; // 미래 날짜에는 표시 안 함
       if(getPlanStatus(p)==='done'||getPlanStatus(p)==='shipped'||p.status==='done')return false;
       if((p.actQty||0)>=(p.planQty||1))return false;
       return true;
