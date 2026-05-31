@@ -1434,7 +1434,7 @@ setInterval(()=>{
 function openModal(id){
   document.getElementById(id).classList.add('open');
   if(id==='plan-modal'){
-    const today = new Date().toISOString().slice(0,10);
+    const today = todayISO();
     const df = document.getElementById('pf-date');
     if(df) df.value = today;
     const cf = document.getElementById('pf-code');
@@ -1458,7 +1458,10 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 
 /* ══ 작업 관리 ══ */
 const COLORS=['#3b82f6','#22c55e','#a78bfa','#f59e0b','#ec4899','#22d3ee','#f97316','#84cc16'];
-function todayISO(){ return new Date().toISOString().slice(0,10); }
+function todayISO(){
+  const d=new Date(new Date().getTime()+9*60*60*1000);
+  return d.toISOString().slice(0,10);
+}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function initial(n){return n.trim().slice(0,2).toUpperCase()||'?';}
 
@@ -1572,7 +1575,7 @@ function calcWorkerCodeHours(worker, code){
 // 특정 작업자의 오늘 총 투입시간 (코드별 병렬 합산)
 function calcWorkerTotalHours(worker){
   const wlogs = Object.values(cachedLogs?.[worker]||{});
-  const today = new Date().toISOString().slice(0,10);
+  const today = todayISO();
   const todayLocal = new Date().toLocaleDateString('ko-KR');
   const todayLogs = wlogs.filter(l=>{
     const li=new Date(l.ts).toISOString().slice(0,10);
@@ -2094,7 +2097,7 @@ window.submitPlan=async function(){
   const qty=Number(document.getElementById('pf-qty').value)||0;
   if(!code){showToast('작업코드 입력');return;}
   if(qty<=0){showToast('계획수량 입력');return;}
-  const today=new Date().toISOString().slice(0,10);
+  const today=todayISO();
   const newPlan={code,date:'',createdAt:today,planQty:qty,productCode:document.getElementById('pf-pcode').value.trim()||'',spec:document.getElementById('pf-spec').value.trim()||'',customer:document.getElementById('pf-customer').value.trim()||'',remark:document.getElementById('pf-remark').value.trim()||'',note:document.getElementById('pf-note').value.trim()||'',status:'planned',dueDate:document.getElementById('pf-duedate')?.value||''};
   closeModal('plan-modal');
   // 폴링 완전 중단
@@ -2133,7 +2136,7 @@ function renderPlanTable(filterFn){
       });
     });
     if(cnt.size===0){
-      const today=new Date().toISOString().slice(0,10);
+      const today=todayISO();
       Object.entries(cachedLogs||{}).forEach(([worker,wlogs])=>{
         Object.values(wlogs||{}).forEach(l=>{
           if((l.code||'').toLowerCase().trim()===lc&&new Date(l.ts).toISOString().slice(0,10)===today) cnt.add(worker);
@@ -2218,7 +2221,7 @@ function filterPlanTable({fromPolling=false}={}){
   }
   renderPlanTable(p=>{
     const st=getPlanStatus(p);
-    const today=new Date().toISOString().slice(0,10);
+    const today=todayISO();
     // 미달성: 계획일이 오늘보다 이전이고 미완료인 계획은 항상 표시
     const isIncomplete=st!=='done'&&st!=='shipped'&&p.status!=='deleted'&&(p.actQty||0)<(p.planQty||1)&&p.date&&p.date<today;
     if(isIncomplete&&!codeVal&&!custVal) return true;
@@ -2368,7 +2371,7 @@ function renderCalendar(){
   if(!grid)return;
   const firstDay=new Date(calYear,calMonth,1).getDay();
   const lastDate=new Date(calYear,calMonth+1,0).getDate();
-  const today=new Date().toISOString().slice(0,10);
+  const today=todayISO();
   let html='';
   for(let i=0;i<firstDay;i++)html+=`<div class="cal-day" style="background:var(--bg2);opacity:.3"></div>`;
   for(let d=1;d<=lastDate;d++){
@@ -2438,13 +2441,13 @@ if(dpEl)dpEl.textContent=dn.toLocaleString('ko-KR',{hour12:false});
 // 공통: 상태 계산
 // 납기지연 배지 헬퍼
 function dueBadge(p){
-  const today=new Date().toISOString().slice(0,10);
+  const today=todayISO();
   if(p.dueDate&&p.dueDate<today&&p.status!=='deleted') return '<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>';
   return '';
 }
 
 function getPlanStatus(p){
-  const today=new Date().toISOString().slice(0,10);
+  const today=todayISO();
   if(p.status==='deleted') return 'deleted';
   if(p.status==='shipped') return 'shipped';
   if(p.planQty>0 && (p.actQty||0)>=p.planQty) return 'done';
@@ -2479,7 +2482,7 @@ function getWorkerCountForCode(code){
   });
   // 오늘 logs 기반으로 보완 (cachedNames에 있는 작업자만)
   if(workers.size===0){
-    const today=new Date().toISOString().slice(0,10);
+    const today=todayISO();
     Object.entries(cachedLogs||{}).forEach(([worker,wlogs])=>{
       if(!cachedNames.some(n=>n.toLowerCase()===worker.toLowerCase())) return;
       Object.values(wlogs||{}).forEach(l=>{
@@ -2539,7 +2542,7 @@ function calcWorkHours(code){
 
 // ── 대시보드 ──
 function renderDashboard(){
-  const today=new Date().toISOString().slice(0,10);
+  const today=todayISO();
   const plans=activePlans();
   const todayPlans=plans.filter(p=>p.date&&p.date<=today&&(getPlanStatus(p)!=='done'&&getPlanStatus(p)!=='shipped'||p.date===today));
   const totalPlanQty=todayPlans.reduce((s,p)=>s+(p.planQty||0),0);
@@ -2730,7 +2733,7 @@ function renderDashboard(){
 
 // ── 진행현황 ──
 function renderProgress(){
-  const today=new Date().toISOString().slice(0,10);
+  const today=todayISO();
   const plans=activePlans();
   // 작업중 코드 (오늘 작업중인 것)
   const runningCodes=new Set();
@@ -3152,7 +3155,7 @@ function renderWorkerStats(){
   const tbl=document.getElementById('worker-stats-tbl');
   if(!tbl)return;
 
-  const today=new Date().toISOString().slice(0,10);
+  const today=todayISO();
   const todayStr=new Date().toLocaleDateString('ko-KR');
 
   // 메트릭 업데이트
@@ -3473,7 +3476,7 @@ window.switchOrderTab = function(tab) {
 };
 
 function calcComply(plans){
-  const today=new Date().toISOString().slice(0,10);
+  const today=todayISO();
   const withDue=plans.filter(p=>p.dueDate);
   if(!withDue.length) return 100;
   const onTime=withDue.filter(p=>{
@@ -3524,7 +3527,7 @@ function orPlanRow(p, no) {
   const pct = p.planQty>0 ? Math.round((p.actQty||0)/p.planQty*100) : 0;
   const st = p.shippedAt ? 'shipped' : getPlanStatus(p);
   const shippedInfo = p.shippedAt ? `<div style="font-size:9px;color:var(--text3);margin-top:2px">${p.shippedAt}</div>` : '';
-  const today = new Date().toISOString().slice(0,10);
+  const today = todayISO();
   const isOverdue = p.dueDate && p.dueDate < today;
   const dueCls = isOverdue ? 'color:var(--red)' : 'color:var(--text3)';
   const isDeleted = p.status === 'deleted';
@@ -3647,7 +3650,7 @@ window.renderOrAll = function() {
   plans.sort((a,b)=>a.date>b.date?1:-1);
   updateOrTopKPI(plans);
   const tbody = document.getElementById('or-all-tbody'); if(!tbody) return;
-  const today=new Date().toISOString().slice(0,10);
+  const today=todayISO();
   if(!plans.length) { tbody.innerHTML='<tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>'; return; }
   tbody.innerHTML = plans.map((p,idx)=>{
     const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
@@ -3812,7 +3815,7 @@ window.printDailyReport = function() {
 window.exportDailyExcel = function() {
   const dateVal = document.getElementById('daily-date')?.value;
   if(!dateVal){ showToast('날짜를 선택하세요'); return; }
-  const today = new Date().toISOString().slice(0,10);
+  const today = todayISO();
   const plans = Object.values(cachedPlans).filter(p=>p.date===dateVal);
 
   // CSV 생성
