@@ -2452,7 +2452,7 @@ if(dpEl)dpEl.textContent=dn.toLocaleString('ko-KR',{hour12:false});
 // 납기지연 배지 헬퍼
 function dueBadge(p){
   const today=new Date().toISOString().slice(0,10);
-  if(p.dueDate&&p.dueDate<today&&p.status!=='shipped') return '<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>';
+  if(p.dueDate&&p.dueDate<today) return '<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>';
   return '';
 }
 
@@ -3538,7 +3538,7 @@ function orPlanRow(p, no) {
   const st = p.shippedAt ? 'shipped' : getPlanStatus(p);
   const shippedInfo = p.shippedAt ? `<div style="font-size:9px;color:var(--text3);margin-top:2px">${p.shippedAt}</div>` : '';
   const today = new Date().toISOString().slice(0,10);
-  const isOverdue = p.dueDate && p.dueDate < today && st!=='done' && st!=='shipped';
+  const isOverdue = p.dueDate && p.dueDate < today;
   const dueCls = isOverdue ? 'color:var(--red)' : 'color:var(--text3)';
   const isDeleted = p.status === 'deleted';
   return `<tr${isDeleted?' style="background:rgba(239,68,68,.08);text-decoration:line-through;color:var(--text3)"':''}>
@@ -3548,7 +3548,7 @@ function orPlanRow(p, no) {
     <td>${esc(p.customer||'—')}</td>
     <td style="font-size:11px;color:var(--text3)">${esc(p.productCode||'—')}</td>
     <td style="font-size:11px;color:var(--text3)">${esc(p.spec||'—')}</td>
-    <td style="font-family:var(--mono);font-size:11px;${dueCls}">${p.dueDate||'—'}${isOverdue?` <span style="font-size:9px;color:var(--red)">(D+${Math.floor((new Date(today)-new Date(p.dueDate))/86400000)})</span>`:''}</td>
+    <td style="font-family:var(--mono);font-size:11px;${dueCls}">${p.dueDate||'—'}${isOverdue?` <span style="font-size:9px;color:var(--red)">(D+${Math.floor((new Date(st==='shipped'&&p.shippedAt?p.shippedAt:today)-new Date(p.dueDate))/86400000)})</span>`:''}</td>
     <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()} EA</td>
     <td style="font-family:var(--mono);color:${(p.actQty||0)>0?'var(--green)':'var(--text3)'}">${(p.actQty||0).toLocaleString()} EA</td>
     <td><div style="display:flex;align-items:center;gap:6px">
@@ -3666,7 +3666,7 @@ window.renderOrAll = function() {
     const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
     const st=p.shippedAt?'shipped':getPlanStatus(p);
     const isDeleted=p.status==='deleted';
-    const isOverdue=p.dueDate&&p.dueDate<today&&st!=='done'&&st!=='shipped'&&!isDeleted;
+    const isOverdue=p.dueDate&&p.dueDate<today&&!isDeleted;
     const dueCls=isOverdue?'color:var(--red)':'color:var(--text3)';
     return `<tr${isDeleted?' style="background:rgba(239,68,68,.08);text-decoration:line-through;color:var(--text3)"':''}>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${idx+1}</td>
@@ -3675,7 +3675,7 @@ window.renderOrAll = function() {
       <td>${esc(p.customer||'—')}</td>
       <td style="font-size:11px;color:var(--text3)">${esc(p.productCode||'—')}</td>
       <td style="font-size:11px;color:var(--text3)">${esc(p.spec||'—')}</td>
-      <td style="font-family:var(--mono);font-size:11px;${dueCls}">${p.dueDate||'—'}${isOverdue?` <span style="font-size:9px;color:var(--red)">(D+${Math.floor((new Date(today)-new Date(p.dueDate))/86400000)})</span>`:''}</td>
+      <td style="font-family:var(--mono);font-size:11px;${dueCls}">${p.dueDate||'—'}${isOverdue?` <span style="font-size:9px;color:var(--red)">(D+${Math.floor((new Date(st==='shipped'&&p.shippedAt?p.shippedAt:today)-new Date(p.dueDate))/86400000)})</span>`:''}</td>
       <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()} EA</td>
       <td style="font-family:var(--mono);color:${(p.actQty||0)>0?'var(--green)':'var(--text3)'}">${(p.actQty||0).toLocaleString()} EA</td>
       <td><div style="display:flex;align-items:center;gap:5px">
