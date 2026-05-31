@@ -1175,6 +1175,7 @@ function applyViewerMode() {
       'button[onclick*="deleteAllPlans"]',
       '.jbtn-start', '.jbtn-pause', '.jbtn-end',
       'button[onclick*="addCode"]',
+      'button[onclick*="addCodeFromPlan"]',
       'button[onclick*="deleteWorker"]',
       'button[onclick*="openOffday"]',
       'button[onclick*="addWorker"]',
@@ -1184,22 +1185,10 @@ function applyViewerMode() {
     ];
     selectors.forEach(sel => {
       document.querySelectorAll(sel).forEach(btn => {
-        if(btn.dataset.viewerDisabled) return;
-        btn.dataset.viewerDisabled = '1';
         btn.style.opacity = '0.35';
         btn.style.cursor = 'not-allowed';
-        btn.style.pointerEvents = 'none';
         btn.title = '관리자 전용';
-        // 클릭 차단용 오버레이
-        const wrap = document.createElement('span');
-        wrap.style.cssText = 'position:relative;display:inline-block';
-        wrap.title = '관리자 전용';
-        const overlay = document.createElement('span');
-        overlay.style.cssText = 'position:absolute;inset:0;cursor:not-allowed;z-index:1';
-        overlay.title = '관리자 전용';
-        btn.parentNode.insertBefore(wrap, btn);
-        wrap.appendChild(btn);
-        wrap.appendChild(overlay);
+        btn.onclick = function(e){ e.stopPropagation(); e.preventDefault(); return false; };
       });
     });
   }
