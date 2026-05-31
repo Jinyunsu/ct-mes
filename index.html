@@ -3558,7 +3558,7 @@ function orPlanRow(p, no) {
       </div>
       <span style="font-size:12px">${pct}%</span>
     </div></td>
-    <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${shippedInfo}${(p.dueDate&&p.dueDate<today&&st!=='shipped')?'<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>':''}</td>
+    <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${shippedInfo}${(p.dueDate&&p.dueDate<today&&st!=='shipped'&&st!=='deleted')?'<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>':''}</td>
     <td style="white-space:nowrap">
       ${st==='shipped'?'<span style="font-size:10px;color:var(--green);font-weight:700">✓ 출하완료</span>':st==='done'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer;white-space:nowrap">출하</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}
     </td>
@@ -3685,7 +3685,7 @@ window.renderOrAll = function() {
         </div>
         <span style="font-size:11px">${pct}%</span>
       </div></td>
-      <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${p.shippedAt?`<div style="font-size:9px;color:var(--text3)">${p.shippedAt}</div>`:''}${(p.dueDate&&p.dueDate<today&&st!=='shipped')?'<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>':''}</td>
+      <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${p.shippedAt?`<div style="font-size:9px;color:var(--text3)">${p.shippedAt}</div>`:''}${(p.dueDate&&p.dueDate<today&&st!=='shipped'&&!isDeleted)?'<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>':''}</td>
       <td style="white-space:nowrap">${st==='shipped'?'<span style="font-size:10px;color:var(--green);font-weight:700">✓ 출하완료</span>':st==='done'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer">출하</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}</td>
       <td style="font-size:11px;color:var(--text3);max-width:120px">${esc(p.remark||'—')}</td>
       <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
