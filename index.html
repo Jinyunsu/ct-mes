@@ -2453,7 +2453,7 @@ if(dpEl)dpEl.textContent=dn.toLocaleString('ko-KR',{hour12:false});
 // 납기지연 배지 헬퍼
 function dueBadge(p){
   const today=new Date().toISOString().slice(0,10);
-  if(p.dueDate&&p.dueDate<today) return '<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>';
+  if(p.dueDate&&p.dueDate<today&&p.status!=='deleted') return '<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>';
   return '';
 }
 
