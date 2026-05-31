@@ -1162,30 +1162,46 @@ function applyViewerMode() {
   // 버튼들에 viewer-disabled 적용 (DOM 로드 후 + 폴링 후에도 적용되도록 MutationObserver 사용)
   function disableButtons() {
     const selectors = [
+      // 생산계획
       'button[onclick*="plan-modal"]',
+      'button[onclick*="openModal"]',
       'button[onclick*="planAction"]',
       'button[onclick*="openPlanDateModal"]',
       'button[onclick*="openNoteEdit"]',
       'button[onclick*="openEditPlanModal"]',
       'button[onclick*="deletePlan"]',
       'button[onclick*="shipPlan"]',
+      'button[onclick*="submitPlan"]',
+      'button[onclick*="submitEditPlan"]',
+      'button[onclick*="deleteAllPlans"]',
+      // 작업관리
       '.jbtn-start', '.jbtn-pause', '.jbtn-end',
       'button[onclick*="addCode"]',
+      // 작업자
       'button[onclick*="deleteWorker"]',
       'button[onclick*="openOffday"]',
       'button[onclick*="addWorker"]',
+      // 설정
       'button[onclick*="changeResetPassword"]',
       'button[onclick*="openResetModal"]',
       'button[onclick*="openPwChangeModal"]',
-      'button[onclick*="deleteAllPlans"]',
-      'button[onclick*="submitPlan"]',
-      'button[onclick*="submitEditPlan"]',
     ];
     selectors.forEach(sel => {
       document.querySelectorAll(sel).forEach(btn => {
-        btn.classList.add('viewer-disabled');
+        if(btn.dataset.viewerDisabled) return; // 이미 처리됨
+        btn.dataset.viewerDisabled = '1';
+        btn.style.opacity = '0.35';
+        btn.style.cursor = 'not-allowed';
+        btn.style.pointerEvents = 'none';
         btn.title = '권한 없음';
-        btn.setAttribute('onclick', 'event.stopPropagation();showToast("편집 권한이 없습니다")');
+        // 새 래퍼로 감싸서 클릭 차단
+        const wrapper = document.createElement('span');
+        wrapper.style.cssText = 'display:inline-block;cursor:not-allowed;opacity:.35';
+        wrapper.title = '권한 없음';
+        btn.parentNode.insertBefore(wrapper, btn);
+        wrapper.appendChild(btn);
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'none';
       });
     });
     // 입력 필드도 readonly
@@ -2541,7 +2557,7 @@ function calcWorkHours(code){
 function renderDashboard(){
   const today=new Date().toISOString().slice(0,10);
   const plans=activePlans();
-  const todayPlans=plans.filter(p=>p.date===today);
+  const todayPlans=plans.filter(p=>p.date&&p.date<=today&&(getPlanStatus(p)!=='done'&&getPlanStatus(p)!=='shipped'||p.date===today));
   const totalPlanQty=todayPlans.reduce((s,p)=>s+(p.planQty||0),0);
   const totalActQty=todayPlans.reduce((s,p)=>s+(p.actQty||0),0);
   const rate=totalPlanQty>0?Math.round(totalActQty/totalPlanQty*100):0;
@@ -2754,7 +2770,7 @@ function renderProgress(){
     Object.values(cachedStates).forEach(codes=>{
       Object.keys(codes||{}).forEach(c=>activePlanCodes.add(c.toLowerCase()));
     });
-    const runPlans=plans.filter(p=>p.date===today);
+    const runPlans=plans.filter(p=>p.date&&p.date<=today&&getPlanStatus(p)!=='done'&&getPlanStatus(p)!=='shipped');
     if(!runPlans.length){
       ptbl.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">오늘 작업 내역이 없습니다</td></tr>';
     }else{
@@ -3702,20 +3718,21 @@ function updatePlanSelect() {
   const sel = document.getElementById('plan-select');
   if(!sel) return;
   const today = todayISO();
-  // 오늘 계획 + 미완료 계획 모두 표시
+  // 오늘 이전 미완료 + 오늘 계획 모두 표시
   const plans = Object.values(cachedPlans)
     .filter(p => {
       const remaining = (p.planQty||0) - (p.actQty||0);
-      return remaining > 0 && p.status !== 'done' && p.date === today;
+      return remaining > 0 && p.status !== 'done' && p.status !== 'deleted' && p.date && p.date <= today;
     })
-    .sort((a,b) => a.code > b.code ? 1 : -1);
+    .sort((a,b) => a.date > b.date ? 1 : -1);
   const currentVal = sel.value;
   sel.innerHTML = plans.length
-    ? '<option value="">— 오늘 계획 선택 —</option>'
-    : '<option value="">오늘 등록된 계획 없음</option>';
+    ? '<option value="">— 계획 선택 —</option>'
+    : '<option value="">미완료 계획 없음</option>';
   sel.innerHTML += plans.map(p => {
       const remaining = (p.planQty||0) - (p.actQty||0);
-      const label = `${p.code}${p.customer?' ('+p.customer+')':''} - 잔여 ${remaining}EA`;
+      const dateLabel = p.date === today ? '오늘' : p.date;
+      const label = `${p.code}${p.customer?' ('+p.customer+')':''} [${dateLabel}] - 잔여 ${remaining}EA`;
       return `<option value="${esc(p.code)}" data-plan-id="${esc(p.id||p.code)}" data-remaining="${remaining}">${label}</option>`;
     }).join('');
   if(currentVal) sel.value = currentVal;
