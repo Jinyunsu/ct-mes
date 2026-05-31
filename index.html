@@ -2236,9 +2236,9 @@ function filterPlanTable({fromPolling=false}={}){
   }
   renderPlanTable(p=>{
     const st=getPlanStatus(p);
-    const isIncomplete=st!=='done'&&st!=='shipped'&&p.status!=='deleted'&&(p.actQty||0)<(p.planQty||1);
-    // 미완료 계획은 날짜 필터 무관하게 항상 표시
-    if(isIncomplete&&!codeVal&&!custVal) return true;
+    const isIncomplete=st!=='done'&&st!=='shipped'&&p.status!=='deleted'&&(p.actQty||0)<(p.planQty||1)&&p.date;
+    // 미완료 계획은 월 필터와 무관하게 항상 표시
+    if(isIncomplete) return true;
     if(dateVal&&p.date&&!p.date.startsWith(dateVal))return false;
     if(codeVal&&!p.code?.toLowerCase().includes(codeVal))return false;
     if(custVal&&!p.customer?.toLowerCase().includes(custVal))return false;
@@ -2390,7 +2390,7 @@ function renderCalendar(){
     const dow=new Date(calYear,calMonth,d).getDay();
     const dc=dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text2)';
     const dp=activePlans().filter(p=>p.date&&p.date===ds);
-    // 이전 날짜 미완료 계획 - 완료될 때까지 매일 표시
+    // 미완료 계획 - 완료될 때까지 매일 이어서 표시 (계획일 이후 날짜에만)
     const prevUnfinished=activePlans().filter(p=>{
       if(!p.date||p.date>=ds)return false;
       if(getPlanStatus(p)==='done'||getPlanStatus(p)==='shipped'||p.status==='done')return false;
