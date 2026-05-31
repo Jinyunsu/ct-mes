@@ -1404,6 +1404,10 @@ function go(id) {
   else if(id==='customers') renderCustomers();
   else if(id==='prodplan'){ filterPlanTable(); renderCalendar(); }
   else if(id==='orders'){
+    const dp=document.getElementById('or-day-picker');
+    if(dp&&!dp.value) dp.value=todayISO();
+    const mp=document.getElementById('or-month-picker');
+    if(mp&&!mp.value){ const t=todayISO(); mp.value=t.slice(0,7); }
     renderOrKPIs();
     if(curOrderTab==='daily') renderOrDay();
     else if(curOrderTab==='monthly') renderOrMonth();
@@ -3572,6 +3576,7 @@ window.orGoToday = function() {
 
 window.renderOrDay = function() {
   const p = document.getElementById('or-day-picker');
+  if(p && !p.value) p.value = todayISO();
   const ds = p?.value || todayISO();
   const plans = allOrderPlans().filter(x=>x.date===ds);
   const tp=plans.reduce((s,x)=>s+(x.planQty||0),0);
