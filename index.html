@@ -1776,7 +1776,8 @@ window.toggleJob=function(c){if(!jobs[c])return;jobs[c].open=!jobs[c].open;docum
 window.removeJob=function(c){delete jobs[c];renderJobs();};
 
 window.doAction=async function(code,action,qty=0,partialEnd=false){
-  if(!isAdmin && !workerPwUnlocked){ showToast('관리자 전용'); return; }
+  const isMobile=window.innerWidth<=768||/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  if(!isAdmin && !workerPwUnlocked && !isMobile){ showToast('관리자 전용'); return; }
   const t=new Date();
   const timeStr=t.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
   const dateStr=t.toLocaleDateString('ko-KR');
@@ -1843,7 +1844,8 @@ window.doAction=async function(code,action,qty=0,partialEnd=false){
 };
 
 window.openQty=function(c){
-  if(!isAdmin && !workerPwUnlocked){ showToast('관리자 전용'); return; }
+  const isMobile=window.innerWidth<=768||/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  if(!isAdmin && !workerPwUnlocked && !isMobile){ showToast('관리자 전용'); return; }
   qtyTarget=c;
   document.getElementById('qty-sub').textContent='작업코드: '+c;
   document.getElementById('qty-inp').value='';
