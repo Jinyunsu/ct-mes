@@ -3072,17 +3072,17 @@ function renderPerformance(){
         if(st) wIntervals.push([st,Date.now()]);
       });
       // 이달에 겹치는 구간만 계산
-      const clipped=wIntervals
+      const wClipped=wIntervals
         .filter(([a,b])=>b>monthStart&&a<monthEnd)
         .map(([a,b])=>[Math.max(a,monthStart),Math.min(b,monthEnd)]);
-      clipped.sort((a,b)=>a[0]-b[0]);
-      const merged=clipped.length?[[...clipped[0]]]:[];
-      for(let i=1;i<clipped.length;i++){
-        const last=merged[merged.length-1];
+      wClipped.sort((a,b)=>a[0]-b[0]);
+      const wMerged=wClipped.length?[[...clipped[0]]]:[];
+      for(let i=1;i<wClipped.length;i++){
+        const last=merged[wMerged.length-1];
         if(clipped[i][0]<=last[1]) last[1]=Math.max(last[1],clipped[i][1]);
-        else merged.push([...clipped[i]]);
+        else wMerged.push([...clipped[i]]);
       }
-      const ms=merged.reduce((s,[a,b])=>s+(b-a),0);
+      const ms=wMerged.reduce((s,[a,b])=>s+(b-a),0);
       return {name:n,ms};
       const codes=new Set(wlogs.map(l=>l.code));
       const allIntervals=[];
