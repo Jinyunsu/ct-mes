@@ -2984,7 +2984,6 @@ function renderProgress(){
           if(sf==='overdue'){if(!(p.dueDate&&p.dueDate<today&&st!=='shipped'))return;}
           else if(st!==sf) return;
         }
-          const st=getPlanStatus(p);
           const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
           const hrs=calcWorkHoursForDate(p.code, today);
           const wCnt=getWorkerCountForCode(p.code);
