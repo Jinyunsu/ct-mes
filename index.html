@@ -325,6 +325,17 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
 <body>
 <div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
 
+<!-- PDF 뷰어 모달 -->
+<div id="pdf-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border-radius:16px;width:90vw;max-width:900px;height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="font-size:15px;font-weight:700;color:var(--text)" id="pdf-modal-title"><i class="ti ti-file-type-pdf" style="color:#ef4444"></i> 생산의뢰서</div>
+      <button onclick="closePdfModal()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;padding:4px"><i class="ti ti-x"></i></button>
+    </div>
+    <iframe id="pdf-viewer" style="flex:1;border:none;width:100%"></iframe>
+  </div>
+</div>
+
 <!-- 작업관리 비밀번호 모달 -->
 <div id="worker-pw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:none;align-items:center;justify-content:center">
   <div style="background:var(--bg2);border-radius:16px;padding:28px 32px;width:300px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
@@ -1215,6 +1226,7 @@ function applyViewerMode() {
       'button[onclick*="openModal"]',
       'button[onclick*="planAction"]',
       'button[onclick*="openPlanDateModal"]',
+      'button[onclick*="uploadPlanPdf"]',
       'button[onclick*="openEditPlanModal"]',
       'button[onclick*="deletePlan"]',
       'button[onclick*="shipPlan"]',
@@ -2272,6 +2284,7 @@ function renderPlanTable(filterFn, sortDir){
         const _hasNote=!!(p.note&&p.note.trim());
         return `
         <button class="btn btn-secondary btn-sm" style="margin-right:4px;${_hasNote?'background:#dc2626;color:#fff;border-color:#dc2626':'color:var(--text3)'}" onclick="openNoteEdit('${esc(p.id)}')" title="${_hasNote?'지연사유: '+esc(p.note):'지연사유 작성'}"><i class="ti ti-notes" style="font-size:13px"></i></button>
+        <button class="btn btn-secondary btn-sm" style="margin-right:4px;${p.hasPdf?'color:#ef4444':'color:var(--text3)'}" onclick="${p.hasPdf?`viewPlanPdf('${esc(p.id)}','${esc(p.pdfName||p.code)}')`:`uploadPlanPdf('${esc(p.id)}')`}" title="${p.hasPdf?'의뢰서 보기: '+esc(p.pdfName||''):'의뢰서 업로드'}"><i class="ti ti-file-type-pdf" style="font-size:13px"></i></button>
         <button class="btn btn-secondary btn-sm" style="margin-right:4px${_can?'':_dis}" onclick="${_can?`openPlanDateModal('${esc(p.id)}')`:'void(0)'}" title="${_can?'생산계획일 지정':'작업이 시작된 계획은 변경할 수 없습니다'}"><i class="ti ti-calendar"></i></button>
         <button class="btn btn-secondary btn-sm" style="margin-right:4px${_can?'':_dis}" onclick="planAction('edit','${esc(p.id)}')" title="${_title}"><i class="ti ti-edit"></i></button>
         <button class="btn btn-secondary btn-sm" style="color:#dc2626${_can?'':_dis}" onclick="planAction('delete','${esc(p.id)}')" title="${_titleD}"><i class="ti ti-trash"></i></button>`;
@@ -3068,6 +3081,58 @@ function renderProgress(){
   }
 
 }
+
+// PDF 업로드/뷰어
+window.uploadPlanPdf = function(planId) {
+  if(!isAdmin){ showToast('관리자 전용'); return; }
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/pdf';
+  input.onchange = async function(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+    if(file.size > 5*1024*1024){ showToast('PDF는 5MB 이하만 가능합니다'); return; }
+    showToast('업로드 중...');
+    const reader = new FileReader();
+    reader.onload = async function(ev) {
+      try {
+        const r = await fetch('/api/plans', {
+          method: 'PATCH',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({id:planId, pdfData:ev.target.result, pdfName:file.name})
+        });
+        if(r.ok){ showToast('의뢰서 업로드 완료!'); await loadAll(); }
+        else showToast('업로드 실패');
+      } catch(err){ showToast('업로드 오류'); }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+};
+
+window.viewPlanPdf = async function(planId, pdfName) {
+  const modal=document.getElementById('pdf-modal');
+  const viewer=document.getElementById('pdf-viewer');
+  const titleEl=document.getElementById('pdf-modal-title');
+  if(!modal||!viewer) return;
+  if(titleEl) titleEl.innerHTML=`<i class="ti ti-file-type-pdf" style="color:#ef4444"></i> ${esc(pdfName||'생산의뢰서')}`;
+  viewer.src='';
+  modal.style.display='flex';
+  showToast('불러오는 중...');
+  try {
+    const r=await fetch(`/api/plans?pdf=${encodeURIComponent(planId)}`);
+    const data=await r.json();
+    if(data.pdfData){ viewer.src=data.pdfData; }
+    else { showToast('PDF를 찾을 수 없습니다'); modal.style.display='none'; }
+  } catch(err){ showToast('오류: '+err.message); modal.style.display='none'; }
+};
+
+window.closePdfModal = function() {
+  const modal=document.getElementById('pdf-modal');
+  const viewer=document.getElementById('pdf-viewer');
+  if(modal) modal.style.display='none';
+  if(viewer) viewer.src='';
+};
 
 // 작업관리 비밀번호
 const WORKER_PW = '0112';
