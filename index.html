@@ -2561,7 +2561,7 @@ if(dpEl)dpEl.textContent=dn.toLocaleString('ko-KR',{hour12:false});
 function dueBadge(p){
   const today=todayISO();
   if(p.status==='shipped') return '<span class="badge badge-green" style="margin-left:4px;font-size:10px">출하완료</span>';
-  if(p.dueDate&&p.dueDate<today&&p.status!=='deleted') return '<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>';
+  if(p.dueDate&&p.dueDate<today&&p.status!=='deleted'&&p.status!=='shipped'&&getPlanStatus(p)!=='done') return '<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>';
   return '';
 }
 
@@ -2871,7 +2871,7 @@ function renderDashboard(){
   const today2 = todayISO();
   const allPlans = activePlans();
   // 납기지연: 납기일 < 오늘, 미완료
-  const delayedCnt = allPlans.filter(p=>p.dueDate && p.dueDate<today2 && p.status!=='shipped').length;
+  const delayedCnt = allPlans.filter(p=>p.dueDate && p.dueDate<today2 && p.status!=='shipped' && getPlanStatus(p)!=='done').length;
   // 납기 초과: 동일
   // 완료: 오늘 완료된 계획
   const doneTodayCnt = allPlans.filter(p=>getPlanStatus(p)==='done' && (p.completedAt===today2 || p.date===today2 || p.createdAt===today2)).length;
