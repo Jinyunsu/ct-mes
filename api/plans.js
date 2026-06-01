@@ -27,12 +27,12 @@ async function ensureColumns() {
   }
 }
 
-function rowToObj(row, includePdf = false) {
+function rowToObj(row) {
   let createdAt = row.created_at_date || '';
   if (!createdAt && row.created_at) {
     try { createdAt = new Date(row.created_at).toISOString().slice(0, 10); } catch(e) {}
   }
-  const obj = {
+  return {
     id: row.id,
     code: row.code || '',
     date: row.date || '',
@@ -48,19 +48,18 @@ function rowToObj(row, includePdf = false) {
     shippedAt: row.shipped_at || '',
     note: row.note || '',
     completedAt: row.completed_at || '',
-    hasPdf: !!(row.pdf_data),
+    hasPdf: !!(row.pdf_data && row.pdf_data.length > 0),
     pdfName: row.pdf_name || '',
   };
-  if (includePdf) obj.pdfData = row.pdf_data || '';
-  return obj;
 }
 
 async function getAllPlans() {
-  // pdf_data 제외하고 조회 (성능)
-  const rows = await sql`SELECT id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, note, status, created_at_date, due_date, shipped_at, completed_at, pdf_name, CASE WHEN pdf_data IS NOT NULL AND pdf_data != '' THEN true ELSE false END as has_pdf FROM plans ORDER BY created_at ASC`;
+  // pdf_data는 크기가 크므로 제외하고 조회
+  const rows = await sql`SELECT id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, note, status, created_at_date, due_date, shipped_at, completed_at, pdf_name, COALESCE(LENGTH(pdf_data), 0) > 0 as has_pdf FROM plans ORDER BY created_at ASC`;
   const result = {};
   for (const row of rows) {
-    result[row.id] = rowToObj({...row, pdf_data: row.has_pdf ? 'HAS_PDF' : ''});
+    const obj = rowToObj({...row, pdf_data: row.has_pdf ? 'HAS' : ''});
+    result[row.id] = obj;
   }
   return result;
 }
@@ -91,10 +90,10 @@ export default async function handler(req, res) {
     await ensureColumns();
 
     // PDF 조회: GET /api/plans?pdf=planId
-    if (req.method === 'GET' && req.query.pdf) {
-      const row = await sql`SELECT pdf_data, pdf_name FROM plans WHERE id = ${req.query.pdf}`;
-      if (!row[0] || !row[0].pdf_data) return res.status(404).json({ error: 'No PDF' });
-      return res.status(200).json({ pdfData: row[0].pdf_data, pdfName: row[0].pdf_name });
+    if (req.method === 'GET' && req.query?.pdf) {
+      const rows = await sql`SELECT pdf_data, pdf_name FROM plans WHERE id = ${req.query.pdf}`;
+      if (!rows[0] || !rows[0].pdf_data) return res.status(404).json({ error: 'No PDF' });
+      return res.status(200).json({ pdfData: rows[0].pdf_data, pdfName: rows[0].pdf_name });
     }
 
     if (req.method === 'GET') {
@@ -116,7 +115,7 @@ export default async function handler(req, res) {
       return res.status(200).json(await getAllPlans());
     }
 
-    // PDF 업로드: PATCH /api/plans  { id, pdfData, pdfName }
+    // PDF 업로드: PATCH { id, pdfData, pdfName }
     if (req.method === 'PATCH') {
       const { id, pdfData, pdfName } = req.body;
       if (!id) return res.status(400).json({ error: 'id required' });
