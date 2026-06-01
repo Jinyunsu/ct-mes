@@ -1147,6 +1147,7 @@ const ADMIN_EMAILS = [
 ];
 let isAdmin = false;
 
+let disableButtons=function(){};
 function applyViewerMode() {
   const style = document.createElement('style');
   style.id = 'viewer-mode-style';
@@ -1160,13 +1161,12 @@ function applyViewerMode() {
   document.head.appendChild(style);
 
   // 버튼들에 viewer-disabled 적용 (DOM 로드 후 + 폴링 후에도 적용되도록 MutationObserver 사용)
-  function disableButtons() {
+  disableButtons = function() {
     const selectors = [
       'button[onclick*="plan-modal"]',
       'button[onclick*="openModal"]',
       'button[onclick*="planAction"]',
       'button[onclick*="openPlanDateModal"]',
-      'button[onclick*="openNoteEdit"]',
       'button[onclick*="openEditPlanModal"]',
       'button[onclick*="deletePlan"]',
       'button[onclick*="shipPlan"]',
@@ -1194,10 +1194,8 @@ function applyViewerMode() {
     });
   }
 
-  // 초기 + DOM 변경 시마다 적용
+  // 초기 적용
   setTimeout(disableButtons, 500);
-  const observer = new MutationObserver(()=>setTimeout(disableButtons, 100));
-  observer.observe(document.body, {childList:true, subtree:true});
 
   // 상단 뷰어 배지
   const tbRight = document.querySelector('.tb-right');
@@ -1363,6 +1361,7 @@ function refreshUI() {
   if(typeof renderPerformance==='function') renderPerformance();
   if(typeof renderWorkerStats==='function') renderWorkerStats();
   if(typeof renderCustomers==='function') renderCustomers();
+  if(!isAdmin && typeof disableButtons==='function') disableButtons();
 }
 // 생산계획 필터 초기화
 (function(){
@@ -1960,6 +1959,7 @@ window.deleteWorker=async function(name){
 /* ══ 비고 인라인 편집 ══ */
 let _noteId = null;
 window.openNoteEdit = function(id) {
+  if(!isAdmin){ showToast('관리자 전용'); return; }
   _noteId = id;
   const p = cachedPlans[id] || Object.values(cachedPlans).find(x=>x.id===id);
   if(!p) return;
