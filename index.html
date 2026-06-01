@@ -1178,6 +1178,7 @@ function applyViewerMode() {
       'button[onclick*="addCodeFromPlan"]',
       'button[onclick*="deleteWorker"]',
       'button[onclick*="openOffday"]',
+      'button[onclick*="openOffdayModal"]',
       'button[onclick*="addWorker"]',
       'button[onclick*="changeResetPassword"]',
       'button[onclick*="openResetModal"]',
@@ -1744,7 +1745,7 @@ window.doAction=async function(code,action,qty=0,partialEnd=false){
         if(safeQty>0){
           const newActQty=already+safeQty;
           const isDone=newActQty>=planQty;
-          const updated={...plan,id:pid,actQty:newActQty,status:isDone?'done':plan.status};
+          const updated={...plan,id:pid,actQty:newActQty,status:isDone?'done':plan.status,completedAt:isDone?todayISO():(plan.completedAt||'')};
           cachedPlans[pid]={...updated};
           const r=await fetch('/api/plans',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)});
           const res=await r.json();
@@ -1887,6 +1888,7 @@ function renderWorkerListPage(){
 
 let _offdayWorker='';
 window.openOffdayModal=function(name){
+  if(!isAdmin){ showToast('관리자 전용'); return; }
   _offdayWorker=name;
   document.getElementById('offday-worker-label').textContent=name;
   document.getElementById('offday-date').value=todayISO();
@@ -1920,6 +1922,7 @@ window.deleteOffday=async function(id){
 };
 
 window.addWorker=async function(){
+  if(!isAdmin){ showToast('관리자 전용'); return; }
   const inp=document.getElementById('new-worker-inp');
   const val=inp.value.trim();
   if(!val){showToast('이름을 입력하세요');return;}
@@ -1928,7 +1931,7 @@ window.addWorker=async function(){
   if(res){cachedNames=res;renderWorkerGrid();renderWorkerListPage();inp.value='';showToast(`[${val}] 추가됨`);}
 };
 window.deleteWorker=async function(name){
-  if(!isAdmin){ showToast('편집 권한이 없습니다'); return; }
+  if(!isAdmin){ showToast('관리자 전용'); return; }
   if(!confirm(`[${name}] 작업자를 삭제하시겠습니까?\n해당 작업자의 상태, 작업 기록, 휴무 데이터도 모두 삭제됩니다.`))return;
   if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
   _pollingLocked=true;
@@ -2229,10 +2232,12 @@ function filterPlanTable({fromPolling=false}={}){
   renderPlanTable(p=>{
     const st=getPlanStatus(p);
     const today=todayISO();
-    // 미달성: 계획일이 오늘보다 이전이고 미완료인 계획은 항상 표시
+    // 미달성(날짜 지난 미완료): 항상 표시
     const isIncomplete=st!=='done'&&st!=='shipped'&&p.status!=='deleted'&&(p.actQty||0)<(p.planQty||1)&&p.date&&p.date<today;
     if(isIncomplete&&!codeVal&&!custVal) return true;
-    if(dateVal&&p.date&&!p.date.startsWith(dateVal))return false;
+    // 완료된 계획은 completedAt 기준으로 월 필터
+    const filterDate=(st==='done'||st==='shipped')&&p.completedAt ? p.completedAt : p.date;
+    if(dateVal&&filterDate&&!filterDate.startsWith(dateVal))return false;
     if(codeVal&&!p.code?.toLowerCase().includes(codeVal))return false;
     if(custVal&&!p.customer?.toLowerCase().includes(custVal))return false;
     return true;
@@ -2386,7 +2391,15 @@ function renderCalendar(){
     const isToday=ds===today;
     const dow=new Date(calYear,calMonth,d).getDay();
     const dc=dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text2)';
-    const dp=activePlans().filter(p=>p.date&&p.date===ds);
+    // 계획일이 ds인 계획 (완료된 건 completedAt 기준)
+    const dp=activePlans().filter(p=>{
+      if(!p.date) return false;
+      const st=getPlanStatus(p);
+      // 완료된 계획은 completedAt 날짜에 표시
+      if((st==='done'||st==='shipped')&&p.completedAt) return p.completedAt===ds;
+      // 미완료 계획은 원래 계획일에 표시
+      return p.date===ds;
+    });
     // 미완료 계획 - 계획일 다음날부터 오늘까지만 이어서 표시
     const prevUnfinished=activePlans().filter(p=>{
       if(!p.date||p.date>=ds)return false;
@@ -2457,8 +2470,8 @@ function getPlanStatus(p){
   const today=todayISO();
   if(p.status==='deleted') return 'deleted';
   if(p.status==='shipped') return 'shipped';
-  if(p.planQty>0 && (p.actQty||0)>=p.planQty) return 'done';
   if(p.status==='done') return 'done';
+  if(p.planQty>0 && (p.actQty||0)>=p.planQty) return 'done';
   if(!p.date) return 'planned';
   // 현재 states 체크 (날짜 무관) - running 있으면 running, running 없고 pause 있으면 paused
   const lc=(p.code||'').toLowerCase();
@@ -3257,7 +3270,19 @@ function renderWorkerStats(){
 // ── 작업일보 ──
 function renderDailyReport(dateStr){
   if(!dateStr)return;
-  const plans=Object.values(cachedPlans).filter(p=>p.date===dateStr);
+  const dateLocal=new Date(dateStr).toLocaleDateString('ko-KR');
+  // 해당 날짜에 로그가 있는 코드 수집
+  const codesWithLogs=new Set();
+  Object.entries(cachedLogs||{}).filter(([w])=>w!=='__system__').forEach(([,wl])=>{
+    Object.values(wl||{}).forEach(l=>{
+      const li=new Date(l.ts).toISOString().slice(0,10);
+      if(l.date===dateLocal||li===dateStr) codesWithLogs.add(l.code?.toLowerCase());
+    });
+  });
+  // 계획일이 dateStr인 계획 + 해당 날짜 로그가 있는 계획 모두 포함
+  const plans=Object.values(cachedPlans).filter(p=>
+    p.date===dateStr || codesWithLogs.has(p.code?.toLowerCase())
+  );
   const wds=['일','월','화','수','목','금','토'];
   const d=new Date(dateStr);
   const titleEl=document.getElementById('daily-title');
