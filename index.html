@@ -2271,7 +2271,7 @@ function renderPlanTable(filterFn, sortDir){
           </span>
         </div>
       </td>
-      <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;color:${p.dueDate&&p.dueDate<todayISO()?'var(--red)':'var(--text3)'}">${p.dueDate||'—'}${(()=>{if(!p.dueDate)return '';const d=Math.floor((new Date(p.shippedAt||p.completedAt||todayISO())-new Date(p.dueDate))/86400000);return d>0?' <span style="font-size:9px;color:var(--red)">(D+'+d+')</span>':'';})()} </td>
+      <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;color:${(()=>{if(!p.dueDate)return 'var(--text3)';const d=Math.floor((new Date(p.shippedAt||p.completedAt||todayISO())-new Date(p.dueDate))/86400000);return d>0?'var(--red)':'var(--text3)';})()}">${p.dueDate||'—'}${(()=>{if(!p.dueDate)return '';const d=Math.floor((new Date(p.shippedAt||p.completedAt||todayISO())-new Date(p.dueDate))/86400000);return d>0?' <span style="font-size:9px;color:var(--red)">(D+'+d+')</span>':'';})()} </td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text);white-space:nowrap">${esc(p.code)}</td>
       <td style="color:var(--text2);white-space:nowrap">${esc(p.productCode||'—')}</td>
       <td style="color:var(--text2);font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.spec||'')}">${esc(p.spec||'—')}</td>
@@ -3903,7 +3903,8 @@ function orPlanRow(p, no) {
   const st = p.shippedAt ? 'shipped' : getPlanStatus(p);
   const shippedInfo = p.shippedAt ? `<div style="font-size:9px;color:var(--text3);margin-top:2px">${p.shippedAt}</div>` : '';
   const today = todayISO();
-  const isOverdue = p.dueDate && p.dueDate < today;
+  const _daysLate=p.dueDate?Math.floor((new Date(st==='shipped'&&p.shippedAt?p.shippedAt:today)-new Date(p.dueDate))/86400000):0;
+  const isOverdue = p.dueDate && _daysLate > 0;
   const dueCls = isOverdue ? 'color:var(--red)' : 'color:var(--text3)';
   const isDeleted = p.status === 'deleted';
   return `<tr${isDeleted?' style="background:rgba(239,68,68,.08);text-decoration:line-through;color:var(--text3)"':''}>
@@ -4064,7 +4065,8 @@ window.renderOrAll = function() {
     const isOverdue=p.dueDate&&p.dueDate<today&&!isDeleted;
     const dueCls=isOverdue?'color:var(--red)':'color:var(--text3)';
     return `<tr${isDeleted?' style="background:rgba(239,68,68,.08);text-decoration:line-through;color:var(--text3)"':''}>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center">${idx+1}</td>
+    const _daysLate2=p.dueDate?Math.floor((new Date(st==='shipped'&&p.shippedAt?p.shippedAt:today)-new Date(p.dueDate))/86400000):0;
+    const isOverdue=p.dueDate&&_daysLate2>0&&!isDeleted;
       <td style="font-size:12px;color:var(--text3)">${p.date||'—'}</td>
       <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
       <td>${esc(p.customer||'—')}</td>
