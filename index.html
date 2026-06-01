@@ -330,7 +330,10 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   <div style="background:var(--bg2);border-radius:16px;width:90vw;max-width:900px;height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="font-size:15px;font-weight:700;color:var(--text)" id="pdf-modal-title"><i class="ti ti-file-type-pdf" style="color:#ef4444"></i> 생산의뢰서</div>
-      <button onclick="closePdfModal()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;padding:4px"><i class="ti ti-x"></i></button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button id="pdf-replace-btn" onclick="replacePlanPdf()" style="display:none;padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:12px;cursor:pointer;font-family:var(--font)"><i class="ti ti-upload" style="font-size:12px"></i> 교체</button>
+        <button onclick="closePdfModal()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;padding:4px"><i class="ti ti-x"></i></button>
+      </div>
     </div>
     <iframe id="pdf-viewer" style="flex:1;border:none;width:100%"></iframe>
   </div>
@@ -3114,8 +3117,10 @@ window.viewPlanPdf = async function(planId, pdfName) {
   const modal=document.getElementById('pdf-modal');
   const viewer=document.getElementById('pdf-viewer');
   const titleEl=document.getElementById('pdf-modal-title');
+  const replaceBtn=document.getElementById('pdf-replace-btn');
   if(!modal||!viewer) return;
   if(titleEl) titleEl.innerHTML=`<i class="ti ti-file-type-pdf" style="color:#ef4444"></i> ${esc(pdfName||'생산의뢰서')}`;
+  if(replaceBtn) { replaceBtn.style.display=isAdmin?'block':'none'; replaceBtn.dataset.planId=planId; }
   viewer.src='';
   modal.style.display='flex';
   showToast('불러오는 중...');
@@ -3125,6 +3130,14 @@ window.viewPlanPdf = async function(planId, pdfName) {
     if(data.pdfData){ viewer.src=data.pdfData; }
     else { showToast('PDF를 찾을 수 없습니다'); modal.style.display='none'; }
   } catch(err){ showToast('오류: '+err.message); modal.style.display='none'; }
+};
+
+window.replacePlanPdf = function() {
+  const replaceBtn=document.getElementById('pdf-replace-btn');
+  const planId=replaceBtn?.dataset.planId;
+  if(!planId){ showToast('오류: planId 없음'); return; }
+  window.uploadPlanPdf(planId);
+  closePdfModal();
 };
 
 window.closePdfModal = function() {
