@@ -2236,8 +2236,8 @@ function filterPlanTable({fromPolling=false}={}){
     const isIncomplete=st!=='done'&&st!=='shipped'&&p.status!=='deleted'&&(p.actQty||0)<(p.planQty||1)&&p.date&&p.date<today;
     if(isIncomplete&&!codeVal&&!custVal) return true;
     // 완료된 계획은 completedAt 기준으로 월 필터
-    const filterDate=(st==='done'||st==='shipped')&&p.completedAt ? p.completedAt : p.date;
-    if(dateVal&&filterDate&&!filterDate.startsWith(dateVal))return false;
+    const effectiveDate=(st==='done'||st==='shipped')?(p.completedAt||p.date):p.date;
+    if(dateVal&&effectiveDate&&!effectiveDate.startsWith(dateVal))return false;
     if(codeVal&&!p.code?.toLowerCase().includes(codeVal))return false;
     if(custVal&&!p.customer?.toLowerCase().includes(custVal))return false;
     return true;
@@ -2395,20 +2395,19 @@ function renderCalendar(){
     const dp=activePlans().filter(p=>{
       if(!p.date) return false;
       const st=getPlanStatus(p);
-      // 완료된 계획은 completedAt 날짜에 표시
-      if((st==='done'||st==='shipped')&&p.completedAt) return p.completedAt===ds;
-      // 미완료 계획은 원래 계획일에 표시
+      const effectiveCompletedAt = p.completedAt || (p.status==='done'?p.date:'');
+      if((st==='done'||st==='shipped')) return effectiveCompletedAt===ds;
       return p.date===ds;
     });
     // 미완료 계획 - 계획일 다음날부터 오늘까지만 이어서 표시
     const prevUnfinished=activePlans().filter(p=>{
       if(!p.date||p.date>=ds)return false;
       if(ds>today)return false;
-      // completedAt이 ds 이전이면 이미 완료 - 이월 안 함
-      if(p.completedAt&&p.completedAt<ds)return false;
-      if(getPlanStatus(p)==='shipped'||p.status==='done')return false;
-      // completedAt이 없고 actQty>=planQty면 완료 - 이월 안 함
-      if(!p.completedAt&&(p.actQty||0)>=(p.planQty||1))return false;
+      const effectiveCompletedAt = p.completedAt || (p.status==='done'?p.date:'');
+      // 완료일이 ds 이전이면 이미 완료 - 이월 안 함
+      if(effectiveCompletedAt&&effectiveCompletedAt<ds)return false;
+      if(getPlanStatus(p)==='shipped'||p.status==='done'&&!p.completedAt&&p.date<ds)return false;
+      if(!p.completedAt&&(p.actQty||0)>=(p.planQty||1)&&p.date<ds)return false;
       return true;
     });
     const allDp=[...prevUnfinished.map(p=>({...p,_carry:true})),...dp];
@@ -2418,9 +2417,8 @@ function renderCalendar(){
     const fullTooltip=[tooltipLines,offTooltip].filter(Boolean).join('\n');
     const ph=allDp.slice(0,3).map(p=>{
       const c=getCalColor(p.code);
-      // 해당 날짜 기준 상태: completedAt이 ds 이하일 때만 완료
-      const isDone=(getPlanStatus(p)==='done'||p.status==='done')&&p.completedAt&&p.completedAt<=ds;
-      // carry(이월)인데 아직 완료 안 됐으면 미달성 색
+      const effectiveCompletedAt = p.completedAt || (p.status==='done'?p.date:'');
+      const isDone=(getPlanStatus(p)==='done'||p.status==='done')&&effectiveCompletedAt&&effectiveCompletedAt<=ds;
       const isCarryFailed=p._carry&&!isDone;
       const bg=isDone?'rgba(34,197,94,.25)':isCarryFailed?'rgba(239,68,68,.15)':c.bg;
       const color=isDone?'var(--green)':isCarryFailed?'var(--red)':c.text;
