@@ -2995,38 +2995,6 @@ function renderProgress(){
     }
   }
 
-// 작업관리 비밀번호
-const WORKER_PW = '0112';
-let workerPwUnlocked = false;
-
-window.goWorkerMenu = function() {
-  const isMobile = window.innerWidth<=768 || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-  if(isMobile){ location.reload(); return; }
-  if(isAdmin || workerPwUnlocked){ go('worker'); return; }
-  // PC + 비관리자 → 비밀번호 모달
-  const modal = document.getElementById('worker-pw-modal');
-  if(modal){ modal.style.display='flex'; setTimeout(()=>document.getElementById('worker-pw-input')?.focus(),100); }
-};
-window.checkWorkerPw = function() {
-  const input = document.getElementById('worker-pw-input');
-  const err = document.getElementById('worker-pw-err');
-  if(input?.value === WORKER_PW){
-    workerPwUnlocked = true;
-    closeWorkerPwModal();
-    go('worker');
-  } else {
-    if(err) err.textContent = '비밀번호가 틀렸습니다';
-    if(input){ input.value=''; input.focus(); }
-  }
-};
-window.closeWorkerPwModal = function() {
-  const modal = document.getElementById('worker-pw-modal');
-  if(modal) modal.style.display='none';
-  const input = document.getElementById('worker-pw-input');
-  const err = document.getElementById('worker-pw-err');
-  if(input) input.value='';
-  if(err) err.textContent='';
-};
 
 
   const wtbl=document.querySelectorAll('#page-progress .tbl-wrap')[1]?.querySelector('tbody');
@@ -3095,6 +3063,40 @@ window.closeWorkerPwModal = function() {
   }
 
 }
+
+// 작업관리 비밀번호
+const WORKER_PW = '0112';
+let workerPwUnlocked = false;
+
+window.goWorkerMenu = function() {
+  const isMobile = window.innerWidth<=768 || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  if(isMobile){ location.reload(); return; }
+  if(isAdmin || workerPwUnlocked){ go('worker'); return; }
+  // PC + 비관리자 → 비밀번호 모달
+  const modal = document.getElementById('worker-pw-modal');
+  if(modal){ modal.style.display='flex'; setTimeout(()=>document.getElementById('worker-pw-input')?.focus(),100); }
+};
+window.checkWorkerPw = function() {
+  const input = document.getElementById('worker-pw-input');
+  const err = document.getElementById('worker-pw-err');
+  if(input?.value === WORKER_PW){
+    workerPwUnlocked = true;
+    closeWorkerPwModal();
+    go('worker');
+  } else {
+    if(err) err.textContent = '비밀번호가 틀렸습니다';
+    if(input){ input.value=''; input.focus(); }
+  }
+};
+window.closeWorkerPwModal = function() {
+  const modal = document.getElementById('worker-pw-modal');
+  if(modal) modal.style.display='none';
+  const input = document.getElementById('worker-pw-input');
+  const err = document.getElementById('worker-pw-err');
+  if(input) input.value='';
+  if(err) err.textContent='';
+};
+
 
 // ── 실적분석 ──
 function renderPerformance(){
