@@ -847,7 +847,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="background:rgba(239,68,68,.06);border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(239,68,68,.2)"><div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:4px">취소건수</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="dk-cancel">—</div></div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
+        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th><th>의뢰서</th></tr></thead>
         <tbody id="or-day-tbody"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
@@ -904,7 +904,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
+        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th><th>의뢰서</th></tr></thead>
         <tbody id="or-all-tbody"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
@@ -3915,6 +3915,7 @@ function orPlanRow(p, no) {
     <td style="font-size:11px;color:var(--text3);max-width:120px">${esc(p.remark||'—')}</td>
     <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
     <td style="font-size:11px;${p.status==='deleted'?'color:var(--red);font-weight:700':'color:var(--text3)'}">${p.status==='deleted'?'계획취소':'—'}</td>
+    <td style="text-align:center">${p.hasPdf?`<button onclick="viewPlanPdf('${esc(p.id)}','${esc(p.pdfName||p.code)}')" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:2px" title="의뢰서 보기: ${esc(p.pdfName||'')}"><i class="ti ti-file-type-pdf" style="font-size:16px"></i></button>`:'<span style="color:var(--border)"><i class="ti ti-file-type-pdf" style="font-size:16px"></i></span>'}</td>
   </tr>`;
 }
 
@@ -4018,7 +4019,7 @@ window.renderOrMonth = function() {
     const dr=dtp>0?Math.round(dta/dtp*100):0;
     return `<div style="margin-bottom:14px">
       <div class="tbl-wrap"><table>
-        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
+        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th><th>의뢰서</th></tr></thead>
         <tbody>${dp.map((p,i)=>orPlanRow(p,i+1)).join('')}</tbody>
       </table></div>
     </div>`;
@@ -4069,6 +4070,7 @@ window.renderOrAll = function() {
       <td style="font-size:11px;color:var(--text3);max-width:120px">${esc(p.remark||'—')}</td>
       <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
       <td style="font-size:11px;${p.status==='deleted'?'color:var(--red);font-weight:700':'color:var(--text3)'}">${p.status==='deleted'?'계획취소':'—'}</td>
+      <td style="text-align:center">${p.hasPdf?`<button onclick="viewPlanPdf('${esc(p.id)}','${esc(p.pdfName||p.code)}')" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:2px" title="${esc(p.pdfName||'')}"><i class="ti ti-file-type-pdf" style="font-size:16px"></i></button>`:'<span style="color:var(--border)"><i class="ti ti-file-type-pdf" style="font-size:16px"></i></span>'}</td>
     </tr>`;
   }).join('');
 };
