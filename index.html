@@ -2395,19 +2395,25 @@ function renderCalendar(){
     const dp=activePlans().filter(p=>{
       if(!p.date) return false;
       const st=getPlanStatus(p);
-      const effectiveCompletedAt = p.completedAt || (p.status==='done'?p.date:'');
-      if((st==='done'||st==='shipped')) return effectiveCompletedAt===ds;
+      if(st==='done'||st==='shipped'){
+        // completedAt 있으면 그 날짜, 없으면 계획일(date)에 표시
+        const doneDate = p.completedAt || p.date;
+        return doneDate===ds;
+      }
       return p.date===ds;
     });
     // 미완료 계획 - 계획일 다음날부터 오늘까지만 이어서 표시
     const prevUnfinished=activePlans().filter(p=>{
       if(!p.date||p.date>=ds)return false;
       if(ds>today)return false;
-      const effectiveCompletedAt = p.completedAt || (p.status==='done'?p.date:'');
-      // 완료일이 ds 이전이면 이미 완료 - 이월 안 함
-      if(effectiveCompletedAt&&effectiveCompletedAt<ds)return false;
-      if(getPlanStatus(p)==='shipped'||p.status==='done'&&!p.completedAt&&p.date<ds)return false;
-      if(!p.completedAt&&(p.actQty||0)>=(p.planQty||1)&&p.date<ds)return false;
+      const st=getPlanStatus(p);
+      if(st==='shipped')return false;
+      // completedAt이 있고 ds보다 이전이면 완료됨 - 이월 안 함
+      if(p.completedAt&&p.completedAt<ds)return false;
+      // completedAt이 없는데 status=done이면 계획일(date)에 완료로 간주 - 이월 안 함
+      if(!p.completedAt&&st==='done')return false;
+      // actQty >= planQty인데 completedAt 없으면 완료 - 이월 안 함
+      if(!p.completedAt&&(p.actQty||0)>=(p.planQty||1))return false;
       return true;
     });
     const allDp=[...prevUnfinished.map(p=>({...p,_carry:true})),...dp];
@@ -2417,8 +2423,8 @@ function renderCalendar(){
     const fullTooltip=[tooltipLines,offTooltip].filter(Boolean).join('\n');
     const ph=allDp.slice(0,3).map(p=>{
       const c=getCalColor(p.code);
-      const effectiveCompletedAt = p.completedAt || (p.status==='done'?p.date:'');
-      const isDone=(getPlanStatus(p)==='done'||p.status==='done')&&effectiveCompletedAt&&effectiveCompletedAt<=ds;
+      const doneDate = p.completedAt || (!p.completedAt&&p.status==='done'?p.date:'');
+      const isDone=(getPlanStatus(p)==='done'||p.status==='done')&&doneDate&&doneDate<=ds;
       const isCarryFailed=p._carry&&!isDone;
       const bg=isDone?'rgba(34,197,94,.25)':isCarryFailed?'rgba(239,68,68,.15)':c.bg;
       const color=isDone?'var(--green)':isCarryFailed?'var(--red)':c.text;
@@ -3356,7 +3362,10 @@ function renderDailyReport(dateStr){
     else ctbl.innerHTML=plans.map(p=>{
       const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
       const hrs=calcWorkHours(p.code);
-      const st=getPlanStatus(p);
+      // 해당 날짜 기준 상태: completedAt이 dateStr이면 완료, 아니면 미완료
+      const doneDate=p.completedAt||(p.status==='done'&&!p.completedAt?p.date:'');
+      const isDoneOnDate=doneDate&&doneDate===dateStr;
+      const st=isDoneOnDate?'done':(getPlanStatus(p)==='done'||getPlanStatus(p)==='shipped')?'failed':getPlanStatus(p);
       return `<tr>
         <td style="font-weight:700;font-family:var(--mono)">${esc(p.code)}</td>
         <td style="font-size:11px;color:var(--text2)">${esc(p.productCode||'—')}</td>
