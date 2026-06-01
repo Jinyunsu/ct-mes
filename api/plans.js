@@ -16,6 +16,7 @@ async function ensureColumns() {
     ['code', 'TEXT DEFAULT \'\''],
     ['date', 'TEXT DEFAULT \'\''],
     ['note', 'TEXT DEFAULT \'\''],
+    ['completed_at', 'TEXT DEFAULT \'\''],
   ];
   for (const [col, type] of cols) {
     try {
@@ -44,6 +45,7 @@ function rowToObj(row) {
     dueDate: row.due_date || '',
     shippedAt: row.shipped_at || '',
     note: row.note || '',
+    completedAt: row.completed_at || '',
   };
 }
 
@@ -56,7 +58,7 @@ async function getAllPlans() {
 
 async function upsertPlan(p, id) {
   await sql`
-    INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, note, status, created_at_date, due_date, shipped_at)
+    INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, note, status, created_at_date, due_date, shipped_at, completed_at)
     VALUES (
       ${id},
       ${p.code || ''},
@@ -71,7 +73,8 @@ async function upsertPlan(p, id) {
       ${p.status || 'planned'},
       ${p.createdAt || ''},
       ${p.dueDate || ''},
-      ${p.shippedAt || ''}
+      ${p.shippedAt || ''},
+      ${p.completedAt || ''}
     )
     ON CONFLICT (id) DO UPDATE SET
       code = EXCLUDED.code,
@@ -85,7 +88,8 @@ async function upsertPlan(p, id) {
       note = EXCLUDED.note,
       status = EXCLUDED.status,
       due_date = EXCLUDED.due_date,
-      shipped_at = EXCLUDED.shipped_at
+      shipped_at = EXCLUDED.shipped_at,
+      completed_at = EXCLUDED.completed_at
   `;
 }
 
@@ -120,7 +124,6 @@ export default async function handler(req, res) {
     if (req.method === 'DELETE') {
       const { id } = req.body;
       if (!id) return res.status(400).json({ error: 'id required' });
-      // 소프트 삭제: status를 'deleted'로 변경
       await sql`UPDATE plans SET status = 'deleted' WHERE id = ${id}`;
       return res.status(200).json(await getAllPlans());
     }
