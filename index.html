@@ -3082,7 +3082,7 @@ function renderPerformance(){
         if(clipped[i][0]<=last[1]) last[1]=Math.max(last[1],clipped[i][1]);
         else wMerged.push([...clipped[i]]);
       }
-      const ms=wMerged.reduce((s,[a,b])=>s+(b-a),0);
+      const wMs=wMerged.reduce((s,[a,b])=>s+(b-a),0);
       return {name:n,ms};
       const codes=new Set(wlogs.map(l=>l.code));
       const allIntervals=[];
