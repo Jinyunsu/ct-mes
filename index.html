@@ -926,7 +926,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <div class="card-title"><i class="ti ti-package"></i> 작업코드별 현황</div>
           <div class="tbl-wrap">
             <table>
-              <thead><tr><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획</th><th>실적</th><th>달성률</th><th>상태</th></tr></thead>
+              <thead><tr><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획</th><th>실적</th><th>달성률</th><th>작업시간</th><th>상태</th></tr></thead>
               <tbody><tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr></tbody>
             </table>
           </div>
@@ -3592,7 +3592,7 @@ function renderDailyReport(dateStr){
   if(ctbl){
     const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'미달성'};
     const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-red'};
-    if(!plans.length)ctbl.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr>';
+    if(!plans.length)ctbl.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr>';
     else ctbl.innerHTML=plans.map(p=>{
       const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
       const hrs=calcWorkHoursForDate(p.code, dateStr);
