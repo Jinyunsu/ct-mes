@@ -4066,7 +4066,8 @@ window.renderOrAll = function() {
     const isOverdue=p.dueDate&&_daysLate2>0&&!isDeleted;
     const dueCls=isOverdue?"color:var(--red)":"color:var(--text3)";
     return `<tr${isDeleted?' style="background:rgba(239,68,68,.08);text-decoration:line-through;color:var(--text3)"':""}>
-      <td style="font-weight:700;color:var(--accent)">${esc(p.code)}</td>
+      <td style="font-size:12px;color:var(--text3);text-align:center">${idx+1}</td>
+      <td style="font-size:12px;color:var(--text3)">${p.date||"—"}</td>
       <td>${esc(p.customer||'—')}</td>
       <td style="font-size:11px;color:var(--text3)">${esc(p.productCode||'—')}</td>
       <td style="font-size:11px;color:var(--text3)">${esc(p.spec||'—')}</td>
