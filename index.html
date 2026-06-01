@@ -587,10 +587,10 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="ph-right"><div class="chip chip-live">실시간</div></div>
       </div>
       <div class="metrics">
-        <div class="metric green"><div class="metric-label">작업중 코드</div><div class="metric-value">—</div></div>
-        <div class="metric blue"><div class="metric-label">투입 인원</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">명</span></div></div>
-        <div class="metric"><div class="metric-label">오늘 완료</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">코드</span></div></div>
-        <div class="metric amber"><div class="metric-label">지연 작업</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">건</span></div></div>
+        <div class="metric green"><div class="metric-label">작업중 코드</div><div class="metric-value" id="pr-running">—</div></div>
+        <div class="metric blue"><div class="metric-label">투입 인원</div><div class="metric-value-row"><div class="metric-value" id="pr-workers">—</div><span class="metric-sub">명</span></div></div>
+        <div class="metric"><div class="metric-label">오늘 완료</div><div class="metric-value-row"><div class="metric-value" id="pr-done">—</div><span class="metric-sub">코드</span></div></div>
+        <div class="metric amber"><div class="metric-label">지연 작업</div><div class="metric-value-row"><div class="metric-value" id="pr-delayed">—</div><span class="metric-sub">건</span></div></div>
       </div>
       <div class="card" style="margin-bottom:14px">
         <div class="card-title"><i class="ti ti-activity"></i> 실시간 작업현황</div>
@@ -632,12 +632,12 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
       </div>
       <div class="metrics">
-        <div class="metric blue"><div class="metric-label">완료 코드 수</div><div class="metric-value">—</div></div>
-        <div class="metric green"><div class="metric-label">총 생산수량</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">EA</span></div></div>
-        <div class="metric amber"><div class="metric-label">평균 달성률</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">%</span></div></div>
-        <div class="metric cyan"><div class="metric-label">총 작업시간</div><div class="metric-value-row"><div class="metric-value">—</div></div></div>
-        <div class="metric purple"><div class="metric-label">시간당 생산성</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">EA/hr</span></div></div>
-        <div class="metric red"><div class="metric-label">불량률</div><div class="metric-value-row"><div class="metric-value">—</div><span class="metric-sub">%</span></div></div>
+        <div class="metric blue"><div class="metric-label">완료 코드 수</div><div class="metric-value" id="pf-done">—</div></div>
+        <div class="metric green"><div class="metric-label">총 생산수량</div><div class="metric-value-row"><div class="metric-value" id="pf-qty">—</div><span class="metric-sub">EA</span></div></div>
+        <div class="metric amber"><div class="metric-label">평균 달성률</div><div class="metric-value-row"><div class="metric-value" id="pf-rate">—</div><span class="metric-sub">%</span></div></div>
+        <div class="metric cyan"><div class="metric-label">총 작업시간</div><div class="metric-value-row"><div class="metric-value" id="pf-hours">—</div></div></div>
+        <div class="metric purple"><div class="metric-label">시간당 생산성</div><div class="metric-value-row"><div class="metric-value" id="pf-productivity">—</div><span class="metric-sub">EA/hr</span></div></div>
+        <div class="metric red"><div class="metric-label">불량률</div><div class="metric-value-row"><div class="metric-value" id="pf-defect">—</div><span class="metric-sub">%</span></div></div>
       </div>
       <div class="grid-2" style="margin-bottom:14px">
         <div class="card">
@@ -648,7 +648,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="card">
           <div class="card-title"><i class="ti ti-users"></i> 작업자별 투입시간</div>
-          <div style="height:160px;display:flex;align-items:flex-end;gap:4px;padding:10px 0" id="chart-worker">
+          <div style="height:160px;display:flex;align-items:flex-end;gap:2px;padding:10px 0" id="chart-worker">
             <div style="text-align:center;width:100%;color:var(--text3);font-size:12px;align-self:center">데이터 없음</div>
           </div>
         </div>
@@ -1570,14 +1570,22 @@ window.addCode = function(){
 
 
 // 특정 작업자의 특정 코드 작업시간 계산
-function calcWorkerCodeHours(worker, code){
-  const wlogs = Object.values(cachedLogs?.[worker]||{}).filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
+function calcWorkerCodeHours(worker, code, dateStr){
+  let wlogs = Object.values(cachedLogs?.[worker]||{}).filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
+  // 날짜 필터
+  if(dateStr){
+    const dateLocal=new Date(dateStr).toLocaleDateString('ko-KR');
+    wlogs=wlogs.filter(l=>{
+      const li=new Date(l.ts).toISOString().slice(0,10);
+      return li===dateStr||(l.date&&l.date===dateLocal);
+    });
+  }
   let intervals=[], st=null;
   wlogs.forEach(l=>{
     if(l.action==='start') st=l.ts;
     else if((l.action==='end'||l.action==='pause')&&st){ intervals.push([st,l.ts]); st=null; }
   });
-  if(st) intervals.push([st,Date.now()]);
+  if(st&&!dateStr) intervals.push([st,Date.now()]);
   const total=intervals.reduce((s,[a,b])=>s+(b-a),0);
   return total;
 }
@@ -2794,12 +2802,14 @@ function renderProgress(){
   });
 
   // 메트릭
-  const mels=document.querySelectorAll('#page-progress .metric-value');
-  if(mels[0])mels[0].textContent=runningCodes.size||'0';
-  if(mels[1])mels[1].textContent=runningWorkers.size||'0';
-  const donePlans=plans.filter(p=>p.date===today&&p.status==='done');
-  if(mels[2])mels[2].textContent=donePlans.length||'0';
-
+  // 메트릭
+  const el2pr=id=>document.getElementById(id);
+  if(el2pr('pr-running')) el2pr('pr-running').textContent=runningCodes.size||'0';
+  if(el2pr('pr-workers')) el2pr('pr-workers').textContent=runningWorkers.size||'0';
+  const donePlans=plans.filter(p=>(p.completedAt===today||p.date===today)&&getPlanStatus(p)==='done');
+  if(el2pr('pr-done')) el2pr('pr-done').textContent=donePlans.length||'0';
+  const delayedCnt2=plans.filter(p=>p.dueDate&&p.dueDate<today&&getPlanStatus(p)!=='shipped').length;
+  if(el2pr('pr-delayed')) el2pr('pr-delayed').textContent=delayedCnt2||'0';
   // 실시간 진행현황 테이블
   const ptbl=document.querySelector('#page-progress .tbl-wrap tbody');
   if(ptbl){
@@ -2846,7 +2856,7 @@ function renderProgress(){
         const hasLog=Object.values(cachedLogs||{}).some(wl=>Object.values(wl||{}).some(l=>l.code===code&&new Date(l.ts).toISOString().slice(0,10)===today));
         if(plan.date!==today && !hasLog) return;
         const pct=plan.planQty>0?Math.round((plan.actQty||0)/plan.planQty*100):0;
-        const hrs=calcWorkHours(code);
+        const hrs=calcWorkHoursForDate(code, today);
         const wCnt=getWorkerCountForCode(code);
         const recentLog=Object.values(cachedLogs||{}).flatMap(wl=>Object.values(wl||{})).filter(l=>l.code===code).sort((a,b)=>b.ts-a.ts)[0];
         const st=getPlanStatus(plan);
@@ -2869,7 +2879,7 @@ function renderProgress(){
         if(!activeCodes.has(p.code)){
           const st=getPlanStatus(p);
           const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
-          const hrs=calcWorkHours(p.code);
+          const hrs=calcWorkHoursForDate(p.code, today);
           const wCnt=getWorkerCountForCode(p.code);
           rows.push(`<tr>
             <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
@@ -2988,7 +2998,7 @@ function renderPerformance(){
   if(pfEl('pf-qty'))pfEl('pf-qty').textContent=totalAct.toLocaleString();
   if(pfEl('pf-rate'))pfEl('pf-rate').textContent=rate;
   if(pfEl('pf-hours'))pfEl('pf-hours').textContent=perfTotalMs>0?fmtElapsed(perfTotalMs):'—';
-  if(pfEl('pf-prod'))pfEl('pf-prod').textContent=productivity;
+  if(pfEl('pf-productivity'))pfEl('pf-prod').textContent=productivity;
   if(pfEl('pf-defect'))pfEl('pf-defect').textContent='—';
 
   // 고객사별 현황
@@ -3070,14 +3080,14 @@ function renderPerformance(){
       }
       const ms=merged.reduce((s,[a,b])=>s+(b-a),0);
       return {name:n,ms};
-    }).filter(w=>w.ms>0).sort((a,b)=>b.ms-a.ms);
-    if(!workerData.length){
+    }).sort((a,b)=>b.ms-a.ms);
+    if(!workerData.length||workerData.every(w=>w.ms===0)){
       cwEl.innerHTML='<div style="text-align:center;width:100%;color:var(--text3);font-size:12px;align-self:center">데이터 없음</div>';
     }else{
       const maxMs=workerData[0].ms||1;
       cwEl.innerHTML=workerData.map(w=>{
         const pct=Math.round(w.ms/maxMs*100);
-        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
           <div style="font-size:9px;color:var(--text3);font-family:var(--mono)">${fmtElapsed(w.ms)}</div>
           <div style="width:100%;background:var(--accent);border-radius:3px 3px 0 0;height:${Math.max(pct,2)}%;opacity:.7;min-height:4px"></div>
           <div style="font-size:9px;color:var(--text3);white-space:nowrap;overflow:hidden;max-width:40px;text-overflow:ellipsis">${esc(w.name)}</div>
@@ -3488,7 +3498,7 @@ function renderDailyReport(dateStr){
       const codes=new Set(dayLogs.map(l=>l.code).filter(c=>_planCodes.has(c?.toLowerCase())));
       codes.forEach(code=>{
         if(!codeWorkerMap[code]) codeWorkerMap[code]={};
-        const ms=calcWorkerCodeHours(worker,code);
+        const ms=calcWorkerCodeHours(worker,code,dateStr);
         const qty=dayLogs.filter(l=>l.code===code&&l.action==='end').reduce((s,l)=>s+(l.qty||0),0);
         codeWorkerMap[code][worker]={ms,qty};
       });
