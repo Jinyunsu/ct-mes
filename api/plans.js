@@ -54,12 +54,10 @@ function rowToObj(row) {
 }
 
 async function getAllPlans() {
-  // pdf_data는 크기가 크므로 제외하고 조회
-  const rows = await sql`SELECT id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, note, status, created_at_date, due_date, shipped_at, completed_at, pdf_name, COALESCE(LENGTH(pdf_data), 0) > 0 as has_pdf FROM plans ORDER BY created_at ASC`;
+  const rows = await sql`SELECT * FROM plans ORDER BY created_at ASC`;
   const result = {};
   for (const row of rows) {
-    const obj = rowToObj({...row, pdf_data: row.has_pdf ? 'HAS' : ''});
-    result[row.id] = obj;
+    result[row.id] = rowToObj(row);
   }
   return result;
 }
