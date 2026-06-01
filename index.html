@@ -2879,7 +2879,7 @@ function renderDashboard(){
   const el2=id=>document.getElementById(id);
   const runningCnt = allPlans.filter(p=>getPlanStatus(p)==='running').length;
   const waitingCnt = allPlans.filter(p=>getPlanStatus(p)==='waiting').length;
-  const shippedCnt = allPlans.filter(p=>p.status==='shipped'&&(p.shippedAt?.slice(0,10)===today2||p.completedAt===today2)).length;
+  const shippedCnt = allPlans.filter(p=>{if(p.status!=='shipped')return false;const sa=p.shippedAt||'';return sa===today2||sa.startsWith(today2)||sa.replace(/\./g,'-').replace(/\s/g,'').slice(0,10)===today2||new Date(sa).toISOString().slice(0,10)===today2;}).length;
   const cancelCnt = Object.values(cachedPlans).filter(p=>p.status==='deleted'&&(p.createdAt===today2||p.date===today2)).length;
   if(el2('d-alert-delayed')) el2('d-alert-delayed').textContent=delayedCnt;
   if(el2('d-alert-waiting')) el2('d-alert-waiting').textContent=waitingCnt;
