@@ -687,7 +687,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <div class="card-title"><i class="ti ti-package"></i> 작업코드별 실적 요약</div>
           <div class="tbl-wrap">
             <table>
-              <thead><tr><th>작업코드</th><th>계획</th><th>실적</th><th>달성률</th><th>상태</th></tr></thead>
+              <thead><tr><th>작업코드</th><th>계획</th><th>실적</th><th>달성률</th><th>작업시간</th><th>상태</th></tr></thead>
               <tbody><tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr></tbody>
             </table>
           </div>
@@ -1302,12 +1302,12 @@ function allOrderPlans(){ return Object.values(cachedPlans).sort((a,b)=>(a.creat
 
 let cachedNames=[], cachedStates={}, cachedPlans={}, cachedLogs={}, cachedOffdays={};
 let pollingTimer=null;
-// 정렬/필터 상태
-let planSortDir='asc', planStatusFilter='all';
-let dashSortDir='asc', dashStatusFilter='all';
-let progressSortDir='asc', progressStatusFilter='all';
-let orDaySortDir='asc', orMonthSortDir='asc', orAllSortDir='asc';
-let orDayStatusFilter='all', orMonthStatusFilter='all';
+// 정렬/필터 상태 (window에 등록해야 toggleSort/setStatusFilter에서 접근 가능)
+window.planSortDir='asc'; window.planStatusFilter='all';
+window.dashSortDir='asc'; window.dashStatusFilter='all';
+window.progressSortDir='asc'; window.progressStatusFilter='all';
+window.orDaySortDir='asc'; window.orMonthSortDir='asc'; window.orAllSortDir='asc';
+window.orDayStatusFilter='all'; window.orMonthStatusFilter='all';
 let _pollingLocked=false; // 작업 중 폴링 잠금
 
 // 각 API 응답 오는 대로 즉시 렌더링 (초기 로딩 속도 최적화)
