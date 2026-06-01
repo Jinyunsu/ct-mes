@@ -3061,18 +3061,18 @@ function renderPerformance(){
       const monthStart=new Date(monthStr+'-01').getTime();
       const monthEnd=new Date(new Date(monthStr+'-01').setMonth(new Date(monthStr+'-01').getMonth()+1)).getTime();
       const workerCodes=new Set(wlogs.map(l=>l.code));
-      const allIntervals=[];
+      const wIntervals=[];
       workerCodes.forEach(code=>{
         const entries=wlogs.filter(l=>l.code===code);
         let st=null;
         entries.forEach(l=>{
           if(l.action==='start') st=l.ts;
-          else if((l.action==='end'||l.action==='pause')&&st){allIntervals.push([st,l.ts]);st=null;}
+          else if((l.action==='end'||l.action==='pause')&&st){wIntervals.push([st,l.ts]);st=null;}
         });
-        if(st) allIntervals.push([st,Date.now()]);
+        if(st) wIntervals.push([st,Date.now()]);
       });
       // 이달에 겹치는 구간만 계산
-      const clipped=allIntervals
+      const clipped=wIntervals
         .filter(([a,b])=>b>monthStart&&a<monthEnd)
         .map(([a,b])=>[Math.max(a,monthStart),Math.min(b,monthEnd)]);
       clipped.sort((a,b)=>a[0]-b[0]);
