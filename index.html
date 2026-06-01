@@ -3480,8 +3480,8 @@ function renderCustomers(){
                 const hrs=calcWorkHours(p.code);
                 const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
                 const st=getPlanStatus(p);
-                const stColors={done:'var(--green)',running:'var(--accent)',paused:'var(--amber)',failed:'var(--red)',waiting:'var(--text3)',planned:'var(--text3)'};
-                const stLabels={done:'완료',running:'작업중',paused:'정지',failed:'미달성',waiting:'대기',planned:'예정'};
+                const stColors={done:'var(--green)',running:'var(--accent)',paused:'var(--amber)',failed:'var(--red)',waiting:'var(--text3)',planned:'var(--text3)',shipped:'var(--green)',deleted:'var(--red)'};
+                const stLabels={done:'완료',running:'작업중',paused:'정지',failed:'미달성',waiting:'대기',planned:'예정',shipped:'출하완료',deleted:'계획취소'};
                 return `<tr style="border-bottom:1px solid var(--border)">
                   <td style="padding:6px 8px;font-family:var(--mono);font-weight:700;color:var(--accent)">${esc(p.code)}</td>
                   <td style="padding:6px 8px;color:var(--text2)">${esc(p.productCode||'—')}</td>
