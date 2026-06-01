@@ -3697,7 +3697,7 @@ function renderDailyReport(dateStr){
         <td style="font-family:var(--mono);color:var(--green)">${(p.actQty||0).toLocaleString()}</td>
         <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px">${pct}%</span></div></td>
         <td style="font-size:11px;font-family:var(--mono)">${hrs.str}</td>
-        <td style="white-space:nowrap"><span class="badge ${sc[st]}">${sm[st]}</span>${dueBadge(p)}</td>
+        <td style="white-space:nowrap"><span class="badge ${sc[st]}">${sm[st]}</span></td>
       </tr>`;
     }).join('');
   }
