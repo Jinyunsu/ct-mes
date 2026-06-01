@@ -3053,72 +3053,53 @@ function renderPerformance(){
 
   // 작업자별 투입시간 차트 (이달 기준)
   const cwEl=document.getElementById('chart-worker');
-  if(cwEl){
-    const workerData=cachedNames.map(n=>{
-      const logKey=Object.keys(cachedLogs||{}).find(k=>k.toLowerCase()===n.toLowerCase())||n;
-      // 전체 로그 (달 필터 없이) - 구간 계산 후 이달 겹치는 것만 합산
-      const wlogs=Object.values(cachedLogs?.[logKey]||{}).sort((a,b)=>a.ts-b.ts);
-      const monthStart=new Date(monthStr+'-01').getTime();
-      const monthEnd=new Date(new Date(monthStr+'-01').setMonth(new Date(monthStr+'-01').getMonth()+1)).getTime();
-      const workerCodes=new Set(wlogs.map(l=>l.code));
-      const wIntervals=[];
-      workerCodes.forEach(code=>{
-        const entries=wlogs.filter(l=>l.code===code);
-        let st=null;
-        entries.forEach(l=>{
-          if(l.action==='start') st=l.ts;
-          else if((l.action==='end'||l.action==='pause')&&st){wIntervals.push([st,l.ts]);st=null;}
-        });
-        if(st) wIntervals.push([st,Date.now()]);
+  if(cwEl) renderWorkerChart(cwEl, monthStr);
+}
+
+function renderWorkerChart(cwEl, monthStr){
+  const monthStart=new Date(monthStr+'-01').getTime();
+  const nextMonth=new Date(monthStr+'-01');
+  nextMonth.setMonth(nextMonth.getMonth()+1);
+  const monthEnd=nextMonth.getTime();
+  const workerData=cachedNames.map(function(n){
+    const logKey=Object.keys(cachedLogs||{}).find(function(k){return k.toLowerCase()===n.toLowerCase();})||n;
+    const allLogs=Object.values(cachedLogs?.[logKey]||{}).sort(function(a,b){return a.ts-b.ts;});
+    const codeSet=new Set(allLogs.map(function(l){return l.code;}));
+    var ivs=[];
+    codeSet.forEach(function(code){
+      var ents=allLogs.filter(function(l){return l.code===code;});
+      var startTs=null;
+      ents.forEach(function(l){
+        if(l.action==='start') startTs=l.ts;
+        else if((l.action==='end'||l.action==='pause')&&startTs){ivs.push([startTs,l.ts]);startTs=null;}
       });
-      // 이달에 겹치는 구간만 계산
-      const wClipped=wIntervals
-        .filter(([a,b])=>b>monthStart&&a<monthEnd)
-        .map(([a,b])=>[Math.max(a,monthStart),Math.min(b,monthEnd)]);
-      wClipped.sort((a,b)=>a[0]-b[0]);
-      const wMerged=wClipped.length?[[...clipped[0]]]:[];
-      for(let i=1;i<wClipped.length;i++){
-        const last=merged[wMerged.length-1];
-        if(clipped[i][0]<=last[1]) last[1]=Math.max(last[1],clipped[i][1]);
-        else wMerged.push([...clipped[i]]);
-      }
-      const wMs=wMerged.reduce((s,[a,b])=>s+(b-a),0);
-      return {name:n,ms};
-      const codes=new Set(wlogs.map(l=>l.code));
-      const allIntervals=[];
-      codes.forEach(code=>{
-        const entries=wlogs.filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
-        let st=null;
-        entries.forEach(l=>{
-          if(l.action==='start') st=l.ts;
-          else if((l.action==='end'||l.action==='pause')&&st){allIntervals.push([st,l.ts]);st=null;}
-        });
-        if(st) allIntervals.push([st,Date.now()]);
-      });
-      allIntervals.sort((a,b)=>a[0]-b[0]);
-      const merged=allIntervals.length?[[...allIntervals[0]]]:[];
-      for(let i=1;i<allIntervals.length;i++){
-        const last=merged[merged.length-1];
-        if(allIntervals[i][0]<=last[1]) last[1]=Math.max(last[1],allIntervals[i][1]);
-        else merged.push([...allIntervals[i]]);
-      }
-      const ms=merged.reduce((s,[a,b])=>s+(b-a),0);
-      return {name:n,ms};
-    }).sort((a,b)=>b.ms-a.ms);
-    if(!workerData.length||workerData.every(w=>w.ms===0)){
-      cwEl.innerHTML='<div style="text-align:center;width:100%;color:var(--text3);font-size:12px;align-self:center">데이터 없음</div>';
-    }else{
-      const maxMs=workerData[0].ms||1;
-      cwEl.innerHTML=workerData.map(w=>{
-        const pct=Math.round(w.ms/maxMs*100);
-        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
-          <div style="font-size:9px;color:var(--text3);font-family:var(--mono)">${fmtElapsed(w.ms)}</div>
-          <div style="width:100%;background:var(--accent);border-radius:3px 3px 0 0;height:${Math.max(pct,2)}%;opacity:.7;min-height:4px"></div>
-          <div style="font-size:9px;color:var(--text3);white-space:nowrap;overflow:hidden;max-width:40px;text-overflow:ellipsis">${esc(w.name)}</div>
-        </div>`;
-      }).join('');
+      if(startTs) ivs.push([startTs,Date.now()]);
+    });
+    var clipped=ivs.filter(function(iv){return iv[1]>monthStart&&iv[0]<monthEnd;})
+      .map(function(iv){return [Math.max(iv[0],monthStart),Math.min(iv[1],monthEnd)];});
+    clipped.sort(function(a,b){return a[0]-b[0];});
+    var mrgd=clipped.length?[[clipped[0][0],clipped[0][1]]]:[];
+    for(var i=1;i<clipped.length;i++){
+      var last=mrgd[mrgd.length-1];
+      if(clipped[i][0]<=last[1]) last[1]=Math.max(last[1],clipped[i][1]);
+      else mrgd.push([clipped[i][0],clipped[i][1]]);
     }
-  }}
+    var totalMs=mrgd.reduce(function(s,iv){return s+(iv[1]-iv[0]);},0);
+    return {name:n,ms:totalMs};
+  }).sort(function(a,b){return b.ms-a.ms;});
+  if(!workerData.length){
+    cwEl.innerHTML='<div style="text-align:center;width:100%;color:var(--text3);font-size:12px;align-self:center">데이터 없음</div>';
+    return;
+  }
+  var maxMs=workerData[0].ms||1;
+  cwEl.innerHTML=workerData.map(function(w){
+    var pct=Math.round(w.ms/maxMs*100);
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">'+
+      '<div style="font-size:9px;color:var(--text3);font-family:var(--mono)">'+fmtElapsed(w.ms)+'</div>'+
+      '<div style="width:100%;background:var(--accent);border-radius:3px 3px 0 0;height:'+Math.max(pct,2)+'%;opacity:.7;min-height:4px"></div>'+
+      '<div style="font-size:9px;color:var(--text3);white-space:nowrap;overflow:hidden;max-width:40px;text-overflow:ellipsis">'+esc(w.name)+'</div>'+
+      '</div>';
+  }).join('');
 
 // ── 고객사 현황 ──
 let custTab = 'all';
