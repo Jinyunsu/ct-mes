@@ -3060,9 +3060,9 @@ function renderPerformance(){
       const wlogs=Object.values(cachedLogs?.[logKey]||{}).sort((a,b)=>a.ts-b.ts);
       const monthStart=new Date(monthStr+'-01').getTime();
       const monthEnd=new Date(new Date(monthStr+'-01').setMonth(new Date(monthStr+'-01').getMonth()+1)).getTime();
-      const codes=new Set(wlogs.map(l=>l.code));
+      const workerCodes=new Set(wlogs.map(l=>l.code));
       const allIntervals=[];
-      codes.forEach(code=>{
+      workerCodes.forEach(code=>{
         const entries=wlogs.filter(l=>l.code===code);
         let st=null;
         entries.forEach(l=>{
