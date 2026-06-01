@@ -513,32 +513,36 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
       </div>
       <div class="grid-2" style="margin-top:14px">
-        <div class="card" style="display:flex;flex-direction:column;max-height:400px">
+        <div class="card" style="display:flex;flex-direction:column">
           <div class="card-title" style="flex-shrink:0"><i class="ti ti-bell"></i> 알림·이슈</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0;overflow-y:auto">
-            <div style="background:var(--bg3);border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;flex:1;min-height:0">
+            <div style="background:var(--bg3);border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:3px">
               <div style="font-size:10px;color:#a78bfa;font-weight:700">납기지연</div>
-              <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:22px;font-weight:900;font-family:var(--mono);color:#a78bfa" id="d-alert-delayed">0</span><span style="font-size:12px;font-weight:700;color:var(--text)">건</span></div>
+              <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:20px;font-weight:900;font-family:var(--mono);color:#a78bfa" id="d-alert-delayed">0</span><span style="font-size:11px;font-weight:700;color:var(--text)">건</span></div>
             </div>
-            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:3px">
               <div style="font-size:10px;color:var(--text3);font-weight:700">작업 대기</div>
-              <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--text3)" id="d-alert-waiting">0</span><span style="font-size:12px;font-weight:700;color:var(--text)">건</span></div>
+              <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--text3)" id="d-alert-waiting">0</span><span style="font-size:11px;font-weight:700;color:var(--text)">건</span></div>
             </div>
-            <div style="background:var(--bg3);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">
+            <div style="background:var(--bg3);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:3px">
               <div style="font-size:10px;color:var(--accent);font-weight:700">작업 중</div>
-              <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--accent)" id="d-alert-running">0</span><span style="font-size:12px;font-weight:700;color:var(--text)">건</span></div>
+              <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--accent)" id="d-alert-running">0</span><span style="font-size:11px;font-weight:700;color:var(--text)">건</span></div>
             </div>
-            <div style="background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">
+            <div style="background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:3px">
               <div style="font-size:10px;color:var(--amber);font-weight:700">작업 중 정지</div>
-              <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--amber)" id="d-alert-paused">0</span><span style="font-size:12px;font-weight:700;color:var(--text)">건</span></div>
+              <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--amber)" id="d-alert-paused">0</span><span style="font-size:11px;font-weight:700;color:var(--text)">건</span></div>
             </div>
-            <div style="background:var(--bg3);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">
+            <div style="background:var(--bg3);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:3px">
               <div style="font-size:10px;color:var(--green);font-weight:700">완료 작업</div>
-              <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--green)" id="d-alert-done">0</span><span style="font-size:12px;font-weight:700;color:var(--text)">건</span></div>
+              <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--green)" id="d-alert-done">0</span><span style="font-size:11px;font-weight:700;color:var(--text)">건</span></div>
             </div>
-            <div style="background:var(--bg3);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">
-              <div style="font-size:10px;color:var(--red);font-weight:700">계획 취소</div>
-              <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--red)" id="d-alert-cancel">0</span><span style="font-size:12px;font-weight:700;color:var(--text)">건</span></div>
+            <div style="background:var(--bg3);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:3px">
+              <div style="font-size:10px;color:var(--green);font-weight:700">출하 완료</div>
+              <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--green)" id="d-alert-shipped">0</span><span style="font-size:11px;font-weight:700;color:var(--text)">건</span></div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:3px;grid-column:span 3">
+              <div style="font-size:10px;color:var(--red);font-weight:700">계획 취소 <span style="font-size:9px;color:var(--text3);font-weight:400">(오늘 기준)</span></div>
+              <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--red)" id="d-alert-cancel">0</span><span style="font-size:11px;font-weight:700;color:var(--text)">건</span></div>
             </div>
           </div>
         </div>
@@ -2556,6 +2560,7 @@ if(dpEl)dpEl.textContent=dn.toLocaleString('ko-KR',{hour12:false});
 // 납기지연 배지 헬퍼
 function dueBadge(p){
   const today=todayISO();
+  if(p.status==='shipped') return '<span class="badge badge-green" style="margin-left:4px;font-size:10px">출하완료</span>';
   if(p.dueDate&&p.dueDate<today&&p.status!=='deleted') return '<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>';
   return '';
 }
@@ -2874,6 +2879,7 @@ function renderDashboard(){
   const el2=id=>document.getElementById(id);
   const runningCnt = allPlans.filter(p=>getPlanStatus(p)==='running').length;
   const waitingCnt = allPlans.filter(p=>getPlanStatus(p)==='waiting').length;
+  const shippedCnt = allPlans.filter(p=>p.status==="shipped").length;
   const cancelCnt = Object.values(cachedPlans).filter(p=>p.status==='deleted'&&(p.createdAt===today2||p.date===today2)).length;
   if(el2('d-alert-delayed')) el2('d-alert-delayed').textContent=delayedCnt;
   if(el2('d-alert-waiting')) el2('d-alert-waiting').textContent=waitingCnt;
