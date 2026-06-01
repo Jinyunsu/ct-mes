@@ -17,6 +17,8 @@ async function ensureColumns() {
     ['date', 'TEXT DEFAULT \'\''],
     ['note', 'TEXT DEFAULT \'\''],
     ['completed_at', 'TEXT DEFAULT \'\''],
+    ['pdf_data', 'TEXT DEFAULT \'\''],
+    ['pdf_name', 'TEXT DEFAULT \'\''],
   ];
   for (const [col, type] of cols) {
     try {
@@ -25,12 +27,12 @@ async function ensureColumns() {
   }
 }
 
-function rowToObj(row) {
+function rowToObj(row, includePdf = false) {
   let createdAt = row.created_at_date || '';
   if (!createdAt && row.created_at) {
     try { createdAt = new Date(row.created_at).toISOString().slice(0, 10); } catch(e) {}
   }
-  return {
+  const obj = {
     id: row.id,
     code: row.code || '',
     date: row.date || '',
@@ -46,13 +48,20 @@ function rowToObj(row) {
     shippedAt: row.shipped_at || '',
     note: row.note || '',
     completedAt: row.completed_at || '',
+    hasPdf: !!(row.pdf_data),
+    pdfName: row.pdf_name || '',
   };
+  if (includePdf) obj.pdfData = row.pdf_data || '';
+  return obj;
 }
 
 async function getAllPlans() {
-  const rows = await sql`SELECT * FROM plans ORDER BY created_at ASC`;
+  // pdf_data 제외하고 조회 (성능)
+  const rows = await sql`SELECT id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, note, status, created_at_date, due_date, shipped_at, completed_at, pdf_name, CASE WHEN pdf_data IS NOT NULL AND pdf_data != '' THEN true ELSE false END as has_pdf FROM plans ORDER BY created_at ASC`;
   const result = {};
-  for (const row of rows) result[row.id] = rowToObj(row);
+  for (const row of rows) {
+    result[row.id] = rowToObj({...row, pdf_data: row.has_pdf ? 'HAS_PDF' : ''});
+  }
   return result;
 }
 
@@ -60,47 +69,33 @@ async function upsertPlan(p, id) {
   await sql`
     INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, note, status, created_at_date, due_date, shipped_at, completed_at)
     VALUES (
-      ${id},
-      ${p.code || ''},
-      ${p.date || ''},
-      ${Number(p.planQty) || 0},
-      ${Number(p.actQty) || 0},
-      ${p.productCode || ''},
-      ${p.spec || ''},
-      ${p.customer || ''},
-      ${p.remark || ''},
-      ${p.note || ''},
-      ${p.status || 'planned'},
-      ${p.createdAt || ''},
-      ${p.dueDate || ''},
-      ${p.shippedAt || ''},
-      ${p.completedAt || ''}
+      ${id}, ${p.code||''}, ${p.date||''}, ${Number(p.planQty)||0}, ${Number(p.actQty)||0},
+      ${p.productCode||''}, ${p.spec||''}, ${p.customer||''}, ${p.remark||''}, ${p.note||''},
+      ${p.status||'planned'}, ${p.createdAt||''}, ${p.dueDate||''}, ${p.shippedAt||''}, ${p.completedAt||''}
     )
     ON CONFLICT (id) DO UPDATE SET
-      code = EXCLUDED.code,
-      date = EXCLUDED.date,
-      plan_qty = EXCLUDED.plan_qty,
-      act_qty = EXCLUDED.act_qty,
-      product_code = EXCLUDED.product_code,
-      spec = EXCLUDED.spec,
-      customer = EXCLUDED.customer,
-      remark = EXCLUDED.remark,
-      note = EXCLUDED.note,
-      status = EXCLUDED.status,
-      due_date = EXCLUDED.due_date,
-      shipped_at = EXCLUDED.shipped_at,
-      completed_at = EXCLUDED.completed_at
+      code=EXCLUDED.code, date=EXCLUDED.date, plan_qty=EXCLUDED.plan_qty, act_qty=EXCLUDED.act_qty,
+      product_code=EXCLUDED.product_code, spec=EXCLUDED.spec, customer=EXCLUDED.customer,
+      remark=EXCLUDED.remark, note=EXCLUDED.note, status=EXCLUDED.status,
+      due_date=EXCLUDED.due_date, shipped_at=EXCLUDED.shipped_at, completed_at=EXCLUDED.completed_at
   `;
 }
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
     await ensureColumns();
+
+    // PDF 조회: GET /api/plans?pdf=planId
+    if (req.method === 'GET' && req.query.pdf) {
+      const row = await sql`SELECT pdf_data, pdf_name FROM plans WHERE id = ${req.query.pdf}`;
+      if (!row[0] || !row[0].pdf_data) return res.status(404).json({ error: 'No PDF' });
+      return res.status(200).json({ pdfData: row[0].pdf_data, pdfName: row[0].pdf_name });
+    }
 
     if (req.method === 'GET') {
       return res.status(200).json(await getAllPlans());
@@ -119,6 +114,14 @@ export default async function handler(req, res) {
       if (!id) return res.status(400).json({ error: 'id required' });
       await upsertPlan(p, id);
       return res.status(200).json(await getAllPlans());
+    }
+
+    // PDF 업로드: PATCH /api/plans  { id, pdfData, pdfName }
+    if (req.method === 'PATCH') {
+      const { id, pdfData, pdfName } = req.body;
+      if (!id) return res.status(400).json({ error: 'id required' });
+      await sql`UPDATE plans SET pdf_data = ${pdfData||''}, pdf_name = ${pdfName||''} WHERE id = ${id}`;
+      return res.status(200).json({ ok: true });
     }
 
     if (req.method === 'DELETE') {
