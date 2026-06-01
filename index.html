@@ -2327,7 +2327,7 @@ function filterPlanTable({fromPolling=false}={}){
     if(planStatusFilter!=='all'&&st!==planStatusFilter) return false;
     const isIncomplete=st!=='done'&&st!=='shipped'&&p.status!=='deleted'&&(p.actQty||0)<(p.planQty||1)&&p.date&&p.date<today;
     if(isIncomplete&&!codeVal&&!custVal&&planStatusFilter==='all') return true;
-    const effectiveDate=(st==='done'||st==='shipped')?(p.completedAt||p.date):p.date;
+    const effectiveDate=st==='shipped'?(p.shippedAt||p.completedAt||p.date):st==='done'?(p.completedAt||p.date):p.date;
     if(dateVal&&effectiveDate&&!effectiveDate.startsWith(dateVal))return false;
     if(codeVal&&!p.code?.toLowerCase().includes(codeVal))return false;
     if(custVal&&!p.customer?.toLowerCase().includes(custVal))return false;
