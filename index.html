@@ -2777,7 +2777,7 @@ function renderDashboard(){
   const delayedCnt = allPlans.filter(p=>p.dueDate && p.dueDate<today2 && p.status!=='shipped').length;
   // 납기 초과: 동일
   // 완료: 오늘 완료된 계획
-  const doneTodayCnt = allPlans.filter(p=>getPlanStatus(p)==='done' && (p.date===today2 || p.createdAt===today2)).length;
+  const doneTodayCnt = allPlans.filter(p=>getPlanStatus(p)==='done' && (p.completedAt===today2 || p.date===today2 || p.createdAt===today2)).length;
   const pausedCnt = allPlans.filter(p=>getPlanStatus(p)==='paused').length;
   const el2=id=>document.getElementById(id);
   const runningCnt = allPlans.filter(p=>getPlanStatus(p)==='running').length;
