@@ -2403,9 +2403,12 @@ function renderCalendar(){
     // 미완료 계획 - 계획일 다음날부터 오늘까지만 이어서 표시
     const prevUnfinished=activePlans().filter(p=>{
       if(!p.date||p.date>=ds)return false;
-      if(ds>today)return false; // 미래 날짜에는 표시 안 함
-      if(getPlanStatus(p)==='done'||getPlanStatus(p)==='shipped'||p.status==='done')return false;
-      if((p.actQty||0)>=(p.planQty||1))return false;
+      if(ds>today)return false;
+      // completedAt이 ds 이전이면 이미 완료 - 이월 안 함
+      if(p.completedAt&&p.completedAt<ds)return false;
+      if(getPlanStatus(p)==='shipped'||p.status==='done')return false;
+      // completedAt이 없고 actQty>=planQty면 완료 - 이월 안 함
+      if(!p.completedAt&&(p.actQty||0)>=(p.planQty||1))return false;
       return true;
     });
     const allDp=[...prevUnfinished.map(p=>({...p,_carry:true})),...dp];
@@ -2415,10 +2418,13 @@ function renderCalendar(){
     const fullTooltip=[tooltipLines,offTooltip].filter(Boolean).join('\n');
     const ph=allDp.slice(0,3).map(p=>{
       const c=getCalColor(p.code);
-      const isDone=getPlanStatus(p)==='done'||p.status==='done';
-      const bg=isDone?'rgba(34,197,94,.25)':p._carry?'rgba(239,68,68,.15)':c.bg;
-      const color=isDone?'var(--green)':p._carry?'var(--red)':c.text;
-      const border=p._carry?'1px dashed var(--red)':'none';
+      // 해당 날짜 기준 상태: completedAt이 ds 이하일 때만 완료
+      const isDone=(getPlanStatus(p)==='done'||p.status==='done')&&p.completedAt&&p.completedAt<=ds;
+      // carry(이월)인데 아직 완료 안 됐으면 미달성 색
+      const isCarryFailed=p._carry&&!isDone;
+      const bg=isDone?'rgba(34,197,94,.25)':isCarryFailed?'rgba(239,68,68,.15)':c.bg;
+      const color=isDone?'var(--green)':isCarryFailed?'var(--red)':c.text;
+      const border=isCarryFailed?'1px dashed var(--red)':'none';
       const prefix=p._carry?'↩ ':'';
       return `<div class="cal-chip" style="background:${bg};color:${color};border:${border}" title="${p.code}${p.customer?' ('+p.customer+')':''} | ${p.planQty||0}EA">${prefix}${p.code}${p.customer?` (${p.customer})`:''}</div>`;
     }).join('');
