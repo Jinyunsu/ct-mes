@@ -3055,11 +3055,35 @@ function renderPerformance(){
   const cwEl=document.getElementById('chart-worker');
   if(cwEl){
     const workerData=cachedNames.map(n=>{
-      // 이달 로그만 계산
-      const wlogs=Object.values(cachedLogs?.[n]||{}).filter(l=>{
-        const li=new Date(l.ts).toISOString().slice(0,7);
-        return li===monthStr;
+      const logKey=Object.keys(cachedLogs||{}).find(k=>k.toLowerCase()===n.toLowerCase())||n;
+      // 전체 로그 (달 필터 없이) - 구간 계산 후 이달 겹치는 것만 합산
+      const wlogs=Object.values(cachedLogs?.[logKey]||{}).sort((a,b)=>a.ts-b.ts);
+      const monthStart=new Date(monthStr+'-01').getTime();
+      const monthEnd=new Date(new Date(monthStr+'-01').setMonth(new Date(monthStr+'-01').getMonth()+1)).getTime();
+      const codes=new Set(wlogs.map(l=>l.code));
+      const allIntervals=[];
+      codes.forEach(code=>{
+        const entries=wlogs.filter(l=>l.code===code);
+        let st=null;
+        entries.forEach(l=>{
+          if(l.action==='start') st=l.ts;
+          else if((l.action==='end'||l.action==='pause')&&st){allIntervals.push([st,l.ts]);st=null;}
+        });
+        if(st) allIntervals.push([st,Date.now()]);
       });
+      // 이달에 겹치는 구간만 계산
+      const clipped=allIntervals
+        .filter(([a,b])=>b>monthStart&&a<monthEnd)
+        .map(([a,b])=>[Math.max(a,monthStart),Math.min(b,monthEnd)]);
+      clipped.sort((a,b)=>a[0]-b[0]);
+      const merged=clipped.length?[[...clipped[0]]]:[];
+      for(let i=1;i<clipped.length;i++){
+        const last=merged[merged.length-1];
+        if(clipped[i][0]<=last[1]) last[1]=Math.max(last[1],clipped[i][1]);
+        else merged.push([...clipped[i]]);
+      }
+      const ms=merged.reduce((s,[a,b])=>s+(b-a),0);
+      return {name:n,ms};
       const codes=new Set(wlogs.map(l=>l.code));
       const allIntervals=[];
       codes.forEach(code=>{
