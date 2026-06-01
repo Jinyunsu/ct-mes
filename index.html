@@ -2582,7 +2582,16 @@ function calcWorkHoursForDate(code, dateStr){
 function renderDashboard(){
   const today=todayISO();
   const plans=activePlans();
-  const todayPlans=plans.filter(p=>p.date&&p.date<=today&&(getPlanStatus(p)!=='done'&&getPlanStatus(p)!=='shipped'||p.date===today));
+  const todayPlans=plans.filter(p=>{
+    if(!p.date) return false;
+    const st=getPlanStatus(p);
+    // 오늘 완료된 계획 (completedAt이 오늘)
+    if((st==='done'||st==='shipped')&&p.completedAt===today) return true;
+    // 오늘 계획일 또는 미완료 이월
+    if(p.date===today) return true;
+    if(p.date<today&&st!=='done'&&st!=='shipped') return true;
+    return false;
+  });
   const totalPlanQty=todayPlans.reduce((s,p)=>s+(p.planQty||0),0);
   const totalActQty=todayPlans.reduce((s,p)=>s+(p.actQty||0),0);
   const rate=totalPlanQty>0?Math.round(totalActQty/totalPlanQty*100):0;
