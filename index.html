@@ -2523,21 +2523,6 @@ function dueBadge(p){
 }
 
 // 필터 UI 헬퍼
-function sortFilterBar(sortVar, statusVar, onSort, onStatus, showStatus=true){
-  const statusOpts=['all','running','paused','planned','waiting','done','failed','shipped','deleted'];
-  const statusLabels={all:'전체',running:'작업중',paused:'정지',planned:'예정',waiting:'대기',done:'완료',failed:'미달성',shipped:'출하완료',deleted:'계획취소'};
-  const sortBtn=`<button onclick="${onSort}" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font)">
-    <i class="ti ti-arrows-sort" style="font-size:12px"></i> 날짜 ${sortVar==='asc'?'▲':'▼'}
-  </button>`;
-  const statusSel=showStatus?`<select onchange="${onStatus}" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer">
-    ${statusOpts.map(s=>`<option value="${s}" ${statusVar===s?'selected':''}>${statusLabels[s]}</option>`).join('')}
-  </select>`:'';
-  return `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${sortBtn}${statusSel}</div>`;
-}
-
-function applySort(plans, sortDir){ return sortDir==='asc'?[...plans].sort((a,b)=>(a.date||'')>(b.date||'')?1:-1):[...plans].sort((a,b)=>(a.date||'')<(b.date||'')?1:-1); }
-function applyStatusFilter(plans, statusFilter){ if(statusFilter==='all') return plans; return plans.filter(p=>getPlanStatus(p)===statusFilter); }
-
 function toggleSort(varName, renderFn){ window[varName]=window[varName]==='asc'?'desc':'asc'; renderFn(); }
 function setStatusFilter(varName, val, renderFn){ window[varName]=val; renderFn(); }
 
