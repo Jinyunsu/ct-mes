@@ -2531,19 +2531,30 @@ function getLogsForCode(code){
 }
 
 function calcWorkHours(code){
+  return calcWorkHoursForDate(code, null); // 날짜 없으면 전체
+}
+
+function calcWorkHoursForDate(code, dateStr){
   const intervals=[];
+  const dateLocal=dateStr?new Date(dateStr).toLocaleDateString('ko-KR'):null;
   Object.entries(cachedLogs||{}).forEach(([worker, wlogs])=>{
-    // 삭제된 작업자 로그 무시
     if(!cachedNames.some(n=>n.toLowerCase()===worker.toLowerCase())) return;
-    const entries=Object.values(wlogs||{}).filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
+    let entries=Object.values(wlogs||{}).filter(l=>l.code===code).sort((a,b)=>a.ts-b.ts);
+    // 날짜 필터: 해당 날짜 로그만
+    if(dateStr){
+      entries=entries.filter(l=>{
+        const li=new Date(l.ts).toISOString().slice(0,10);
+        return li===dateStr||(l.date&&l.date===dateLocal);
+      });
+    }
     let st=null;
     entries.forEach(l=>{
       if(l.action==='start') st=l.ts;
       else if((l.action==='end'||l.action==='pause')&&st){ intervals.push([st,l.ts]); st=null; }
     });
-    if(st){
+    if(st&&!dateStr){
       const isStillRunning=Object.values(cachedStates||{}).some(codes=>codes[code]&&codes[code].action==='start');
-      if(isStillRunning) intervals.push([st,Date.now()]); // 현재 작업중
+      if(isStillRunning) intervals.push([st,Date.now()]);
     }
   });
   if(!intervals.length) return {ms:0,str:'—'};
@@ -3358,7 +3369,7 @@ function renderDailyReport(dateStr){
     if(!plans.length)ctbl.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr>';
     else ctbl.innerHTML=plans.map(p=>{
       const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
-      const hrs=calcWorkHours(p.code);
+      const hrs=calcWorkHoursForDate(p.code, dateStr);
       // 해당 날짜 기준 상태: completedAt이 dateStr이면 완료, 아니면 실제 상태
       const isDoneOnDate = p.completedAt && p.completedAt===dateStr;
       const currentSt = getPlanStatus(p);
