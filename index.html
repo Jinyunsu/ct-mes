@@ -2874,12 +2874,12 @@ function renderDashboard(){
   const delayedCnt = allPlans.filter(p=>p.dueDate && p.dueDate<today2 && p.status!=='shipped' && getPlanStatus(p)!=='done').length;
   // 납기 초과: 동일
   // 완료: 오늘 완료된 계획
-  const doneTodayCnt = allPlans.filter(p=>getPlanStatus(p)==='done' && (p.completedAt===today2 || p.date===today2 || p.createdAt===today2)).length;
+  const doneTodayCnt = allPlans.filter(p=>getPlanStatus(p)==='done' && (p.completedAt===today2||p.date===today2||p.createdAt===today2)).length;
   const pausedCnt = allPlans.filter(p=>getPlanStatus(p)==='paused').length;
   const el2=id=>document.getElementById(id);
   const runningCnt = allPlans.filter(p=>getPlanStatus(p)==='running').length;
   const waitingCnt = allPlans.filter(p=>getPlanStatus(p)==='waiting').length;
-  const shippedCnt = allPlans.filter(p=>p.status==="shipped").length;
+  const shippedCnt = allPlans.filter(p=>p.status==='shipped'&&(p.shippedAt?.slice(0,10)===today2||p.completedAt===today2)).length;
   const cancelCnt = Object.values(cachedPlans).filter(p=>p.status==='deleted'&&(p.createdAt===today2||p.date===today2)).length;
   if(el2('d-alert-delayed')) el2('d-alert-delayed').textContent=delayedCnt;
   if(el2('d-alert-waiting')) el2('d-alert-waiting').textContent=waitingCnt;
@@ -3848,8 +3848,9 @@ function calcComply(plans){
   if(!withDue.length) return 100;
   const onTime=withDue.filter(p=>{
     const st=getPlanStatus(p);
-    if(st==='done'||st==='shipped') return p.dueDate>=p.date; // 완료된 것
-    return p.dueDate>=today; // 아직 납기 안 지난 것
+    if(st==='shipped') return p.dueDate>=(p.shippedAt?.slice(0,10)||today); // 출하일 기준
+    if(st==='done') return p.dueDate>=(p.completedAt||p.date); // 완료일 기준
+    return p.dueDate>=today; // 미완료: 납기 아직 안 지난 것
   });
   return Math.round(onTime.length/withDue.length*100);
 }
