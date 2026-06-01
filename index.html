@@ -544,7 +544,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>등록일</th><th>생산계획일</th><th>납기일</th><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입<br>인원</th><th>작업<br>시간</th><th>상태</th><th>요청사항</th><th style="width:100px">관리</th></tr></thead>
+            <thead><tr><th>등록일</th><th>생산계획일</th><th>납기일</th><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>요청사항</th><th style="width:100px">관리</th></tr></thead>
             <tbody id="plan-tbl"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
           </table>
         </div>
@@ -2198,7 +2198,7 @@ function renderPlanTable(filterFn){
       <td><div style="display:flex;align-items:center;gap:6px"><div class="prog-bar" style="width:50px"><div class="prog-fill ${pct>=100?'green':pct>=50?'':'red'}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px;font-family:var(--mono);font-weight:700;color:${pct>=100?'var(--green)':pct>=50?'var(--text)':'var(--red)'}">${pct}%</span></div></td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${wCnt}명</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${typeof wHrs==='object'?wHrs.str:wHrs}</td>
-      <td style="white-space:nowrap"><span class="badge ${sc[getPlanStatus(p)]||'badge-gray'}">${sm[getPlanStatus(p)]||'예정'}</span>${dueBadge(p)}</td>
+      <td style="white-space:nowrap"><span class="badge ${sc[getPlanStatus(p)]||'badge-gray'}" style="font-size:10px;padding:2px 5px">${sm[getPlanStatus(p)]||'예정'}</span>${dueBadge(p)}</td>
       <td style="color:var(--text3);font-size:11px">${esc(p.remark||'—')}</td>
       <td style="white-space:nowrap">${(()=>{
         const _st=getPlanStatus(p);
