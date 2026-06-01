@@ -2486,7 +2486,11 @@ function renderCalendar(){
     const dp=activePlans().filter(p=>{
       if(!p.date) return false;
       const st=getPlanStatus(p);
-      if(st==='done'||st==='shipped'){
+      if(st==='shipped'){
+        const shippedDate = p.shippedAt?.slice(0,10) || p.completedAt || p.date;
+        return shippedDate===ds;
+      }
+      if(st==='done'){
         const doneDate = p.completedAt || p.date;
         return doneDate===ds;
       }
@@ -2498,6 +2502,8 @@ function renderCalendar(){
       if(ds>today)return false;
       const st=getPlanStatus(p);
       if(st==='shipped')return false;
+      // shippedAt이 ds 이전이면 이월 안 함
+      if(p.shippedAt&&p.shippedAt.slice(0,10)<ds)return false;
       // completedAt이 있고 ds 이전이면 완료 - 이월 안 함
       if(p.completedAt&&p.completedAt<ds)return false;
       // completedAt 없는 기존 done: 계획일(date)에 완료된 것으로 간주 - 이월 안 함
