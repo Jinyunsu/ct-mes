@@ -463,7 +463,15 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       </div>
       <div class="grid-2">
         <div class="card">
-          <div class="card-title"><i class="ti ti-chart-line"></i> 작업코드별 진행현황</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div class="card-title" style="margin:0"><i class="ti ti-chart-line"></i> 작업코드별 진행현황</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button id="dash-sort-btn" onclick="toggleSort('dashSortDir',renderDashboard)" style="display:flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:11px"></i> 날짜 ▲</button>
+              <select id="dash-status-filter" onchange="setStatusFilter('dashStatusFilter',this.value,renderDashboard)" style="padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer">
+                <option value="all">전체 상태</option><option value="running">작업중</option><option value="paused">정지</option><option value="waiting">대기</option><option value="planned">예정</option><option value="done">완료</option><option value="failed">미달성</option>
+              </select>
+            </div>
+          </div>
           <div class="tbl-wrap">
             <table style="font-size:11px">
               <thead><tr style="font-size:10px;white-space:normal;word-break:keep-all;text-align:center"><th>작업코드</th><th>제품코드</th><th>생산계획일</th><th>고객사</th><th>투입인원</th><th>작업시간</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th></tr></thead>
@@ -535,11 +543,15 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       <div class="card" style="margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div class="card-title" style="margin:0"><i class="ti ti-list-details"></i> 생산계획 목록</div>
-          <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <button class="btn btn-primary btn-sm" onclick="openModal('plan-modal')"><i class="ti ti-plus"></i> 신규 등록</button>
             <input id="plan-filter-date" type="month" class="input" style="width:auto;font-size:12px;padding:5px 10px" onchange="filterPlanTable()">
             <input id="plan-filter-code" class="input" style="width:120px;font-size:12px" placeholder="작업코드 검색" oninput="filterPlanTable()">
             <input id="plan-filter-customer" class="input" style="width:100px;font-size:12px" placeholder="고객사 검색" oninput="filterPlanTable()">
+            <button id="plan-sort-btn" onclick="toggleSort('planSortDir',filterPlanTable)" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:12px"></i> 날짜 ▲</button>
+            <select id="plan-status-filter" onchange="setStatusFilter('planStatusFilter',this.value,filterPlanTable)" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer">
+              <option value="all">전체 상태</option><option value="planned">예정</option><option value="waiting">대기</option><option value="running">작업중</option><option value="paused">정지</option><option value="done">완료</option><option value="failed">미달성</option><option value="shipped">출하완료</option><option value="deleted">계획취소</option>
+            </select>
           </div>
         </div>
         <div class="tbl-wrap">
@@ -593,7 +605,15 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div class="metric amber"><div class="metric-label">지연 작업</div><div class="metric-value-row"><div class="metric-value" id="pr-delayed">—</div><span class="metric-sub">건</span></div></div>
       </div>
       <div class="card" style="margin-bottom:14px">
-        <div class="card-title"><i class="ti ti-activity"></i> 실시간 작업현황</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div class="card-title" style="margin:0"><i class="ti ti-activity"></i> 실시간 작업현황</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button id="progress-sort-btn" onclick="toggleSort('progressSortDir',renderProgress)" style="display:flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:11px"></i> 날짜 ▲</button>
+            <select id="progress-status-filter" onchange="setStatusFilter('progressStatusFilter',this.value,renderProgress)" style="padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer">
+              <option value="all">전체 상태</option><option value="running">작업중</option><option value="paused">정지</option><option value="waiting">대기</option><option value="planned">예정</option><option value="done">완료</option><option value="failed">미달성</option>
+            </select>
+          </div>
+        </div>
         <div class="tbl-wrap">
           <table>
             <thead><tr><th>작업코드</th><th>제품코드</th><th>고객사</th><th>생산계획일</th><th>투입인원</th><th>작업시간</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>최근액션</th></tr></thead>
@@ -786,6 +806,10 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <input type="date" id="or-day-picker" onchange="renderOrDay()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);outline:none;background:var(--bg2);color:var(--text)">
           <button class="btn btn-secondary btn-sm" onclick="orChDay(1)">▶</button>
           <button class="btn btn-secondary btn-sm" onclick="orGoToday()">오늘</button>
+          <button id="or-day-sort-btn" onclick="toggleSort('orDaySortDir',renderOrDay)" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:11px"></i> 날짜 ▲</button>
+          <select id="or-day-status-filter" onchange="setStatusFilter('orDayStatusFilter',this.value,renderOrDay)" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer">
+            <option value="all">전체 상태</option><option value="running">작업중</option><option value="paused">정지</option><option value="waiting">대기</option><option value="planned">예정</option><option value="done">완료</option><option value="failed">미달성</option><option value="shipped">출하완료</option>
+          </select>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px">
@@ -797,7 +821,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="background:rgba(239,68,68,.06);border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(239,68,68,.2)"><div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:4px">취소건수</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="dk-cancel">—</div></div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>작업시간</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
+        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
         <tbody id="or-day-tbody"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
@@ -813,6 +837,10 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <input type="month" id="or-month-picker" onchange="renderOrMonth()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);outline:none;background:var(--bg2);color:var(--text)">
           <button class="btn btn-secondary btn-sm" onclick="orChMonth(1)">▶</button>
           <button class="btn btn-secondary btn-sm" onclick="orGoThisMonth()">이번달</button>
+          <button id="or-month-sort-btn" onclick="toggleSort('orMonthSortDir',renderOrMonth)" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:11px"></i> 날짜 ▲</button>
+          <select id="or-month-status-filter" onchange="setStatusFilter('orMonthStatusFilter',this.value,renderOrMonth)" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer">
+            <option value="all">전체 상태</option><option value="running">작업중</option><option value="paused">정지</option><option value="waiting">대기</option><option value="planned">예정</option><option value="done">완료</option><option value="failed">미달성</option><option value="shipped">출하완료</option>
+          </select>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px">
@@ -841,11 +869,12 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
             <option value="done">완료</option>
             <option value="failed">미달성</option>
           </select>
+          <button id="or-all-sort-btn" onclick="toggleSort('orAllSortDir',renderOrAll)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg2);color:var(--text);font-size:12px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:12px"></i> 날짜 ▲</button>
         </div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>작업시간</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
-        <tbody id="or-all-tbody"><tr><td colspan="16" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
+        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
+        <tbody id="or-all-tbody"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
   </div>
@@ -880,7 +909,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <div class="card-title"><i class="ti ti-package"></i> 작업코드별 현황</div>
           <div class="tbl-wrap">
             <table>
-              <thead><tr><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획</th><th>실적</th><th>달성률</th><th>작업시간</th><th>상태</th></tr></thead>
+              <thead><tr><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획</th><th>실적</th><th>달성률</th><th>상태</th></tr></thead>
               <tbody><tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr></tbody>
             </table>
           </div>
@@ -1273,6 +1302,12 @@ function allOrderPlans(){ return Object.values(cachedPlans).sort((a,b)=>(a.creat
 
 let cachedNames=[], cachedStates={}, cachedPlans={}, cachedLogs={}, cachedOffdays={};
 let pollingTimer=null;
+// 정렬/필터 상태
+let planSortDir='asc', planStatusFilter='all';
+let dashSortDir='asc', dashStatusFilter='all';
+let progressSortDir='asc', progressStatusFilter='all';
+let orDaySortDir='asc', orMonthSortDir='asc', orAllSortDir='asc';
+let orDayStatusFilter='all', orMonthStatusFilter='all';
 let _pollingLocked=false; // 작업 중 폴링 잠금
 
 // 각 API 응답 오는 대로 즉시 렌더링 (초기 로딩 속도 최적화)
@@ -2139,12 +2174,12 @@ window.submitPlan=async function(){
   restartPollingDelayed(2000);
 };
 
-function renderPlanTable(filterFn){
+function renderPlanTable(filterFn, sortDir){
   const tbody=document.getElementById('plan-tbl');
   if(!tbody)return;
   let plans=activePlans().map(p=>({...p, id: p.id || Object.keys(cachedPlans).find(k=>cachedPlans[k]===p) || p.code}));
   if(filterFn)plans=plans.filter(filterFn);
-  plans.sort((a,b)=>a.date>b.date?1:-1);
+  plans.sort((a,b)=>sortDir==="desc"?(a.date<b.date?1:-1):(a.date>b.date?1:-1));
   if(!plans.length){tbody.innerHTML='<tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';return;}
   const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'미달성'};
   const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-red'};
@@ -2241,19 +2276,21 @@ function filterPlanTable({fromPolling=false}={}){
     const active=document.activeElement;
     if(active===codeInput||active===custInput) return;
   }
+  // 정렬 버튼 업데이트
+  const sortBtn=document.getElementById('plan-sort-btn');
+  if(sortBtn) sortBtn.innerHTML=`<i class="ti ti-arrows-sort" style="font-size:12px"></i> 날짜 ${planSortDir==='asc'?'▲':'▼'}`;
   renderPlanTable(p=>{
     const st=getPlanStatus(p);
+    if(planStatusFilter!=='all'&&st!==planStatusFilter) return false;
     const today=todayISO();
-    // 미달성(날짜 지난 미완료): 항상 표시
     const isIncomplete=st!=='done'&&st!=='shipped'&&p.status!=='deleted'&&(p.actQty||0)<(p.planQty||1)&&p.date&&p.date<today;
-    if(isIncomplete&&!codeVal&&!custVal) return true;
-    // 완료된 계획은 completedAt 기준으로 월 필터
+    if(isIncomplete&&!codeVal&&!custVal&&planStatusFilter==='all') return true;
     const effectiveDate=(st==='done'||st==='shipped')?(p.completedAt||p.date):p.date;
     if(dateVal&&effectiveDate&&!effectiveDate.startsWith(dateVal))return false;
     if(codeVal&&!p.code?.toLowerCase().includes(codeVal))return false;
     if(custVal&&!p.customer?.toLowerCase().includes(custVal))return false;
     return true;
-  });
+  }, planSortDir);
 }
 
 function updatePlanKPI(plans){
@@ -2485,7 +2522,26 @@ function dueBadge(p){
   return '';
 }
 
-function getPlanStatus(p){
+// 필터 UI 헬퍼
+function sortFilterBar(sortVar, statusVar, onSort, onStatus, showStatus=true){
+  const statusOpts=['all','running','paused','planned','waiting','done','failed','shipped','deleted'];
+  const statusLabels={all:'전체',running:'작업중',paused:'정지',planned:'예정',waiting:'대기',done:'완료',failed:'미달성',shipped:'출하완료',deleted:'계획취소'};
+  const sortBtn=`<button onclick="${onSort}" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font)">
+    <i class="ti ti-arrows-sort" style="font-size:12px"></i> 날짜 ${sortVar==='asc'?'▲':'▼'}
+  </button>`;
+  const statusSel=showStatus?`<select onchange="${onStatus}" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer">
+    ${statusOpts.map(s=>`<option value="${s}" ${statusVar===s?'selected':''}>${statusLabels[s]}</option>`).join('')}
+  </select>`:'';
+  return `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${sortBtn}${statusSel}</div>`;
+}
+
+function applySort(plans, sortDir){ return sortDir==='asc'?[...plans].sort((a,b)=>(a.date||'')>(b.date||'')?1:-1):[...plans].sort((a,b)=>(a.date||'')<(b.date||'')?1:-1); }
+function applyStatusFilter(plans, statusFilter){ if(statusFilter==='all') return plans; return plans.filter(p=>getPlanStatus(p)===statusFilter); }
+
+function toggleSort(varName, renderFn){ window[varName]=window[varName]==='asc'?'desc':'asc'; renderFn(); }
+function setStatusFilter(varName, val, renderFn){ window[varName]=val; renderFn(); }
+
+
   const today=todayISO();
   if(p.status==='deleted') return 'deleted';
   if(p.status==='shipped') return 'shipped';
@@ -2656,9 +2712,14 @@ function renderDashboard(){
   if(ptbl){
     if(!todayPlans.length){ptbl.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">오늘 등록된 계획이 없습니다</td></tr>';
     }else{
+      // 정렬 버튼 업데이트
+      const dashSortBtn=document.getElementById('dash-sort-btn');
+      if(dashSortBtn) dashSortBtn.innerHTML=`<i class="ti ti-arrows-sort" style="font-size:11px"></i> 날짜 ${dashSortDir==='asc'?'▲':'▼'}`;
+      let filteredPlans=dashStatusFilter==='all'?todayPlans:todayPlans.filter(p=>getPlanStatus(p)===dashStatusFilter);
+      filteredPlans=dashSortDir==='asc'?filteredPlans.sort((a,b)=>(a.date||'')>(b.date||'')?1:-1):filteredPlans.sort((a,b)=>(a.date||'')<(b.date||'')?1:-1);
       const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'미달성'};
       const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-red'};
-      ptbl.innerHTML=todayPlans.map(p=>{
+      ptbl.innerHTML=filteredPlans.map(p=>{
         const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
         const wCnt=getWorkerCountForCode(p.code);
         const hrs=calcWorkHours(p.code);
@@ -2825,7 +2886,12 @@ function renderProgress(){
       if(p.date<=today&&st!=='done'&&st!=='shipped') return true;
       return false;
     });
-    if(!runPlans.length){
+    // 정렬 버튼 업데이트
+    const progSortBtn=document.getElementById('progress-sort-btn');
+    if(progSortBtn) progSortBtn.innerHTML=`<i class="ti ti-arrows-sort" style="font-size:11px"></i> 날짜 ${progressSortDir==='asc'?'▲':'▼'}`;
+    let filteredRunPlans=progressStatusFilter==='all'?runPlans:runPlans.filter(p=>getPlanStatus(p)===progressStatusFilter);
+    filteredRunPlans=progressSortDir==='asc'?filteredRunPlans.sort((a,b)=>(a.date||'')>(b.date||'')?1:-1):filteredRunPlans.sort((a,b)=>(a.date||'')<(b.date||'')?1:-1);
+    if(!filteredRunPlans.length){
       ptbl.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">오늘 작업 내역이 없습니다</td></tr>';
     }else{
       const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'미달성'};
@@ -2875,7 +2941,7 @@ function renderProgress(){
         </tr>`);
       });
       // 완료된 계획 (activeCodes에 없는 것) 추가
-      runPlans.forEach(p=>{
+      filteredRunPlans.forEach(p=>{
         if(!activeCodes.has(p.code)){
           const st=getPlanStatus(p);
           const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
@@ -3693,7 +3759,6 @@ function orPlanRow(p, no) {
       </div>
       <span style="font-size:12px">${pct}%</span>
     </div></td>
-    <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${calcWorkHours(p.code).str}</td>
     <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${shippedInfo}${(p.dueDate&&p.dueDate<today&&st!=='shipped'&&st!=='deleted')?'<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>':''}</td>
     <td style="white-space:nowrap">
       ${st==='shipped'?'<span style="font-size:10px;color:var(--green);font-weight:700">✓ 출하완료</span>':st==='done'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer;white-space:nowrap">출하</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}
@@ -3774,7 +3839,14 @@ window.renderOrMonth = function() {
     byDate[key].push(p);
   });
   const wds = ['일','월','화','수','목','금','토'];
-  wrap.innerHTML = Object.entries(byDate).sort(([a],[b])=>a>b?1:-1).map(([date,dp])=>{
+  const orMonthSortBtn=document.getElementById('or-month-sort-btn');
+  if(orMonthSortBtn) orMonthSortBtn.innerHTML='<i class="ti ti-arrows-sort" style="font-size:11px"></i> 날짜 '+(orMonthSortDir==='asc'?'▲':'▼');
+  const orMonthStatusSel=document.getElementById('or-month-status-filter');
+  const orMonthStatusVal=orMonthStatusFilter;
+  const sortedEntries=Object.entries(byDate).sort(([a],[b])=>orMonthSortDir==='asc'?a>b?1:-1:a<b?1:-1);
+  wrap.innerHTML = sortedEntries.map(([date,dp])=>{
+    let filteredDp=orMonthStatusVal==='all'?dp:dp.filter(p=>getPlanStatus(p)===orMonthStatusVal);
+    if(!filteredDp.length) return '';
     const dow = date==='미지정'?-1:new Date(date).getDay();
     const dc = dow===0?'var(--red)':dow===6?'var(--accent)':'var(--text)';
     const dtp=dp.reduce((s,x)=>s+(x.planQty||0),0);
@@ -3783,7 +3855,7 @@ window.renderOrMonth = function() {
     return `<div style="margin-bottom:14px">
       <div class="tbl-wrap"><table>
         <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th></tr></thead>
-        <tbody>${dp.map((p,i)=>orPlanRow(p,i+1)).join('')}</tbody>
+        <tbody>${filteredDp.map((p,i)=>orPlanRow(p,i+1)).join('')}</tbody>
       </table></div>
     </div>`;
   }).join('');
@@ -3795,7 +3867,9 @@ window.renderOrAll = function() {
   let plans = allOrderPlans();
   if(search) plans = plans.filter(p=>p.code?.toLowerCase().includes(search)||p.customer?.toLowerCase().includes(search));
   if(sf) plans = plans.filter(p=>(p.status||'planned')===sf);
-  plans.sort((a,b)=>a.date>b.date?1:-1);
+  const orAllSortBtn=document.getElementById('or-all-sort-btn');
+  if(orAllSortBtn) orAllSortBtn.innerHTML='<i class="ti ti-arrows-sort" style="font-size:12px"></i> 날짜 '+(orAllSortDir==='asc'?'▲':'▼');
+  plans.sort((a,b)=>orAllSortDir==='asc'?a.date>b.date?1:-1:a.date<b.date?1:-1);
   updateOrTopKPI(plans);
   const tbody = document.getElementById('or-all-tbody'); if(!tbody) return;
   const today=todayISO();
@@ -3822,7 +3896,6 @@ window.renderOrAll = function() {
         </div>
         <span style="font-size:11px">${pct}%</span>
       </div></td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${calcWorkHours(p.code).str}</td>
       <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${p.shippedAt?`<div style="font-size:9px;color:var(--text3)">${p.shippedAt}</div>`:''}${(p.dueDate&&p.dueDate<today&&st!=='shipped'&&!isDeleted)?'<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>':''}</td>
       <td style="white-space:nowrap">${st==='shipped'?'<span style="font-size:10px;color:var(--green);font-weight:700">✓ 출하완료</span>':st==='done'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer">출하</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}</td>
       <td style="font-size:11px;color:var(--text3);max-width:120px">${esc(p.remark||'—')}</td>
