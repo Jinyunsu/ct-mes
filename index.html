@@ -478,8 +478,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <div class="card-title" style="margin:0"><i class="ti ti-chart-line"></i> 작업코드별 진행현황</div>
             <div style="display:flex;gap:6px;align-items:center">
-              <button id="dash-sort-btn" onclick="toggleSort('dashSortDir',window.renderDashboard||renderDashboard)" style="display:flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:11px"></i> 날짜 ▲</button>
-              <select id="dash-status-filter" onchange="setStatusFilter('dashStatusFilter',this.value,window.renderDashboard||renderDashboard)" style="padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer">
+              <button id="dash-sort-btn" onclick="toggleSort('dashSortDir',renderDashboard)" style="display:flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:11px"></i> 날짜 ▲</button>
+              <select id="dash-status-filter" onchange="setStatusFilter('dashStatusFilter',this.value,renderDashboard)" style="padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer">
                 <option value="all">전체 상태</option><option value="running">작업중</option><option value="paused">정지</option><option value="waiting">대기</option><option value="planned">예정</option><option value="done">완료</option><option value="failed">미달성</option><option value="overdue">납기지연</option>
               </select>
             </div>
@@ -620,8 +620,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
           <div class="card-title" style="margin:0"><i class="ti ti-activity"></i> 실시간 작업현황</div>
           <div style="display:flex;gap:6px;align-items:center">
-            <button id="progress-sort-btn" onclick="toggleSort('progressSortDir',window.renderProgress||renderProgress)" style="display:flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:11px"></i> 날짜 ▲</button>
-            <select id="progress-status-filter" onchange="setStatusFilter('progressStatusFilter',this.value,window.renderProgress||renderProgress)" style="padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer">
+            <button id="progress-sort-btn" onclick="toggleSort('progressSortDir',renderProgress)" style="display:flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:11px"></i> 날짜 ▲</button>
+            <select id="progress-status-filter" onchange="setStatusFilter('progressStatusFilter',this.value,renderProgress)" style="padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer">
               <option value="all">전체 상태</option><option value="running">작업중</option><option value="paused">정지</option><option value="waiting">대기</option><option value="planned">예정</option><option value="done">완료</option><option value="failed">미달성</option>
             </select>
           </div>
@@ -2870,7 +2870,6 @@ function renderDashboard(){
 
 // ── 진행현황 ──
 function renderProgress(){
-  window.renderProgress = renderProgress;
   const today=todayISO();
   const plans=activePlans();
   // 작업중 코드 (오늘 작업중인 것)
