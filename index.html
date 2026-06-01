@@ -2542,6 +2542,7 @@ function toggleSort(varName, renderFn){ window[varName]=window[varName]==='asc'?
 function setStatusFilter(varName, val, renderFn){ window[varName]=val; renderFn(); }
 
 
+function getPlanStatus(p){
   const today=todayISO();
   if(p.status==='deleted') return 'deleted';
   if(p.status==='shipped') return 'shipped';
