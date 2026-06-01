@@ -2944,11 +2944,16 @@ function renderProgress(){
       const rows=[];
       activeCodes.forEach((info,code)=>{
         const plan=plans.find(p=>p.code===code)||{code,planQty:0,actQty:0,customer:'—',productCode:'—',spec:'—'};
-        // 완료된 계획은 아래 완료 섹션에서 처리
         if(getPlanStatus(plan)==='done'||plan.status==='done') return;
-        // 오늘 날짜 계획이 아니고 실제 로그도 없으면 표시 안 함 (잔존 states 제거)
         const hasLog=Object.values(cachedLogs||{}).some(wl=>Object.values(wl||{}).some(l=>l.code===code&&new Date(l.ts).toISOString().slice(0,10)===today));
         if(plan.date!==today && !hasLog) return;
+        // 상태 필터 적용
+        const st=getPlanStatus(plan);
+        const sf=progressStatusFilter;
+        if(sf!=='all'){
+          if(sf==='overdue'){if(!(plan.dueDate&&plan.dueDate<today&&st!=='shipped'))return;}
+          else if(st!==sf) return;
+        }
         const pct=plan.planQty>0?Math.round((plan.actQty||0)/plan.planQty*100):0;
         const hrs=calcWorkHoursForDate(code, today);
         const wCnt=getWorkerCountForCode(code);
@@ -2968,9 +2973,17 @@ function renderProgress(){
           <td style="font-size:11px;color:var(--text3)">${recentLog?recentLog.time:'—'}</td>
         </tr>`);
       });
-      // 완료된 계획 (activeCodes에 없는 것) 추가
-      filteredRunPlans.forEach(p=>{
-        if(!activeCodes.has(p.code)){
+      // 정렬 적용
+      const sortedRows=filteredRunPlans
+        .filter(p=>!activeCodes.has(p.code))
+        .sort((a,b)=>progressSortDir==='asc'?(a.date||'')>(b.date||'')?1:-1:(a.date||'')<(b.date||'')?1:-1);
+      sortedRows.forEach(p=>{
+        const st=getPlanStatus(p);
+        const sf=progressStatusFilter;
+        if(sf!=='all'){
+          if(sf==='overdue'){if(!(p.dueDate&&p.dueDate<today&&st!=='shipped'))return;}
+          else if(st!==sf) return;
+        }
           const st=getPlanStatus(p);
           const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
           const hrs=calcWorkHoursForDate(p.code, today);
@@ -2988,7 +3001,6 @@ function renderProgress(){
             <td style="white-space:nowrap"><span class="badge ${sc[st]||'badge-gray'}">${sm[st]||'—'}</span>${dueBadge(p)}</td>
             <td style="font-size:11px;color:var(--text3)">—</td>
           </tr>`);
-        }
       });
       ptbl.innerHTML=rows.join('')||'<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">오늘 작업 내역이 없습니다</td></tr>';
     }
