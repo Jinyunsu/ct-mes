@@ -136,6 +136,8 @@ body{display:flex;overflow:hidden}
 
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.03em}
 .badge-blue{background:rgba(59,130,246,.15);color:var(--accent2);border:1px solid rgba(59,130,246,.2)}
+/* dashboard progress header wrap */
+
 .badge-purple{background:rgba(167,139,250,.2);color:#a78bfa;border:1px solid rgba(167,139,250,.3)}
 .badge-green{background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.2)}
 .badge-amber{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
@@ -464,7 +466,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <div class="card-title"><i class="ti ti-chart-line"></i> 작업코드별 진행현황</div>
           <div class="tbl-wrap">
             <table style="font-size:11px">
-              <thead><tr style="font-size:10px"><th>작업코드</th><th>제품코드</th><th>생산계획일</th><th>고객사</th><th>투입인원</th><th>작업시간</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th></tr></thead>
+              <thead><tr style="font-size:10px;white-space:normal;word-break:keep-all;text-align:center"><th>작업코드</th><th>제품코드</th><th>생산계획일</th><th>고객사</th><th>투입인원</th><th>작업시간</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th></tr></thead>
               <tbody id="d-progress-tbl"><tr><td colspan="10" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr></tbody>
             </table>
           </div>
@@ -542,7 +544,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>등록일</th><th>생산계획일</th><th>납기일</th><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입인원</th><th>작업시간</th><th>상태</th><th>요청사항</th><th style="width:100px">관리</th></tr></thead>
+            <thead><tr><th>등록일</th><th>생산계획일</th><th>납기일</th><th>작업코드</th><th>제품코드</th><th>제품사양</th><th>고객사</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>투입<br>인원</th><th>작업<br>시간</th><th>상태</th><th>요청사항</th><th style="width:100px">관리</th></tr></thead>
             <tbody id="plan-tbl"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
           </table>
         </div>
