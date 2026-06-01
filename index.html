@@ -2958,7 +2958,6 @@ function renderProgress(){
         const hrs=calcWorkHoursForDate(code, today);
         const wCnt=getWorkerCountForCode(code);
         const recentLog=Object.values(cachedLogs||{}).flatMap(wl=>Object.values(wl||{})).filter(l=>l.code===code).sort((a,b)=>b.ts-a.ts)[0];
-        const st=getPlanStatus(plan);
         rows.push(`<tr>
           <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(code)}</td>
           <td style="font-size:11px">${esc(plan.productCode||'—')}</td>
