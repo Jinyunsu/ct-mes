@@ -2186,7 +2186,7 @@ function renderPlanTable(filterFn){
           </span>
         </div>
       </td>
-      <td style="font-family:var(--mono);font-size:11px;color:${p.dueDate&&p.dueDate<todayISO()&&getPlanStatus(p)!=='done'?'var(--red)':'var(--text3)'}">${p.dueDate||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:${p.dueDate&&p.dueDate<todayISO()?'var(--red)':'var(--text3)'}">${p.dueDate||'—'}${p.dueDate&&p.dueDate<todayISO()?` <span style="font-size:9px;color:var(--red)">(D+${Math.floor((new Date(p.shippedAt||p.completedAt||todayISO())-new Date(p.dueDate))/86400000)})</span>`:''}</td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--text)">${esc(p.code)}</td>
       <td style="color:var(--text2)">${esc(p.productCode||'—')}</td>
       <td style="color:var(--text2);font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.spec||'')}">${esc(p.spec||'—')}</td>
