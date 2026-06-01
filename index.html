@@ -2886,7 +2886,8 @@ function renderDashboard(){
   if(el2('d-alert-running')) el2('d-alert-running').textContent=runningCnt;
   if(el2('d-alert-paused')) el2('d-alert-paused').textContent=pausedCnt;
   if(el2('d-alert-done')) el2('d-alert-done').textContent=doneTodayCnt;
-  if(el2('d-alert-cancel')) el2('d-alert-cancel').textContent=cancelCnt;}
+  if(el2('d-alert-done')) el2('d-alert-done').textContent=doneTodayCnt;
+  if(el2('d-alert-shipped')) el2('d-alert-shipped').textContent=shippedCnt;
 
 // ── 진행현황 ──
 function renderProgress(){
