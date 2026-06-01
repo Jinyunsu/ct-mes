@@ -2804,7 +2804,13 @@ function renderProgress(){
     Object.values(cachedStates).forEach(codes=>{
       Object.keys(codes||{}).forEach(c=>activePlanCodes.add(c.toLowerCase()));
     });
-    const runPlans=plans.filter(p=>p.date&&p.date<=today&&getPlanStatus(p)!=='done'&&getPlanStatus(p)!=='shipped');
+    const runPlans=plans.filter(p=>{
+      if(!p.date) return false;
+      const st=getPlanStatus(p);
+      if((st==='done'||st==='shipped')&&p.completedAt===today) return true;
+      if(p.date<=today&&st!=='done'&&st!=='shipped') return true;
+      return false;
+    });
     if(!runPlans.length){
       ptbl.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">오늘 작업 내역이 없습니다</td></tr>';
     }else{
@@ -2951,9 +2957,14 @@ function renderProgress(){
 // ── 실적분석 ──
 function renderPerformance(){
   const plans=activePlans();
-  const now=new Date();
-  const monthStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const monthPlans=plans.filter(p=>p.date?.startsWith(monthStr));
+  const today=todayISO();
+  const monthStr=today.slice(0,7);
+  const monthPlans=plans.filter(p=>{
+    // 이번 달 계획일 또는 이번 달 완료된 계획
+    if(p.date?.startsWith(monthStr)) return true;
+    if(p.completedAt?.startsWith(monthStr)) return true;
+    return false;
+  });
   const totalPlan=monthPlans.reduce((s,p)=>s+(p.planQty||0),0);
   const totalAct=monthPlans.reduce((s,p)=>s+(p.actQty||0),0);
   const rate=totalPlan>0?Math.round(totalAct/totalPlan*100):0;
