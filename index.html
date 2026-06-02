@@ -2524,12 +2524,19 @@ function renderCalendar(){
     });
     const allDp=[...prevUnfinished.map(p=>({...p,_carry:true})),...dp];
     // 호버 툴팁용 전체 목록
-    const tooltipLines=allDp.map(p=>`${p._carry?'↩ ':''}${p.code}${p.customer?' ('+p.customer+')':''} | ${p.planQty||0}EA | ${getPlanStatus(p)==='done'?'완료':getPlanStatus(p)==='running'?'작업중':'예정'}`).join('\n');
+    const tooltipLines=allDp.map(p=>{
+      const st=getPlanStatus(p);
+      const stLabel=st==='done'?'완료':st==='shipped'?'출하완료':st==='running'?'작업중':st==='paused'?'정지':st==='failed'?'미달성':'예정';
+      return `${p._carry?'↩ ':''}${p.code}${p.customer?' ('+p.customer+')':''} | ${p.planQty||0}EA | ${stLabel}`;
+    }).join('\n');
     const offTooltip=Object.values(cachedOffdays||{}).filter(o=>o.date===ds&&cachedNames.some(n=>n.toLowerCase()===o.worker.toLowerCase())).map(o=>`🏖 ${o.worker}${o.reason?' ('+o.reason+')':''}`).join('\n');
     const fullTooltip=[tooltipLines,offTooltip].filter(Boolean).join('\n');
     const ph=allDp.slice(0,3).map(p=>{
       const c=getCalColor(p.code);
-      const isDoneOnDs = p.completedAt ? p.completedAt===ds : (p.status==='done'&&p.date===ds);
+      const st=getPlanStatus(p);
+      const raw=p.shippedAt||'';
+      const shippedDate=raw?(raw.includes('.')?new Date(raw).toISOString().slice(0,10):raw.slice(0,10)):null;
+      const isDoneOnDs = st==='shipped'?(shippedDate===ds):p.completedAt?(p.completedAt===ds):(p.status==='done'&&p.date===ds);
       const isCarryFailed=p._carry&&!isDoneOnDs;
       const bg=isDoneOnDs?'rgba(34,197,94,.25)':isCarryFailed?'rgba(239,68,68,.15)':c.bg;
       const color=isDoneOnDs?'var(--green)':isCarryFailed?'var(--red)':c.text;
