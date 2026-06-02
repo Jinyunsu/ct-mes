@@ -3705,14 +3705,17 @@ function renderDailyReport(dateStr){
     const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-red',shipped:'badge-green',deleted:'badge-red'};
     if(!plans.length)ctbl.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">해당 날짜 기록 없음</td></tr>';
     else ctbl.innerHTML=plans.map(p=>{
-      const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
       const hrs=calcWorkHoursForDate(p.code, dateStr);
-      // 해당 날짜 기준 상태: completedAt이 dateStr이면 완료, 아니면 실제 상태
-      const isDoneOnDate = p.completedAt && p.completedAt===dateStr;
       const currentSt = getPlanStatus(p);
-      // completedAt 없는 기존 done은 계획일(date) 기준
-      const isFallbackDone = !p.completedAt && p.status==='done' && p.date===dateStr;
-      const st = (isDoneOnDate||isFallbackDone) ? 'done' : (currentSt==='done'||currentSt==='shipped') ? 'failed' : currentSt;
+      // 작업일보: shipped는 완료로 표시
+      const isDoneOnDate = p.completedAt && p.completedAt===dateStr;
+      const isShippedAsDone = currentSt==='shipped' && p.completedAt===dateStr;
+      const isFallbackDone = !p.completedAt && (p.status==='done'||p.status==='shipped') && p.date===dateStr;
+      // 완료/출하인데 이 날짜가 완료일이 아니면 → 진행중
+      const isCompletedLater = (currentSt==='done'||currentSt==='shipped') && !isDoneOnDate && !isFallbackDone && !isShippedAsDone;
+      const st = (isDoneOnDate||isFallbackDone||isShippedAsDone) ? 'done' : isCompletedLater ? 'running' : (currentSt==='done'||currentSt==='shipped') ? 'failed' : currentSt;
+      const rawPct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
+      const pct=(isDoneOnDate||isFallbackDone||isShippedAsDone)?rawPct:isCompletedLater?null:st==='failed'?Math.min(rawPct,99):rawPct;
       return `<tr>
         <td style="font-weight:700;font-family:var(--mono)">${esc(p.code)}</td>
         <td style="font-size:11px;color:var(--text2)">${esc(p.productCode||'—')}</td>
@@ -3720,7 +3723,7 @@ function renderDailyReport(dateStr){
         <td style="font-size:11px">${esc(p.customer||'—')}</td>
         <td style="font-family:var(--mono)">${(p.planQty||0).toLocaleString()}</td>
         <td style="font-family:var(--mono);color:var(--green)">${(p.actQty||0).toLocaleString()}</td>
-        <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct>=100?'green':''}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:11px">${pct}%</span></div></td>
+        <td><div style="display:flex;align-items:center;gap:5px"><div class="prog-bar" style="width:40px"><div class="prog-fill ${pct!==null&&pct>=100?'green':''}" style="width:${pct===null?0:Math.min(pct,100)}%"></div></div><span style="font-size:11px">${pct===null?'—':pct+'%'}</span></div></td>
         <td style="font-size:11px;font-family:var(--mono)">${hrs.str}</td>
         <td style="white-space:nowrap"><span class="badge ${sc[st]}">${sm[st]}</span></td>
       </tr>`;
@@ -4326,7 +4329,8 @@ window.shipPlan = async function(id) {
   _pollingLocked=true;
   const now = new Date();
   const shippedAt = now.toLocaleDateString('ko-KR') + ' ' + now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
-  const updated = {...plan, id, status:'shipped', shippedAt};
+  const completedAt = plan.completedAt || todayISO();
+  const updated = {...plan, id, status:'shipped', shippedAt, completedAt};
   const res = await API.put('/api/plans', updated);
   if(res && !res.error) {
     cachedPlans = res;
