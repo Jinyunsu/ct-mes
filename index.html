@@ -2256,16 +2256,19 @@ function renderPlanTable(filterFn, sortDir){
     const wCnt=getWorkerCount(p.code);
     const wHrs=calcWorkHours(p.code);
     const isToday=p.date===todayISO();
-    const _st=getPlanStatus(p);
-    const _hasLog=Object.values(cachedLogs||{}).some(wl=>Object.values(wl||{}).some(l=>l.code?.toLowerCase()===p.code?.toLowerCase()));
-    const _can=(_st==='planned')||(_st==='waiting'&&!_hasLog);
-    const _dis=';opacity:.3;cursor:not-allowed';
     return `<tr style="${isToday?'background:rgba(59,130,246,.04)':''}">
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap">${p.createdAt||'—'}</td>
       <td style="font-family:var(--mono);font-size:11px;white-space:nowrap">
         <div style="display:flex;align-items:center;gap:5px">
           <span style="color:var(--accent);font-weight:700">${p.date||'—'}</span>
-          <button style="background:none;border:none;cursor:pointer;color:var(--text3);padding:1px 3px;border-radius:3px;border:1px solid var(--border);display:inline-flex;align-items:center${_can?'':';opacity:.3;cursor:not-allowed'}" onclick="${_can?`openPlanDateModal('${esc(p.id)}')`:'void(0)'}" title="${_can?'생산계획일 변경':'작업이 시작된 계획은 변경할 수 없습니다'}"><i class="ti ti-calendar" style="font-size:11px"></i></button>
+          <span draggable="true"
+            ondragstart="onPlanRowDrag(event,'${esc(p.id)}')"
+            ondragend="this.style.opacity='1'"
+            onmousedown="this.style.opacity='0.5'"
+            style="cursor:grab;color:var(--text3);display:inline-flex;align-items:center;padding:1px 3px;border-radius:3px;border:1px solid var(--border)"
+            title="달력으로 드래그하여 날짜 변경">
+            <i class="ti ti-grip-vertical" style="font-size:11px"></i>
+          </span>
         </div>
       </td>
       <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;color:${(()=>{if(!p.dueDate)return 'var(--text3)';const d=Math.floor((new Date(p.shippedAt||p.completedAt||todayISO())-new Date(p.dueDate))/86400000);return d>0?'var(--red)':'var(--text3)';})()}">${p.dueDate||'—'}${(()=>{if(!p.dueDate)return '';const d=Math.floor((new Date(p.shippedAt||p.completedAt||todayISO())-new Date(p.dueDate))/86400000);return d>0?' <span style="font-size:9px;color:var(--red)">(D+'+d+')</span>':'';})()} </td>
@@ -2281,12 +2284,17 @@ function renderPlanTable(filterFn, sortDir){
       <td style="white-space:nowrap"><span class="badge ${sc[getPlanStatus(p)]||'badge-gray'}" style="font-size:10px;padding:2px 5px">${sm[getPlanStatus(p)]||'예정'}</span>${dueBadge(p)}</td>
       <td style="color:var(--text3);font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.remark||'')}">${esc(p.remark||'—')}</td>
       <td style="white-space:nowrap">${(()=>{
+        const _st=getPlanStatus(p);
+        const _hasLog=Object.values(cachedLogs||{}).some(wl=>Object.values(wl||{}).some(l=>l.code?.toLowerCase()===p.code?.toLowerCase()));
+        const _can=(_st==='planned')||(_st==='waiting'&&!_hasLog);
+        const _dis=';opacity:.3;cursor:not-allowed';
         const _title=_st==='running'?'작업중인 계획은 수정할 수 없습니다':_st==='done'?'완료된 계획은 수정할 수 없습니다':(!_can)?'작업이 시작된 계획은 수정할 수 없습니다':'수정';
         const _titleD=_st==='running'?'작업중인 계획은 삭제할 수 없습니다':_st==='done'?'완료된 계획은 삭제할 수 없습니다':(!_can)?'작업이 시작된 계획은 삭제할 수 없습니다':'삭제';
         const _hasNote=!!(p.note&&p.note.trim());
         return `
         <button class="btn btn-secondary btn-sm" style="margin-right:4px;${_hasNote?'color:#dc2626':'color:var(--text3)'}" onclick="openNoteEdit('${esc(p.id)}')" title="${_hasNote?'지연사유: '+esc(p.note):'지연사유 작성'}"><i class="ti ti-notes" style="font-size:13px"></i></button>
         <button class="btn btn-secondary btn-sm" style="margin-right:4px;${p.hasPdf?'color:#ef4444':'color:var(--text3)'}" onclick="${p.hasPdf?`viewPlanPdf('${esc(p.id)}','${esc(p.pdfName||p.code)}')`:`uploadPlanPdf('${esc(p.id)}')`}" title="${p.hasPdf?'의뢰서 보기: '+esc(p.pdfName||''):'의뢰서 업로드'}"><i class="ti ti-file-type-pdf" style="font-size:13px"></i></button>
+        <button class="btn btn-secondary btn-sm" style="margin-right:4px${_can?'':_dis}" onclick="${_can?`openPlanDateModal('${esc(p.id)}')`:'void(0)'}" title="${_can?'생산계획일 지정':'작업이 시작된 계획은 변경할 수 없습니다'}"><i class="ti ti-calendar"></i></button>
         <button class="btn btn-secondary btn-sm" style="margin-right:4px${_can?'':_dis}" onclick="planAction('edit','${esc(p.id)}')" title="${_title}"><i class="ti ti-edit"></i></button>
         <button class="btn btn-secondary btn-sm" style="color:#dc2626${_can?'':_dis}" onclick="planAction('delete','${esc(p.id)}')" title="${_titleD}"><i class="ti ti-trash"></i></button>`;
       })()}</td>
