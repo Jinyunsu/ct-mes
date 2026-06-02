@@ -2267,7 +2267,7 @@ function renderPlanTable(filterFn, sortDir){
       <td style="font-family:var(--mono);font-size:11px;white-space:nowrap">
         <div style="display:flex;align-items:center;gap:5px">
           <span style="color:var(--accent);font-weight:700">${p.date||'—'}</span>
-          <button style="background:none;border:none;cursor:pointer;color:var(--text3);padding:1px 3px;border-radius:3px;border:1px solid var(--border);display:inline-flex;align-items:center${_can?'':';opacity:.3;cursor:not-allowed'}" onclick="${_can?`openPlanDateModal('${esc(p.id)}')`:'void(0)'}" title="${_can?'생산계획일 변경':'작업이 시작된 계획은 변경할 수 없습니다'}"><i class="ti ti-calendar" style="font-size:11px"></i></button>
+          <button style="background:none;border:none;cursor:pointer;padding:1px 3px;border-radius:3px;border:1px solid var(--border);display:inline-flex;align-items:center;color:var(--text3);${_can?'':'opacity:.3;cursor:not-allowed'}" onclick="${_can?'openPlanDateModal(\''+esc(p.id)+'\')':'void(0)'}" title="${_can?'생산계획일 변경':'작업이 시작된 계획은 변경할 수 없습니다'}"><i class="ti ti-calendar" style="font-size:11px"></i></button>
         </div>
       </td>
       <td style="font-family:var(--mono);font-size:11px;white-space:nowrap;color:${(()=>{if(!p.dueDate)return 'var(--text3)';const d=Math.floor((new Date(p.shippedAt||p.completedAt||todayISO())-new Date(p.dueDate))/86400000);return d>0?'var(--red)':'var(--text3)';})()}">${p.dueDate||'—'}${(()=>{if(!p.dueDate)return '';const d=Math.floor((new Date(p.shippedAt||p.completedAt||todayISO())-new Date(p.dueDate))/86400000);return d>0?' <span style="font-size:9px;color:var(--red)">(D+'+d+')</span>':'';})()} </td>
