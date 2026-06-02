@@ -2327,7 +2327,8 @@ function filterPlanTable({fromPolling=false}={}){
     if(planStatusFilter!=='all'&&st!==planStatusFilter) return false;
     const isIncomplete=st!=='done'&&st!=='shipped'&&p.status!=='deleted'&&(p.actQty||0)<(p.planQty||1)&&p.date&&p.date<today;
     if(isIncomplete&&!codeVal&&!custVal&&planStatusFilter==='all') return true;
-    const effectiveDate=st==='shipped'?(p.shippedAt||p.completedAt||p.date):st==='done'?(p.completedAt||p.date):p.date;
+    const _sd=p.shippedAt?(p.shippedAt.includes('.')?new Date(p.shippedAt).toISOString().slice(0,10):p.shippedAt.slice(0,10)):null;
+    const effectiveDate=st==='shipped'?(_sd||p.completedAt||p.date):st==='done'?(p.completedAt||p.date):p.date;
     if(dateVal&&effectiveDate&&!effectiveDate.startsWith(dateVal))return false;
     if(codeVal&&!p.code?.toLowerCase().includes(codeVal))return false;
     if(custVal&&!p.customer?.toLowerCase().includes(custVal))return false;
@@ -2487,7 +2488,8 @@ function renderCalendar(){
       if(!p.date) return false;
       const st=getPlanStatus(p);
       if(st==='shipped'){
-        const shippedDate = p.shippedAt?.slice(0,10) || p.completedAt || p.date;
+        const raw=p.shippedAt||'';
+        const shippedDate=raw.includes('.')?new Date(raw).toISOString().slice(0,10):raw.slice(0,10);
         return shippedDate===ds;
       }
       if(st==='done'){
@@ -2503,11 +2505,16 @@ function renderCalendar(){
       const st=getPlanStatus(p);
       // 출하완료: shippedAt 이전 날짜에는 이월 표시
       if(st==='shipped'){
-        const shippedDate=p.shippedAt?.slice(0,10)||p.completedAt||p.date;
+        const raw=p.shippedAt||'';
+        const shippedDate=raw.includes('.')?new Date(raw).toISOString().slice(0,10):raw.slice(0,10);
         return ds<shippedDate;
       }
       // shippedAt이 있고 ds 이전이면 이미 출하 - 이월 안 함
-      if(p.shippedAt&&p.shippedAt.slice(0,10)<ds)return false;
+      if(p.shippedAt){
+        const raw=p.shippedAt;
+        const sd=raw.includes('.')?new Date(raw).toISOString().slice(0,10):raw.slice(0,10);
+        if(sd<ds)return false;
+      }
       // completedAt이 있고 ds 이전이면 완료 - 이월 안 함 (단 완료일에는 dp로 표시됨)
       if(p.completedAt&&p.completedAt<ds)return false;
       // completedAt 없는 기존 done: 계획일(date)에 완료된 것으로 간주 - 이월 안 함
