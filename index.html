@@ -2293,7 +2293,7 @@ function renderPlanTable(filterFn, sortDir){
         const _hasNote=!!(p.note&&p.note.trim());
         return `
         <button class="btn btn-secondary btn-sm" style="margin-right:4px;${_hasNote?'color:#dc2626':'color:var(--text3)'}" onclick="openNoteEdit('${esc(p.id)}')" title="${_hasNote?'지연사유: '+esc(p.note):'지연사유 작성'}"><i class="ti ti-notes" style="font-size:13px"></i></button>
-        <button class="btn btn-secondary btn-sm" style="margin-right:4px;${p.hasPdf?'color:#ef4444':'color:var(--text3)'}" onclick="${p.hasPdf?`viewPlanPdf('${esc(p.id)}','${esc(p.pdfName||p.code)}')`:`uploadPlanPdf('${esc(p.id)}')`}" title="${p.hasPdf?'의뢰서 보기: '+esc(p.pdfName||''):'의뢰서 업로드'}"><i class="ti ti-file-type-pdf" style="font-size:13px"></i></button>
+        <button class="btn btn-secondary btn-sm" style="margin-right:4px;${p.hasPdf?'color:#ef4444':'color:var(--text3)'}" onclick="${p.hasPdf?`viewPlanPdf('${esc(p.id)}','${esc(p.pdfName||p.code)}','${esc(p.pdfUrl||'')}')`:`uploadPlanPdf('${esc(p.id)}')`}" title="${p.hasPdf?'의뢰서 보기: '+esc(p.pdfName||''):'의뢰서 업로드'}"><i class="ti ti-file-type-pdf" style="font-size:13px"></i></button>
         <button class="btn btn-secondary btn-sm" style="margin-right:4px${_can?'':_dis}" onclick="${_can?`openPlanDateModal('${esc(p.id)}')`:'void(0)'}" title="${_can?'생산계획일 지정':'작업이 시작된 계획은 변경할 수 없습니다'}"><i class="ti ti-calendar"></i></button>
         <button class="btn btn-secondary btn-sm" style="margin-right:4px${_can?'':_dis}" onclick="planAction('edit','${esc(p.id)}')" title="${_title}"><i class="ti ti-edit"></i></button>
         <button class="btn btn-secondary btn-sm" style="color:#dc2626${_can?'':_dis}" onclick="planAction('delete','${esc(p.id)}')" title="${_titleD}"><i class="ti ti-trash"></i></button>`;
@@ -3146,23 +3146,20 @@ window.uploadPlanPdf = function(planId) {
   input.click();
 };
 
-window.viewPlanPdf = async function(planId, pdfName) {
+window.viewPlanPdf = async function(planId, pdfName, pdfUrl) {
   const modal=document.getElementById('pdf-modal');
   const viewer=document.getElementById('pdf-viewer');
   const titleEl=document.getElementById('pdf-modal-title');
   const replaceBtn=document.getElementById('pdf-replace-btn');
   if(!modal||!viewer) return;
   if(titleEl) titleEl.innerHTML=`<i class="ti ti-file-type-pdf" style="color:#ef4444"></i> ${esc(pdfName||'생산의뢰서')}`;
-  if(replaceBtn) { replaceBtn.style.display=isAdmin?'block':'none'; replaceBtn.dataset.planId=planId; }
-  viewer.src='';
-  modal.style.display='flex';
-  showToast('불러오는 중...');
-  try {
-    const r=await fetch(`/api/plans?pdf=${encodeURIComponent(planId)}`);
-    const data=await r.json();
-    if(data.pdfData){ viewer.src=data.pdfData; }
-    else { showToast('PDF를 찾을 수 없습니다'); modal.style.display='none'; }
-  } catch(err){ showToast('오류: '+err.message); modal.style.display='none'; }
+  if(replaceBtn){ replaceBtn.style.display=isAdmin?'block':'none'; replaceBtn.dataset.planId=planId; }
+  if(pdfUrl){
+    viewer.src=pdfUrl;
+    modal.style.display='flex';
+  } else {
+    showToast('PDF URL이 없습니다');
+  }
 };
 
 window.replacePlanPdf = function() {
@@ -3951,7 +3948,7 @@ function orPlanRow(p, no) {
     <td style="font-size:11px;color:var(--text3);max-width:120px">${esc(p.remark||'—')}</td>
     <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
     <td style="font-size:11px;${p.status==='deleted'?'color:var(--red);font-weight:700':'color:var(--text3)'}">${p.status==='deleted'?'계획취소':'—'}</td>
-    <td style="text-align:center">${p.hasPdf?`<button onclick="viewPlanPdf('${esc(p.id)}','${esc(p.pdfName||p.code)}')" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:2px" title="의뢰서 보기: ${esc(p.pdfName||'')}"><i class="ti ti-file-type-pdf" style="font-size:16px"></i></button>`:'<span style="color:var(--border)"><i class="ti ti-file-type-pdf" style="font-size:16px"></i></span>'}</td>
+    <td style="text-align:center">${p.hasPdf?`<button onclick="viewPlanPdf('${esc(p.id)}','${esc(p.pdfName||p.code)}','${esc(p.pdfUrl||'')}')" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:2px" title="의뢰서 보기: ${esc(p.pdfName||'')}"><i class="ti ti-file-type-pdf" style="font-size:16px"></i></button>`:'<span style="color:var(--border)"><i class="ti ti-file-type-pdf" style="font-size:16px"></i></span>'}</td>
   </tr>`;
 }
 
@@ -4107,7 +4104,7 @@ window.renderOrAll = function() {
       <td style="font-size:11px;color:var(--text3);max-width:120px">${esc(p.remark||'—')}</td>
       <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
       <td style="font-size:11px;${p.status==='deleted'?'color:var(--red);font-weight:700':'color:var(--text3)'}">${p.status==='deleted'?'계획취소':'—'}</td>
-      <td style="text-align:center">${p.hasPdf?`<button onclick="viewPlanPdf('${esc(p.id)}','${esc(p.pdfName||p.code)}')" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:2px" title="${esc(p.pdfName||'')}"><i class="ti ti-file-type-pdf" style="font-size:16px"></i></button>`:'<span style="color:var(--border)"><i class="ti ti-file-type-pdf" style="font-size:16px"></i></span>'}</td>
+      <td style="text-align:center">${p.hasPdf?`<button onclick="viewPlanPdf('${esc(p.id)}','${esc(p.pdfName||p.code)}','${esc(p.pdfUrl||'')}')" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:2px" title="${esc(p.pdfName||'')}"><i class="ti ti-file-type-pdf" style="font-size:16px"></i></button>`:'<span style="color:var(--border)"><i class="ti ti-file-type-pdf" style="font-size:16px"></i></span>'}</td>
     </tr>`;
   }).join('');
 };
