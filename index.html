@@ -2251,13 +2251,15 @@ function renderPlanTable(filterFn, sortDir){
     const h=Math.floor(total/3600000),m=Math.floor((total%3600000)/60000);
     return h>0?`${h}h ${m}m`:`${m}m`;
   }
+  // 미리 작업 로그 있는 코드 집합 계산 (성능 최적화)
+  const _loggedCodes=new Set(Object.values(cachedLogs||{}).flatMap(wl=>Object.values(wl||{}).map(l=>l.code?.toLowerCase())));
   tbody.innerHTML=plans.map(p=>{
     const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
     const wCnt=getWorkerCount(p.code);
     const wHrs=calcWorkHours(p.code);
     const isToday=p.date===todayISO();
     const _st=getPlanStatus(p);
-    const _hasLog=Object.values(cachedLogs||{}).some(wl=>Object.values(wl||{}).some(l=>l.code?.toLowerCase()===p.code?.toLowerCase()));
+    const _hasLog=_loggedCodes.has(p.code?.toLowerCase());
     const _can=(_st==='planned')||(_st==='waiting'&&!_hasLog);
     const _dis=';opacity:.3;cursor:not-allowed';
     return `<tr style="${isToday?'background:rgba(59,130,246,.04)':''}">
