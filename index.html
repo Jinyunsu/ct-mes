@@ -2256,6 +2256,10 @@ function renderPlanTable(filterFn, sortDir){
     const wCnt=getWorkerCount(p.code);
     const wHrs=calcWorkHours(p.code);
     const isToday=p.date===todayISO();
+    const _st=getPlanStatus(p);
+    const _hasLog=Object.values(cachedLogs||{}).some(wl=>Object.values(wl||{}).some(l=>l.code?.toLowerCase()===p.code?.toLowerCase()));
+    const _can=(_st==='planned')||(_st==='waiting'&&!_hasLog);
+    const _dis=';opacity:.3;cursor:not-allowed';
     return `<tr style="${isToday?'background:rgba(59,130,246,.04)':''}">
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap">${p.createdAt||'—'}</td>
       <td style="font-family:var(--mono);font-size:11px;white-space:nowrap">
@@ -2277,10 +2281,6 @@ function renderPlanTable(filterFn, sortDir){
       <td style="white-space:nowrap"><span class="badge ${sc[getPlanStatus(p)]||'badge-gray'}" style="font-size:10px;padding:2px 5px">${sm[getPlanStatus(p)]||'예정'}</span>${dueBadge(p)}</td>
       <td style="color:var(--text3);font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.remark||'')}">${esc(p.remark||'—')}</td>
       <td style="white-space:nowrap">${(()=>{
-        const _st=getPlanStatus(p);
-        const _hasLog=Object.values(cachedLogs||{}).some(wl=>Object.values(wl||{}).some(l=>l.code?.toLowerCase()===p.code?.toLowerCase()));
-        const _can=(_st==='planned')||(_st==='waiting'&&!_hasLog);
-        const _dis=';opacity:.3;cursor:not-allowed';
         const _title=_st==='running'?'작업중인 계획은 수정할 수 없습니다':_st==='done'?'완료된 계획은 수정할 수 없습니다':(!_can)?'작업이 시작된 계획은 수정할 수 없습니다':'수정';
         const _titleD=_st==='running'?'작업중인 계획은 삭제할 수 없습니다':_st==='done'?'완료된 계획은 삭제할 수 없습니다':(!_can)?'작업이 시작된 계획은 삭제할 수 없습니다':'삭제';
         const _hasNote=!!(p.note&&p.note.trim());
