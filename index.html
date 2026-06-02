@@ -2501,10 +2501,14 @@ function renderCalendar(){
       if(!p.date||p.date>=ds)return false;
       if(ds>today)return false;
       const st=getPlanStatus(p);
-      if(st==='shipped')return false;
-      // shippedAt이 ds 이전이면 이월 안 함
+      // 출하완료: shippedAt 이전 날짜에는 이월 표시
+      if(st==='shipped'){
+        const shippedDate=p.shippedAt?.slice(0,10)||p.completedAt||p.date;
+        return ds<shippedDate;
+      }
+      // shippedAt이 있고 ds 이전이면 이미 출하 - 이월 안 함
       if(p.shippedAt&&p.shippedAt.slice(0,10)<ds)return false;
-      // completedAt이 있고 ds 이전이면 완료 - 이월 안 함
+      // completedAt이 있고 ds 이전이면 완료 - 이월 안 함 (단 완료일에는 dp로 표시됨)
       if(p.completedAt&&p.completedAt<ds)return false;
       // completedAt 없는 기존 done: 계획일(date)에 완료된 것으로 간주 - 이월 안 함
       if(!p.completedAt&&st==='done')return false;
