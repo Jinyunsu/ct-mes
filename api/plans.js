@@ -1,4 +1,6 @@
 import { neon } from '@neondatabase/serverless';
+import { put, del, head } from '@vercel/blob';
+
 const sql = neon(process.env.DATABASE_URL);
 
 async function ensureColumns() {
@@ -17,7 +19,7 @@ async function ensureColumns() {
     ['date', 'TEXT DEFAULT \'\''],
     ['note', 'TEXT DEFAULT \'\''],
     ['completed_at', 'TEXT DEFAULT \'\''],
-    ['pdf_data', 'TEXT DEFAULT \'\''],
+    ['pdf_url', 'TEXT DEFAULT \'\''],
     ['pdf_name', 'TEXT DEFAULT \'\''],
   ];
   for (const [col, type] of cols) {
@@ -48,13 +50,15 @@ function rowToObj(row) {
     shippedAt: row.shipped_at || '',
     note: row.note || '',
     completedAt: row.completed_at || '',
-    hasPdf: !!(row.pdf_data && row.pdf_data.length > 0),
+    hasPdf: !!(row.pdf_url),
     pdfName: row.pdf_name || '',
+    pdfUrl: row.pdf_url || '',
   };
 }
 
 async function getAllPlans() {
-  const rows = await sql`SELECT * FROM plans ORDER BY created_at ASC`;
+  // pdf_data 컬럼 제외하고 조회 (전송량 절약)
+  const rows = await sql`SELECT id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, note, status, created_at_date, due_date, shipped_at, completed_at, pdf_url, pdf_name FROM plans ORDER BY created_at ASC`;
   const result = {};
   for (const row of rows) {
     result[row.id] = rowToObj(row);
@@ -87,13 +91,6 @@ export default async function handler(req, res) {
   try {
     await ensureColumns();
 
-    // PDF 조회: GET /api/plans?pdf=planId
-    if (req.method === 'GET' && req.query?.pdf) {
-      const rows = await sql`SELECT pdf_data, pdf_name FROM plans WHERE id = ${req.query.pdf}`;
-      if (!rows[0] || !rows[0].pdf_data) return res.status(404).json({ error: 'No PDF' });
-      return res.status(200).json({ pdfData: rows[0].pdf_data, pdfName: rows[0].pdf_name });
-    }
-
     if (req.method === 'GET') {
       return res.status(200).json(await getAllPlans());
     }
@@ -113,12 +110,27 @@ export default async function handler(req, res) {
       return res.status(200).json(await getAllPlans());
     }
 
-    // PDF 업로드: PATCH { id, pdfData, pdfName }
+    // PDF 업로드: PATCH { id, pdfData(base64), pdfName }
     if (req.method === 'PATCH') {
       const { id, pdfData, pdfName } = req.body;
       if (!id) return res.status(400).json({ error: 'id required' });
-      await sql`UPDATE plans SET pdf_data = ${pdfData||''}, pdf_name = ${pdfName||''} WHERE id = ${id}`;
-      return res.status(200).json({ ok: true });
+
+      // 기존 PDF 삭제
+      const existing = await sql`SELECT pdf_url FROM plans WHERE id = ${id}`;
+      if (existing[0]?.pdf_url) {
+        try { await del(existing[0].pdf_url); } catch(e) {}
+      }
+
+      // base64 → Buffer → Vercel Blob 업로드
+      const base64 = pdfData.replace(/^data:application\/pdf;base64,/, '');
+      const buffer = Buffer.from(base64, 'base64');
+      const blob = await put(`plans/${id}/${pdfName||'document.pdf'}`, buffer, {
+        access: 'public',
+        contentType: 'application/pdf',
+      });
+
+      await sql`UPDATE plans SET pdf_url = ${blob.url}, pdf_name = ${pdfName||'document.pdf'} WHERE id = ${id}`;
+      return res.status(200).json({ ok: true, pdfUrl: blob.url });
     }
 
     if (req.method === 'DELETE') {
