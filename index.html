@@ -590,6 +590,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
             <tbody id="plan-tbl"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
           </table>
         </div>
+
       </div>
       <!-- 달력 -->
       <div class="card">
@@ -706,7 +707,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       <div class="grid-2">
         <div class="card">
           <div class="card-title"><i class="ti ti-building"></i> 고객사별 생산실적</div>
-          <div class="tbl-wrap">
+          <div class="tbl-wrap" style="max-height:300px;overflow-y:auto">
             <table>
               <thead><tr><th>고객사</th><th>수주건수</th><th>생산수량</th><th>달성률</th><th>비율</th></tr></thead>
               <tbody><tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr></tbody>
@@ -715,7 +716,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
         <div class="card">
           <div class="card-title"><i class="ti ti-package"></i> 작업코드별 실적 요약</div>
-          <div class="tbl-wrap">
+          <div class="tbl-wrap" style="max-height:300px;overflow-y:auto">
             <table>
               <thead><tr><th>작업코드</th><th>계획</th><th>실적</th><th>달성률</th><th>작업시간</th><th>상태</th></tr></thead>
               <tbody><tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">데이터 없음</td></tr></tbody>
@@ -2298,7 +2299,9 @@ function renderPlanTable(filterFn, sortDir){
   updatePlanKPI(plans);
 }
 
+
 function filterPlanTable({fromPolling=false}={}){
+
   const codeInput=document.getElementById('plan-filter-code');
   const custInput=document.getElementById('plan-filter-customer');
   const dateVal=document.getElementById('plan-filter-date')?.value||'';
