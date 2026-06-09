@@ -4115,13 +4115,13 @@ window.renderOrMonth = function() {
   }).join('');
 };
 
-function renderOrAllPager(total, maxPage){
+function renderOrAllPager(shippedTotal, maxPage, activeCount){
   const el=document.getElementById('or-all-pager');
   if(!el) return;
   if(!maxPage||maxPage<=1){el.innerHTML='';return;}
   const cur=orAllPage||1;
   let html='<div style="display:flex;align-items:center;gap:6px;justify-content:space-between;padding:8px 4px;font-size:12px;flex-wrap:wrap">';
-  html+='<span style="color:var(--text3);font-size:11px">총 '+total+'건</span>';
+  html+='<span style="color:var(--text3);font-size:11px">진행중 '+(activeCount||0)+'건 · 출하완료 '+(shippedTotal||0)+'건</span>';
   html+='<div style="display:flex;gap:4px;align-items:center">';
   html+='<button onclick="goToOrAllPage('+(cur-1)+')" '+(cur<=1?'disabled':'')+' style="padding:3px 8px;border:1px solid var(--border);border-radius:5px;background:var(--bg2);color:var(--text);cursor:pointer;font-size:11px;'+(cur<=1?'opacity:.4':'')+'">◀</button>';
   for(let i=1;i<=maxPage;i++){
@@ -4150,16 +4150,24 @@ window.renderOrAll = function() {
   const tbody = document.getElementById('or-all-tbody'); if(!tbody) return;
   const today=todayISO();
   if(!plans.length) { tbody.innerHTML='<tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>'; renderOrAllPager(0); return; }
-  const total=plans.length;
+
+  // 1페이지: 출하완료 외 전부, 2페이지~: 출하완료 20개씩
+  const activePlansOr=plans.filter(p=>p.status!=='shipped');
+  const shippedPlansOr=plans.filter(p=>p.status==='shipped');
   const pageSize=orAllPageSize||20;
-  const maxPage=Math.max(1,Math.ceil(total/pageSize));
+  const maxPage=Math.max(1,Math.ceil(shippedPlansOr.length/pageSize)+1);
   if(orAllPage>maxPage) window.orAllPage=maxPage;
   if(orAllPage<1) window.orAllPage=1;
-  const start=(orAllPage-1)*pageSize;
-  const pagePlans=plans.slice(start,start+pageSize);
-  renderOrAllPager(total, maxPage);
+  let pagePlans;
+  if(orAllPage===1){
+    pagePlans=activePlansOr;
+  } else {
+    const start=(orAllPage-2)*pageSize;
+    pagePlans=shippedPlansOr.slice(start,start+pageSize);
+  }
+  renderOrAllPager(shippedPlansOr.length, maxPage, activePlansOr.length);
   tbody.innerHTML = pagePlans.map((p,idx)=>{
-    const absIdx=start+idx;
+    const absIdx=orAllPage===1?idx:(orAllPage-2)*pageSize+idx;
     const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
     const st=p.shippedAt?"shipped":getPlanStatus(p);
     const isDeleted=p.status==="deleted";
