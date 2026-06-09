@@ -21,6 +21,7 @@ async function ensureColumns() {
     ['completed_at', 'TEXT DEFAULT \'\''],
     ['pdf_url', 'TEXT DEFAULT \'\''],
     ['pdf_name', 'TEXT DEFAULT \'\''],
+    ['shipped_qty', 'INTEGER DEFAULT 0'],
   ];
   for (const [col, type] of cols) {
     try {
@@ -53,12 +54,13 @@ function rowToObj(row) {
     hasPdf: !!(row.pdf_url),
     pdfName: row.pdf_name || '',
     pdfUrl: row.pdf_url || '',
+    shippedQty: Number(row.shipped_qty) || 0,
   };
 }
 
 async function getAllPlans() {
   // pdf_data 컬럼 제외하고 조회 (전송량 절약)
-  const rows = await sql`SELECT id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, note, status, created_at_date, due_date, shipped_at, completed_at, pdf_url, pdf_name FROM plans ORDER BY created_at ASC`;
+  const rows = await sql`SELECT id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, note, status, created_at_date, due_date, shipped_at, completed_at, pdf_url, pdf_name, shipped_qty FROM plans ORDER BY created_at ASC`;
   const result = {};
   for (const row of rows) {
     result[row.id] = rowToObj(row);
@@ -68,17 +70,17 @@ async function getAllPlans() {
 
 async function upsertPlan(p, id) {
   await sql`
-    INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, note, status, created_at_date, due_date, shipped_at, completed_at)
+    INSERT INTO plans (id, code, date, plan_qty, act_qty, product_code, spec, customer, remark, note, status, created_at_date, due_date, shipped_at, completed_at, shipped_qty)
     VALUES (
       ${id}, ${p.code||''}, ${p.date||''}, ${Number(p.planQty)||0}, ${Number(p.actQty)||0},
       ${p.productCode||''}, ${p.spec||''}, ${p.customer||''}, ${p.remark||''}, ${p.note||''},
-      ${p.status||'planned'}, ${p.createdAt||''}, ${p.dueDate||''}, ${p.shippedAt||''}, ${p.completedAt||''}
+      ${p.status||"planned"}, ${p.createdAt||""}, ${p.dueDate||""}, ${p.shippedAt||""}, ${p.completedAt||""}, ${Number(p.shippedQty)||0}
     )
     ON CONFLICT (id) DO UPDATE SET
       code=EXCLUDED.code, date=EXCLUDED.date, plan_qty=EXCLUDED.plan_qty, act_qty=EXCLUDED.act_qty,
       product_code=EXCLUDED.product_code, spec=EXCLUDED.spec, customer=EXCLUDED.customer,
       remark=EXCLUDED.remark, note=EXCLUDED.note, status=EXCLUDED.status,
-      due_date=EXCLUDED.due_date, shipped_at=EXCLUDED.shipped_at, completed_at=EXCLUDED.completed_at
+      due_date=EXCLUDED.due_date, shipped_at=EXCLUDED.shipped_at, completed_at=EXCLUDED.completed_at, shipped_qty=EXCLUDED.shipped_qty
   `;
 }
 
