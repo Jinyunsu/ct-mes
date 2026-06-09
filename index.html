@@ -910,8 +910,8 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin:0"><i class="ti ti-list-details"></i> 전체</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <input id="or-search" placeholder="🔍 작업코드/고객사 검색" oninput="renderOrAll()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);outline:none;width:180px;background:var(--bg2);color:var(--text)">
-          <select id="or-status-f" onchange="renderOrAll()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);background:var(--bg2);color:var(--text)">
+          <input id="or-search" placeholder="🔍 작업코드/고객사 검색" oninput="window.orAllPage=1;renderOrAll()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);outline:none;width:180px;background:var(--bg2);color:var(--text)">
+          <select id="or-status-f" onchange="window.orAllPage=1;renderOrAll()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);background:var(--bg2);color:var(--text)">
             <option value="">전체 상태</option>
             <option value="running">작업중</option>
             <option value="paused">정지</option>
@@ -923,13 +923,14 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
             <option value="overdue">납기지연</option>
             <option value="deleted">계획취소</option>
           </select>
-          <button id="or-all-sort-btn" onclick="toggleSort('orAllSortDir',renderOrAll)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg2);color:var(--text);font-size:12px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:12px"></i> 날짜 ▲</button>
+          <button id="or-all-sort-btn" onclick="window.orAllPage=1;toggleSort('orAllSortDir',renderOrAll)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg2);color:var(--text);font-size:12px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:12px"></i> 날짜 ▲</button>
         </div>
       </div>
       <div class="tbl-wrap"><table>
         <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하수량</th><th>출하일시</th><th>요청사항</th><th>지연사유</th><th>비고</th><th>의뢰서</th></tr></thead>
         <tbody id="or-all-tbody"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
       </table></div>
+    <div id="or-all-pager"></div>
     </div>
   </div>
 </div>
@@ -1364,6 +1365,7 @@ window.dashSortDir='asc'; window.dashStatusFilter='all';
 window.progressSortDir='asc'; window.progressStatusFilter='all';
 window.orDaySortDir='asc'; window.orMonthSortDir='asc'; window.orAllSortDir='asc';
 window.orDayStatusFilter='all'; window.orMonthStatusFilter='all';
+window.orAllPage=1; window.orAllPageSize=20;
 let _pollingLocked=false; // 작업 중 폴링 잠금
 
 // 각 API 응답 오는 대로 즉시 렌더링 (초기 로딩 속도 최적화)
@@ -4113,6 +4115,24 @@ window.renderOrMonth = function() {
   }).join('');
 };
 
+function renderOrAllPager(total, maxPage){
+  const el=document.getElementById('or-all-pager');
+  if(!el) return;
+  if(!maxPage||maxPage<=1){el.innerHTML='';return;}
+  const cur=orAllPage||1;
+  let html='<div style="display:flex;align-items:center;gap:6px;justify-content:space-between;padding:8px 4px;font-size:12px;flex-wrap:wrap">';
+  html+='<span style="color:var(--text3);font-size:11px">총 '+total+'건</span>';
+  html+='<div style="display:flex;gap:4px;align-items:center">';
+  html+='<button onclick="goToOrAllPage('+(cur-1)+')" '+(cur<=1?'disabled':'')+' style="padding:3px 8px;border:1px solid var(--border);border-radius:5px;background:var(--bg2);color:var(--text);cursor:pointer;font-size:11px;'+(cur<=1?'opacity:.4':'')+'">◀</button>';
+  for(let i=1;i<=maxPage;i++){
+    html+='<button onclick="goToOrAllPage('+i+')" style="padding:3px 8px;border:1px solid '+(i===cur?'var(--accent)':'var(--border)')+';border-radius:5px;background:'+(i===cur?'var(--accent)':'var(--bg2)')+';color:'+(i===cur?'#fff':'var(--text)')+';cursor:pointer;font-size:11px;font-weight:'+(i===cur?'700':'400')+'">'+i+'</button>';
+  }
+  html+='<button onclick="goToOrAllPage('+(cur+1)+')" '+(cur>=maxPage?'disabled':'')+' style="padding:3px 8px;border:1px solid var(--border);border-radius:5px;background:var(--bg2);color:var(--text);cursor:pointer;font-size:11px;'+(cur>=maxPage?'opacity:.4':'')+'">▶</button>';
+  html+='</div></div>';
+  el.innerHTML=html;
+}
+window.goToOrAllPage=function(page){ window.orAllPage=page; window.renderOrAll(); };
+
 window.renderOrAll = function() {
   const search = (document.getElementById('or-search')?.value||'').toLowerCase();
   const sf = document.getElementById('or-status-f')?.value||'';
@@ -4129,8 +4149,17 @@ window.renderOrAll = function() {
   updateOrTopKPI(plans);
   const tbody = document.getElementById('or-all-tbody'); if(!tbody) return;
   const today=todayISO();
-  if(!plans.length) { tbody.innerHTML='<tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>'; return; }
-  tbody.innerHTML = plans.map((p,idx)=>{
+  if(!plans.length) { tbody.innerHTML='<tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>'; renderOrAllPager(0); return; }
+  const total=plans.length;
+  const pageSize=orAllPageSize||20;
+  const maxPage=Math.max(1,Math.ceil(total/pageSize));
+  if(orAllPage>maxPage) window.orAllPage=maxPage;
+  if(orAllPage<1) window.orAllPage=1;
+  const start=(orAllPage-1)*pageSize;
+  const pagePlans=plans.slice(start,start+pageSize);
+  renderOrAllPager(total, maxPage);
+  tbody.innerHTML = pagePlans.map((p,idx)=>{
+    const absIdx=start+idx;
     const pct=p.planQty>0?Math.round((p.actQty||0)/p.planQty*100):0;
     const st=p.shippedAt?"shipped":getPlanStatus(p);
     const isDeleted=p.status==="deleted";
@@ -4138,7 +4167,7 @@ window.renderOrAll = function() {
     const isOverdue=p.dueDate&&_daysLate2>0&&!isDeleted;
     const dueCls=isOverdue?"color:var(--red)":"color:var(--text3)";
     return `<tr${isDeleted?' style="background:rgba(239,68,68,.08);text-decoration:line-through;color:var(--text3)"':""}>
-      <td style="font-size:12px;color:var(--text3);text-align:center">${idx+1}</td>
+      <td style="font-size:12px;color:var(--text3);text-align:center">${absIdx+1}</td>
       <td style="font-size:12px;color:var(--text3)">${p.date||"—"}</td>
       <td style="font-weight:700;font-family:var(--mono);color:var(--accent)">${esc(p.code)}</td>
       <td>${esc(p.customer||'—')}</td>
