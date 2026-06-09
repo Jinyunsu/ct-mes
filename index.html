@@ -339,6 +339,23 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
   </div>
 </div>
 
+<!-- 부분 출하 모달 -->
+<div id="ship-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border-radius:16px;padding:28px 32px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px"><i class="ti ti-truck"></i> 출하 처리</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:16px" id="ship-modal-info"></div>
+    <div style="margin-bottom:12px">
+      <label class="label">출하 수량</label>
+      <input id="ship-qty-input" type="number" class="input" min="1" style="width:100%" placeholder="출하할 수량 입력" oninput="updateShipModalInfo()">
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:16px" id="ship-modal-remain"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeShipModal()">취소</button>
+      <button class="btn btn-primary" style="flex:1" onclick="confirmShipPlan()">출하 처리</button>
+    </div>
+  </div>
+</div>
+
 <!-- 작업관리 비밀번호 모달 -->
 <div id="worker-pw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:none;align-items:center;justify-content:center">
   <div style="background:var(--bg2);border-radius:16px;padding:28px 32px;width:300px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
@@ -852,7 +869,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         <div style="background:rgba(239,68,68,.06);border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(239,68,68,.2)"><div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:4px">취소건수</div><div style="font-size:20px;font-weight:800;color:var(--red)" id="dk-cancel">—</div></div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th><th>의뢰서</th></tr></thead>
+        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하수량</th><th>출하일시</th><th>요청사항</th><th>지연사유</th><th>비고</th><th>의뢰서</th></tr></thead>
         <tbody id="or-day-tbody"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">해당 날짜 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
@@ -909,7 +926,7 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
         </div>
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th><th>의뢰서</th></tr></thead>
+        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하수량</th><th>출하일시</th><th>요청사항</th><th>지연사유</th><th>비고</th><th>의뢰서</th></tr></thead>
         <tbody id="or-all-tbody"><tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr></tbody>
       </table></div>
     </div>
@@ -3938,9 +3955,10 @@ function orPlanRow(p, no) {
       </div>
       <span style="font-size:12px">${pct}%</span>
     </div></td>
-    <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${shippedInfo}${(p.dueDate&&p.dueDate<today&&st!=='shipped'&&st!=='deleted')?'<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>':''}</td>
+    <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${(p.dueDate&&p.dueDate<today&&st!=='shipped'&&st!=='deleted')?'<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>':''}</td>
+    <td style="font-family:var(--mono);font-size:11px;text-align:center">${p.shippedQty>0?`<span style="color:var(--green);font-weight:700">${p.shippedQty}</span>/${p.planQty||0}`:'—'}</td>
     <td style="white-space:nowrap">
-      ${st==='shipped'?'<span style="font-size:10px;color:var(--green);font-weight:700">✓ 출하완료</span>':st==='done'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer;white-space:nowrap">출하</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}
+      ${st==='shipped'?`<span style="font-size:10px;color:var(--green);font-weight:700">✓ ${p.shippedAt||''}</span>`:st==='done'||st==='running'||st==='paused'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer;white-space:nowrap">${p.shippedQty>0?'추가출하':'출하'}</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}
     </td>
     <td style="font-size:11px;color:var(--text3);max-width:120px">${esc(p.remark||'—')}</td>
     <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
@@ -4049,7 +4067,7 @@ window.renderOrMonth = function() {
     const dr=dtp>0?Math.round(dta/dtp*100):0;
     return `<div style="margin-bottom:14px">
       <div class="tbl-wrap"><table>
-        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하</th><th>요청사항</th><th>지연사유</th><th>비고</th><th>의뢰서</th></tr></thead>
+        <thead><tr><th>NO</th><th>작업일자</th><th>작업코드</th><th>고객사</th><th>제품코드</th><th>제품사양</th><th>납기일</th><th>계획수량</th><th>실적수량</th><th>달성률</th><th>상태</th><th>출하수량</th><th>출하일시</th><th>요청사항</th><th>지연사유</th><th>비고</th><th>의뢰서</th></tr></thead>
         <tbody>${dp.map((p,i)=>orPlanRow(p,i+1)).join('')}</tbody>
       </table></div>
     </div>`;
@@ -4097,7 +4115,8 @@ window.renderOrAll = function() {
         <span style="font-size:11px">${pct}%</span>
       </div></td>
       <td><span class="badge ${OR_SC[st]}">${OR_SM[st]}</span>${p.shippedAt?`<div style="font-size:9px;color:var(--text3)">${p.shippedAt}</div>`:''}${(p.dueDate&&p.dueDate<today&&st!=='shipped'&&!isDeleted)?'<span class="badge badge-purple" style="margin-left:4px;font-size:10px">납기지연</span>':''}</td>
-      <td style="white-space:nowrap">${st==='shipped'?'<span style="font-size:10px;color:var(--green);font-weight:700">✓ 출하완료</span>':st==='done'?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer">출하</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}</td>
+      <td style="font-family:var(--mono);font-size:11px;text-align:center">${p.shippedQty>0?`<span style="color:var(--green);font-weight:700">${p.shippedQty}</span>/${p.planQty||0}`:"—"}</td>
+      <td style="white-space:nowrap">${st==='shipped'?`<span style="font-size:10px;color:var(--green);font-weight:700">✓ ${p.shippedAt||''}</span>`:(st==='done'||st==='running'||st==='paused')?`<button onclick="shipPlan('${esc(p.id)}')" style="font-size:10px;padding:3px 8px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer">${p.shippedQty>0?'추가출하':'출하'}</button>`:'<span style="font-size:10px;color:var(--text3)">—</span>'}</td>
       <td style="font-size:11px;color:var(--text3);max-width:120px">${esc(p.remark||'—')}</td>
       <td style="font-size:11px;color:var(--red);max-width:120px">${p.note?`<span title="${esc(p.note)}">${esc(p.note)}</span>`:'—'}</td>
       <td style="font-size:11px;${p.status==='deleted'?'color:var(--red);font-weight:700':'color:var(--text3)'}">${p.status==='deleted'?'계획취소':'—'}</td>
@@ -4315,21 +4334,75 @@ window.onCalDrop = function(e, dateStr) {
   });
 };
 
-window.shipPlan = async function(id) {
-  if(!confirm('출하 완료 처리하시겠습니까?')) return;
+window.shipPlan = function(id) {
+  if(!isAdmin){ showToast('관리자 전용'); return; }
   const plan = cachedPlans[id] || Object.values(cachedPlans).find(p=>p.id===id);
-  if(!plan) { showToast('계획을 찾을 수 없습니다'); return; }
+  if(!plan){ showToast('계획을 찾을 수 없습니다'); return; }
+  const modal = document.getElementById('ship-modal');
+  const infoEl = document.getElementById('ship-modal-info');
+  const input = document.getElementById('ship-qty-input');
+  if(!modal) return;
+  const shippedQty = plan.shippedQty||0;
+  const remaining = (plan.actQty||0) - shippedQty;
+  infoEl.innerHTML = `<b>${esc(plan.code)}</b> · 실적: ${plan.actQty||0}개 · 기출하: ${shippedQty}개 · 잔여: ${remaining}개`;
+  input.value = remaining > 0 ? remaining : plan.actQty||0;
+  input.max = plan.actQty||0;
+  modal.dataset.planId = id;
+  modal.style.display = 'flex';
+  updateShipModalInfo();
+  setTimeout(()=>input.focus(),100);
+};
+
+window.updateShipModalInfo = function() {
+  const modal = document.getElementById('ship-modal');
+  const input = document.getElementById('ship-qty-input');
+  const remainEl = document.getElementById('ship-modal-remain');
+  if(!modal||!input||!remainEl) return;
+  const id = modal.dataset.planId;
+  const plan = cachedPlans[id] || Object.values(cachedPlans).find(p=>p.id===id);
+  if(!plan) return;
+  const qty = parseInt(input.value)||0;
+  const shippedQty = (plan.shippedQty||0) + qty;
+  const isFullShip = shippedQty >= (plan.planQty||0);
+  remainEl.innerHTML = isFullShip
+    ? `<span style="color:var(--green)">✓ 전체 출하 완료 처리됩니다</span>`
+    : `<span style="color:var(--amber)">부분 출하 · 잔여 ${(plan.planQty||0)-shippedQty}개 계속 진행</span>`;
+};
+
+window.closeShipModal = function() {
+  const modal = document.getElementById('ship-modal');
+  if(modal) modal.style.display = 'none';
+};
+
+window.confirmShipPlan = async function() {
+  const modal = document.getElementById('ship-modal');
+  const input = document.getElementById('ship-qty-input');
+  if(!modal||!input) return;
+  const id = modal.dataset.planId;
+  const qty = parseInt(input.value)||0;
+  if(qty<=0){ showToast('출하 수량을 입력해주세요'); return; }
+  const plan = cachedPlans[id] || Object.values(cachedPlans).find(p=>p.id===id);
+  if(!plan){ showToast('계획을 찾을 수 없습니다'); return; }
+  closeShipModal();
   if(pollingTimer){ clearInterval(pollingTimer); pollingTimer=null; }
   _pollingLocked=true;
   const now = new Date();
   const shippedAt = now.toLocaleDateString('ko-KR') + ' ' + now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
+  const newShippedQty = (plan.shippedQty||0) + qty;
+  const isFullShip = newShippedQty >= (plan.planQty||0);
   const completedAt = plan.completedAt || todayISO();
-  const updated = {...plan, id, status:'shipped', shippedAt, completedAt};
+  const updated = {
+    ...plan, id,
+    shippedQty: newShippedQty,
+    shippedAt,
+    completedAt,
+    status: isFullShip ? 'shipped' : plan.status,
+  };
   const res = await API.put('/api/plans', updated);
   if(res && !res.error) {
     cachedPlans = res;
     refreshUI();
-    showToast(`[${plan.code}] 출하완료 처리됨 (${shippedAt})`);
+    showToast(isFullShip ? `[${plan.code}] 전체 출하완료` : `[${plan.code}] ${qty}개 부분 출하 (누계 ${newShippedQty}개)`);
   } else showToast('처리 실패');
   restartPollingDelayed(2000);
 };
