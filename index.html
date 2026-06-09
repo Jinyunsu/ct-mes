@@ -592,11 +592,11 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
           <div class="card-title" style="margin:0"><i class="ti ti-list-details"></i> 생산계획 목록</div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <button class="btn btn-primary btn-sm" onclick="openModal('plan-modal')"><i class="ti ti-plus"></i> 신규 등록</button>
-            <input id="plan-filter-date" type="month" class="input" style="width:auto;font-size:12px;padding:5px 10px" onchange="filterPlanTable()">
-            <input id="plan-filter-code" class="input" style="width:120px;font-size:12px" placeholder="작업코드 검색" oninput="filterPlanTable()">
-            <input id="plan-filter-customer" class="input" style="width:100px;font-size:12px" placeholder="고객사 검색" oninput="filterPlanTable()">
-            <button id="plan-sort-btn" onclick="toggleSort('planSortDir',filterPlanTable)" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:12px"></i> 날짜 ▲</button>
-            <select id="plan-status-filter" onchange="setStatusFilter('planStatusFilter',this.value,filterPlanTable)" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer">
+            <input id="plan-filter-date" type="month" class="input" style="width:auto;font-size:12px;padding:5px 10px" onchange="resetPlanPage();filterPlanTable()">
+            <input id="plan-filter-code" class="input" style="width:120px;font-size:12px" placeholder="작업코드 검색" oninput="resetPlanPage();filterPlanTable()">
+            <input id="plan-filter-customer" class="input" style="width:100px;font-size:12px" placeholder="고객사 검색" oninput="resetPlanPage();filterPlanTable()">
+            <button id="plan-sort-btn" onclick="resetPlanPage();toggleSort('planSortDir',filterPlanTable)" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font)"><i class="ti ti-arrows-sort" style="font-size:12px"></i> 날짜 ▲</button>
+            <select id="plan-status-filter" onchange="resetPlanPage();setStatusFilter('planStatusFilter',this.value,filterPlanTable)" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer">
               <option value="all">전체 상태</option><option value="planned">예정</option><option value="waiting">대기</option><option value="running">작업중</option><option value="paused">정지</option><option value="done">완료</option><option value="failed">미달성</option><option value="overdue">납기지연</option>
             </select>
           </div>
@@ -2354,6 +2354,7 @@ function renderPlanPager(donePlans, maxPage, activeCount){
   el.innerHTML=html;
 }
 window.goToPlanPage=function(page){ window.planCompletedPage=page; filterPlanTable(); };
+window.resetPlanPage=function(){ window.planCompletedPage=1; };
 
 function filterPlanTable({fromPolling=false}={}){
 
@@ -2370,7 +2371,6 @@ function filterPlanTable({fromPolling=false}={}){
   // 정렬 버튼 업데이트
   const sortBtn=document.getElementById('plan-sort-btn');
   if(sortBtn) sortBtn.innerHTML=`<i class="ti ti-arrows-sort" style="font-size:12px"></i> 날짜 ${planSortDir==='asc'?'▲':'▼'}`;
-  window.planCompletedPage=1;
   renderPlanTable(p=>{
     const st=getPlanStatus(p);
     const today=todayISO();
