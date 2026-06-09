@@ -2245,12 +2245,17 @@ function renderPlanTable(filterFn, sortDir){
   // 완료(2페이지~): 완료, 출하완료
   const donePlansArr=plans.filter(p=>{const st=getPlanStatus(p);return st==='done'||st==='shipped';});
   const pageSize=planPageSize||10;
-  const maxPage=Math.max(1,Math.ceil(donePlansArr.length/pageSize));
+  const maxPage=Math.max(1,Math.ceil(donePlansArr.length/pageSize)+1);
   if(planCompletedPage>maxPage) window.planCompletedPage=maxPage;
   if(planCompletedPage<1) window.planCompletedPage=1;
-  const doneStart=(planCompletedPage-1)*pageSize;
-  const donePage=donePlansArr.slice(doneStart,doneStart+pageSize);
-  const displayPlans=[...activePlansArr,...donePage];
+  // 1페이지: 진행중만, 2페이지~: 완료만
+  let displayPlans;
+  if(planCompletedPage===1){
+    displayPlans=activePlansArr;
+  } else {
+    const doneStart=(planCompletedPage-2)*pageSize;
+    displayPlans=donePlansArr.slice(doneStart,doneStart+pageSize);
+  }
   renderPlanPager(donePlansArr, maxPage, activePlansArr.length);
   const sm={done:'완료',running:'작업중',planned:'예정',failed:'미달성',waiting:'대기',paused:'정지',overdue:'미달성',shipped:'완료',deleted:'계획취소'};
   const sc={done:'badge-green',running:'badge-blue',planned:'badge-gray',failed:'badge-red',waiting:'badge-gray',paused:'badge-amber',overdue:'badge-red',shipped:'badge-green',deleted:'badge-red'};
@@ -2327,13 +2332,6 @@ function renderPlanTable(filterFn, sortDir){
       })()}</td>
     </tr>`;
   }).join('');
-  // 진행중/완료 구분선 추가
-  if(activePlansArr.length>0 && donePage.length>0){
-    const sep=`<tr><td colspan="15" style="background:var(--bg3);text-align:center;font-size:11px;color:var(--text3);padding:4px;border-top:2px solid var(--border)">─── 완료된 계획 ───</td></tr>`;
-    const rows=tbody.innerHTML.split('</tr>');
-    rows.splice(activePlansArr.length, 0, sep);
-    tbody.innerHTML=rows.join('</tr>');
-  }
   // 요약 KPI 업데이트
   updatePlanKPI(plans);
 }
