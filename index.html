@@ -2241,7 +2241,7 @@ function renderPlanTable(filterFn, sortDir){
   if(!plans.length){tbody.innerHTML='<tr><td colspan="15" style="text-align:center;color:var(--text3);padding:24px">등록된 계획이 없습니다</td></tr>';renderPlanPager([],[]);return;}
   // 진행중(1페이지): 작업중, 정지, 대기, 예정, 납기지연
   const activeSts=['running','paused','waiting','planned','failed'];
-  const activePlansArr=plans.filter(p=>{const st=getPlanStatus(p);return activeSts.includes(st)||(p.dueDate&&p.dueDate<todayISO()&&st!=='shipped');});
+  const activePlansArr=plans.filter(p=>{const st=getPlanStatus(p);if(st==='done'||st==='shipped')return false;return activeSts.includes(st)||(p.dueDate&&p.dueDate<todayISO());});
   // 완료(2페이지~): 완료, 출하완료
   const donePlansArr=plans.filter(p=>{const st=getPlanStatus(p);return st==='done'||st==='shipped';});
   const pageSize=planPageSize||10;
