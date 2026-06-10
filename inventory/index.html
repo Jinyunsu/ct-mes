@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>재고관리대장</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'맑은 고딕','Malgun Gothic',Arial,sans-serif;font-size:13px;color:#1a1a1a;background:#f0f2f5}
+.app{padding:16px}
+
+/* 툴바 */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.toolbar h1{font-size:17px;font-weight:600;color:#1a1a1a;flex:1;display:flex;align-items:center;gap:8px}
+.toolbar h1 span.logo{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;background:#2563eb;border-radius:7px;color:#fff;font-size:15px}
+select,input[type=number],input[type=text]{height:32px;padding:0 10px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#1a1a1a;font-size:13px;font-family:inherit}
+select:focus,input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+button{height:32px;padding:0 14px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#374151;cursor:pointer;font-size:13px;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+button:hover{background:#f3f4f6;border-color:#9ca3af}
+button.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+button.primary:hover{background:#1d4ed8}
+button.danger{background:#fee2e2;color:#b91c1c;border-color:#fca5a5}
+button.danger:hover{background:#fecaca}
+button.export-btn{background:#f0fdf4;color:#166534;border-color:#86efac}
+button.export-btn:hover{background:#dcfce7}
+
+/* 탭 */
+.tabs{display:flex;gap:2px;margin-bottom:14px;background:#e5e7eb;padding:3px;border-radius:8px;width:fit-content}
+.tab{padding:6px 16px;cursor:pointer;border-radius:6px;font-size:13px;color:#6b7280;font-weight:500;transition:all .15s;white-space:nowrap}
+.tab.active{background:#fff;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* 필터 바 */
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.filter-bar label{font-size:12px;color:#6b7280;font-weight:500}
+.filter-btn{height:28px;padding:0 12px;border:1px solid #d1d5db;border-radius:14px;background:#fff;color:#374151;cursor:pointer;font-size:12px;font-family:inherit;transition:all .15s;white-space:nowrap}
+.filter-btn:hover,.filter-btn.active{background:#2563eb;color:#fff;border-color:#2563eb}
+
+/* 섹션 */
+.section{display:none}.section.active{display:block}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:1rem;margin-bottom:12px}
+
+/* 테이블 공통 */
+.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid #e5e7eb}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#f8fafc;padding:7px 8px;text-align:center;font-weight:600;border-bottom:1px solid #e5e7eb;border-right:1px solid #e5e7eb;color:#374151;position:sticky;top:0;z-index:2;white-space:nowrap}
+th:last-child{border-right:none}
+td{padding:4px 6px;border-bottom:1px solid #f1f5f9;border-right:1px solid #f1f5f9;text-align:center;vertical-align:middle}
+td:last-child{border-right:none}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbff}
+td.item-name{text-align:left;font-weight:500}
+td.no-col{color:#9ca3af;font-size:11px;font-weight:600;width:36px}
+
+/* 구분 선택 셀 */
+select.cat-sel{height:24px;padding:0 4px;font-size:11px;border:1px solid #e5e7eb;border-radius:4px;background:#fff;color:#374151;width:68px;cursor:pointer}
+select.cat-sel:focus{outline:none;border-color:#2563eb}
+select.cat-sel.c-전지{background:#fef3c7;border-color:#fcd34d;color:#92400e}
+select.cat-sel.c-BMS{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
+select.cat-sel.c-PCM{background:#ede9fe;border-color:#c4b5fd;color:#5b21b6}
+select.cat-sel.c-충전기{background:#dcfce7;border-color:#86efac;color:#166534}
+select.cat-sel.c-케이스{background:#fce7f3;border-color:#f9a8d4;color:#9d174d}
+
+/* 입출고 입력 */
+input.qty{width:42px;height:26px;text-align:center;border:1px solid #e5e7eb;border-radius:4px;background:#fff;color:#1a1a1a;font-size:12px;font-family:inherit;padding:0 2px}
+input.qty:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.1)}
+input.qty.in{background:#f0fdf4;border-color:#bbf7d0}
+input.qty.out{background:#fff7f0;border-color:#fed7aa}
+
+/* 집계 셀 */
+.total-in{color:#166534;font-weight:700;background:#f0fdf4}
+.total-out{color:#b91c1c;font-weight:700;background:#fff7f0}
+.total-stock{font-weight:700;color:#1d4ed8;background:#eff6ff}
+.prev-stock{color:#6b7280;font-weight:500}
+
+/* 배지 */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-ok{background:#dcfce7;color:#166534}
+.badge-warn{background:#fef9c3;color:#854d0e}
+.badge-danger{background:#fee2e2;color:#b91c1c}
+
+/* 구분 배지 */
+.cat-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.cb-전지{background:#fef3c7;color:#92400e}
+.cb-BMS{background:#dbeafe;color:#1e40af}
+.cb-PCM{background:#ede9fe;color:#5b21b6}
+.cb-충전기{background:#dcfce7;color:#166534}
+.cb-케이스{background:#fce7f3;color:#9d174d}
+
+/* 통계 카드 */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.stat{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center}
+.stat-label{font-size:11px;color:#6b7280;margin-bottom:4px;font-weight:500}
+.stat-value{font-size:22px;font-weight:700}
+
+/* 모달 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center}
+.modal{background:#fff;border-radius:12px;padding:1.5rem;width:380px;box-shadow:0 20px 40px rgba(0,0,0,.15)}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:1rem;color:#1a1a1a}
+.form-row{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.form-row label{font-size:12px;color:#6b7280;font-weight:500}
+.form-row input,.form-row select{width:100%;height:34px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem}
+
+/* 토스트 */
+.toast{position:fixed;bottom:24px;right:24px;background:#1a1a1a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.toast.show{opacity:1}
+
+/* 보고서 */
+.rpt-controls{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px 16px}
+.rpt-ctrl-group{display:flex;align-items:center;gap:8px}
+.rpt-ctrl-label{font-size:12px;color:#6b7280;font-weight:500;white-space:nowrap}
+.rpt-section-title{font-size:14px;font-weight:700;color:#1a1a1a;margin:0 0 10px;padding-left:4px}
+.rpt-sub-title{font-size:13px;font-weight:600;color:#374151;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.rpt-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.rpt-note{font-size:11px;color:#6b7280;background:#f8fafc;border:1px solid #e5e7eb;border-radius:6px;padding:8px 12px;margin-bottom:10px;line-height:1.7}
+.sort-btns{display:flex;gap:4px;margin-left:auto}
+.sort-btn{height:22px;padding:0 8px;font-size:11px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#6b7280;cursor:pointer}
+.sort-btn.active{background:#2563eb;color:#fff;border-color:#2563eb}
+.bar-wrap{display:flex;align-items:center;gap:6px}
+.bar-bg{flex:1;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden}
+.bar-fill-in{height:100%;background:#22c55e;border-radius:4px;transition:width .4s}
+.bar-fill-out{height:100%;background:#f97316;border-radius:4px;transition:width .4s}
+.eval-over{color:#166534;font-weight:600}
+.eval-under{color:#b91c1c;font-weight:600}
+.eval-ok{color:#1d4ed8;font-weight:600}
+@media(max-width:700px){.rpt-grid2{grid-template-columns:1fr}}
+
+
+/* 입출고 대장 연도/월 컨트롤 */
+.ledger-controls{display:flex;align-items:center;gap:12px;margin-bottom:10px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 16px;flex-wrap:wrap}
+.ledger-ym{display:flex;align-items:center;gap:8px}
+.ledger-badge{font-size:13px;font-weight:700;color:#2563eb;margin-left:4px}
+
+
+/* 유통/제조 출고 */
+.total-out-dist{color:#7c3aed;font-weight:700;background:#f5f3ff}
+.total-out-mfg{color:#b45309;font-weight:700;background:#fffbeb}
+input.qty.out-dist{background:#f5f3ff;border-color:#c4b5fd}
+input.qty.out-mfg{background:#fffbeb;border-color:#fcd34d}
+.badge-dist{background:#f5f3ff;color:#5b21b6;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
+.badge-mfg{background:#fffbeb;color:#92400e;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
+
+
+/* 페이지네이션 */
+.pager{display:flex;align-items:center;justify-content:center;gap:4px;padding:10px 0 4px;flex-wrap:wrap}
+.pager-btn{min-width:28px;height:28px;padding:0 6px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;color:#374151;cursor:pointer;font-size:12px;font-family:inherit;transition:all .15s;line-height:28px;text-align:center}
+.pager-btn:hover{background:#f3f4f6;border-color:#9ca3af}
+.pager-btn.active{background:#2563eb;color:#fff;border-color:#2563eb;font-weight:600}
+.pager-btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+.pager-info{font-size:11px;color:#9ca3af;margin:0 4px}
+
+/* 메모 셀 */
+.qty-wrap{position:relative;display:inline-flex;align-items:center}
+.memo-dot{position:absolute;top:1px;right:1px;width:6px;height:6px;border-radius:50%;background:#f59e0b;pointer-events:none;display:none}
+.memo-dot.has-memo{display:block}
+.memo-btn{position:absolute;top:1px;right:1px;width:14px;height:14px;border-radius:50%;background:#f59e0b;border:none;cursor:pointer;padding:0;font-size:9px;line-height:14px;text-align:center;color:#fff;display:none;z-index:1}
+td:hover .memo-btn{display:flex;align-items:center;justify-content:center}
+.qty-wrap:hover .memo-btn{display:flex;align-items:center;justify-content:center}
+
+/* 메모 팝업 */
+.memo-popup{position:fixed;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:14px;width:260px;z-index:200}
+.memo-popup h4{font-size:12px;font-weight:600;color:#374151;margin-bottom:8px}
+.memo-popup textarea{width:100%;height:80px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;padding:6px 8px;resize:none;color:#1a1a1a}
+.memo-popup textarea:focus{outline:none;border-color:#2563eb}
+.memo-popup-btns{display:flex;gap:6px;justify-content:flex-end;margin-top:8px}
+.memo-popup-btns button{height:28px;padding:0 12px;font-size:12px}
+.memo-tag{font-size:10px;color:#92400e;background:#fef3c7;border-radius:3px;padding:1px 4px;margin-left:3px;vertical-align:middle}
+
+/* 불량 출고 */
+.badge-defect{background:#fce7f3;color:#9d174d}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="toolbar">
+  <h1><span class="logo">📦</span> 재고관리대장</h1>
+  <button class="export-btn" onclick="exportCSV()">⬇ CSV 내보내기</button>
+  <button class="primary" onclick="saveAll()">💾 저장</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('ledger',this)">📋 입출고 대장</div>
+  <div class="tab" onclick="switchTab('status',this)">📊 재고 현황</div>
+  <div class="tab" onclick="switchTab('items',this)">📝 품목 관리</div>
+  <div class="tab" onclick="switchTab('history',this)">🕓 입출고 이력</div>
+  <div class="tab" onclick="switchTab('report',this)">📈 보고서</div>
+</div>
+
+<!-- 입출고 대장 -->
+<div id="sec-ledger" class="section active">
+  <div class="ledger-controls">
+    <div class="ledger-ym">
+      <span class="rpt-ctrl-label">연도</span>
+      <select id="sel-year"></select>
+      <button onclick="addYear()" title="연도 추가" style="height:28px;padding:0 10px;font-size:12px;background:#eff6ff;color:#2563eb;border-color:#bfdbfe">+ 연도 추가</button>
+      <span class="rpt-ctrl-label" style="margin-left:8px">월</span>
+      <select id="sel-month"></select>
+    </div>
+    <span id="ledger-title-badge" class="ledger-badge"></span>
+  </div>
+  <div class="filter-bar">
+    <label>구분 필터:</label>
+    <button class="filter-btn active" onclick="setFilter('전체',this)">전체</button>
+    <button class="filter-btn" onclick="setFilter('전지',this)">전지</button>
+    <button class="filter-btn" onclick="setFilter('BMS',this)">BMS</button>
+    <button class="filter-btn" onclick="setFilter('PCM',this)">PCM</button>
+    <button class="filter-btn" onclick="setFilter('충전기',this)">충전기</button>
+    <button class="filter-btn" onclick="setFilter('케이스',this)">케이스</button>
+  </div>
+  <div class="tbl-wrap">
+    <table><thead id="ledger-head"></thead><tbody id="ledger-body"></tbody></table>
+  </div>
+</div>
+
+<!-- 재고 현황 -->
+<div id="sec-status" class="section">
+  <div class="stat-grid" id="stat-grid"></div>
+  <div class="card">
+    <table>
+      <thead><tr>
+        <th>NO</th><th>구분</th><th>품목코드</th><th>품목명</th><th>기본사양</th><th>상세사양</th>
+        <th>전월재고</th><th>당월재고</th><th>총입고</th><th>총출고</th><th>안전재고</th><th>상태</th>
+      </tr></thead>
+      <tbody id="status-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 품목 관리 -->
+<div id="sec-items" class="section">
+  <div style="margin-bottom:10px">
+    <button class="primary" onclick="openItemModal()">+ 품목 추가</button>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>NO</th><th>구분</th><th>품목코드</th><th>품목명</th><th>기본사양</th><th>상세사양</th><th>안전재고</th><th>관리</th></tr></thead>
+      <tbody id="items-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 입출고 이력 -->
+<div id="sec-history" class="section">
+  <div class="card">
+    <table>
+      <thead><tr><th>날짜</th><th>구분</th><th>품목코드</th><th>품목명</th><th>입/출</th><th>수량</th><th>비고</th></tr></thead>
+      <tbody id="history-body"></tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- 보고서 -->
+<div id="sec-report" class="section">
+
+  <div class="rpt-controls">
+    <div class="rpt-ctrl-group">
+      <span class="rpt-ctrl-label">기준 연도</span>
+      <select id="rpt-year"></select>
+    </div>
+    <div class="rpt-ctrl-group">
+      <span class="rpt-ctrl-label">기준 월 (월간)</span>
+      <select id="rpt-month"></select>
+    </div>
+    <button class="primary" onclick="buildReport()">🔄 보고서 생성</button>
+  </div>
+
+  <div class="rpt-section-title">📅 월간 요약</div>
+  <div class="stat-grid" id="rpt-monthly-stats"></div>
+
+  <div class="rpt-grid2">
+    <div>
+      <div class="rpt-sub-title">📥 월간 입고 TOP 10</div>
+      <div class="card" style="padding:0">
+        <table><thead><tr><th>순위</th><th>품목명</th><th>구분</th><th>입고량</th><th style="width:110px">비율</th></tr></thead>
+        <tbody id="rpt-top-in"></tbody></table>
+        <div class="pager" id="pager-in"></div>
+      </div>
+    </div>
+    <div>
+      <div class="rpt-sub-title">📤 월간 사용(출고) TOP 10
+        <span class="sort-btns">
+          <button class="sort-btn active" id="sort-out-desc" onclick="setOutSort('desc',this)">▼ 많은순</button>
+          <button class="sort-btn" id="sort-out-asc" onclick="setOutSort('asc',this)">▲ 적은순</button>
+        </span>
+      </div>
+      <div class="card" style="padding:0">
+        <table><thead><tr><th>순위</th><th>품목명</th><th>구분</th><th>총출고</th><th>유통/제조</th><th style="width:100px">비율</th></tr></thead>
+        <tbody id="rpt-top-out"></tbody></table>
+        <div class="pager" id="pager-out"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rpt-grid2" style="margin-top:14px">
+    <div>
+      <div class="rpt-sub-title">📊 월간 입고·사용 추이 <span style="font-size:11px;color:#9ca3af">(해당월 전품목 합계)</span></div>
+      <div class="card"><canvas id="chart-monthly" height="180"></canvas></div>
+    </div>
+    <div>
+      <div class="rpt-sub-title">📆 연간 월별 추이 <span style="font-size:11px;color:#9ca3af">(선택 연도)</span></div>
+      <div class="card"><canvas id="chart-yearly" height="180"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="rpt-section-title" style="margin-top:14px">🚨 불량 출고 현황</div>
+  <div class="rpt-note">
+    ※ 비고에 <b>불량</b>이 포함된 출고 이력을 집계합니다. 출고 시 비고란에 "불량" 키워드를 입력하면 자동으로 반영됩니다.
+  </div>
+  <div class="rpt-grid2">
+    <div>
+      <div class="rpt-sub-title">📋 불량 출고 이력 (선택월)</div>
+      <div class="card" style="padding:0;max-height:280px;overflow-y:auto">
+        <table><thead><tr><th>날짜</th><th>품목명</th><th>구분</th><th>수량</th><th>비고</th></tr></thead>
+        <tbody id="rpt-defect-list"></tbody></table>
+      </div>
+    </div>
+    <div>
+      <div class="rpt-sub-title">📊 품목별 불량 출고 합계 (선택월)</div>
+      <div class="card" style="padding:0">
+        <table><thead><tr><th>순위</th><th>품목명</th><th>구분</th><th>불량수량</th><th style="width:110px">비율</th></tr></thead>
+        <tbody id="rpt-defect-rank"></tbody></table>
+      </div>
+      <div class="stat-grid" style="margin-top:10px" id="rpt-defect-stats"></div>
+    </div>
+  </div>
+
+  <div class="rpt-section-title" style="margin-top:14px">🏭 품목별 유통 / 제조 사용량</div>
+  <div class="rpt-note">
+    ※ 선택 월 기준 품목별 유통 출고 / 제조 출고 / 합계를 보여줍니다.
+    <span class="sort-btns" style="margin-left:12px">
+      <button class="sort-btn active" id="dist-sort-total" onclick="setDistSort('total',this)">합계순</button>
+      <button class="sort-btn" id="dist-sort-dist" onclick="setDistSort('dist',this)">유통순</button>
+      <button class="sort-btn" id="dist-sort-mfg" onclick="setDistSort('mfg',this)">제조순</button>
+    </span>
+  </div>
+  <div class="card" style="padding:0">
+    <table>
+      <thead><tr>
+        <th>NO</th><th>구분</th><th>품목명</th><th>기본사양</th>
+        <th style="color:#7c3aed">유통 출고</th><th style="width:110px">유통 비율</th>
+        <th style="color:#b45309">제조 출고</th><th style="width:110px">제조 비율</th>
+        <th style="color:#b91c1c">합계</th>
+      </tr></thead>
+      <tbody id="rpt-dist-mfg-body"></tbody>
+    </table>
+    <div class="pager" id="pager-dist"></div>
+  </div>
+<div class="rpt-section-title" style="margin-top:14px">🎯 안전재고 · 적정재고 분석</div>
+  <div class="rpt-note">
+    ※ <b>권장 안전재고</b> = 일평균 사용량 × 리드타임(3일) × 안전계수(1.5)&nbsp;&nbsp;|&nbsp;&nbsp;
+    <b>권장 적정재고</b> = 안전재고 + 일평균 사용량 × 발주주기(7일)&nbsp;&nbsp;|&nbsp;&nbsp;최근 3개월 출고 기준
+  </div>
+  <div class="card" style="padding:0">
+    <table>
+      <thead><tr>
+        <th>NO</th><th>구분</th><th>품목명</th><th>기본사양</th>
+        <th>3개월 평균<br>월사용량</th><th>일평균<br>사용량</th>
+        <th>권장<br>안전재고</th><th>현재<br>안전재고</th><th>안전재고<br>평가</th>
+        <th>권장<br>적정재고</th><th>현재고</th><th>재고<br>평가</th>
+      </tr></thead>
+      <tbody id="rpt-safety-body"></tbody>
+    </table>
+    <div class="pager" id="pager-safety"></div>
+  </div>
+
+</div>
+</div><!-- .app -->
+
+<!-- 품목 추가/수정 모달 -->
+<div id="item-modal" style="display:none" class="modal-bg" onclick="if(event.target===this)closeItemModal()">
+  <div class="modal">
+    <h3 id="modal-title">품목 추가</h3>
+    <div class="form-row"><label>구분</label>
+      <select id="f-cat">
+        <option value="">-- 선택 --</option>
+        <option>전지</option><option>BMS</option><option>PCM</option><option>충전기</option><option>케이스</option>
+      </select>
+    </div>
+    <div class="form-row"><label>품목코드</label><input id="f-code" type="text" placeholder="ITM-011"></div>
+    <div class="form-row"><label>품목명</label><input id="f-name" type="text" placeholder="품목명 입력"></div>
+    <div class="form-row"><label>기본사양</label><input id="f-spec1" type="text" placeholder="예) 18650, 21700"></div>
+    <div class="form-row"><label>상세사양</label><input id="f-spec2" type="text" placeholder="예) 3.7V 2500mAh"></div>
+    <div class="form-row"><label>안전재고</label><input id="f-safe" type="number" value="5" min="0"></div>
+    <input type="hidden" id="f-idx" value="-1">
+    <div class="modal-btns">
+      <button onclick="closeItemModal()">취소</button>
+      <button class="primary" onclick="saveItem()">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY='inv_data_v2';
+const CATS=['전지','BMS','PCM','충전기','케이스'];
+
+const DEFAULT_ITEMS=[
+  {code:'ITM-001',name:'A4 용지 (박스)',spec1:'',spec2:'',safe:10,cat:''},
+  {code:'ITM-002',name:'볼펜 (검정)',spec1:'',spec2:'',safe:5,cat:''},
+  {code:'ITM-003',name:'스테이플러 침',spec1:'',spec2:'',safe:3,cat:''},
+  {code:'ITM-004',name:'복사용지 (A3)',spec1:'',spec2:'',safe:5,cat:''},
+  {code:'ITM-005',name:'수정테이프',spec1:'',spec2:'',safe:10,cat:''},
+  {code:'ITM-006',name:'투명 테이프',spec1:'',spec2:'',safe:20,cat:''},
+  {code:'ITM-007',name:'포스트잇 (대)',spec1:'',spec2:'',safe:15,cat:''},
+  {code:'ITM-008',name:'파일 박스',spec1:'',spec2:'',safe:10,cat:''},
+  {code:'ITM-009',name:'프린터 토너',spec1:'',spec2:'',safe:2,cat:''},
+  {code:'ITM-010',name:'USB 메모리 32GB',spec1:'',spec2:'',safe:5,cat:''},
+];
+
+let db={items:[],ledger:{},history:[]};
+let curFilter='전체';
+
+function loadDB(){
+  try{const r=localStorage.getItem(STORAGE_KEY);if(r)db=JSON.parse(r);else db={items:JSON.parse(JSON.stringify(DEFAULT_ITEMS)),ledger:{},history:[]};}
+  catch(e){db={items:JSON.parse(JSON.stringify(DEFAULT_ITEMS)),ledger:{},history:[]};}
+}
+function saveDB(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(db));}catch(e){}}
+
+const now=new Date();
+let curYear=now.getFullYear(),curMonth=now.getMonth()+1;
+
+function ledgerKey(y,m){return `${y}-${String(m).padStart(2,'0')}`;}
+function daysInMonth(y,m){return new Date(y,m,0).getDate();}
+function getLedger(){const k=ledgerKey(curYear,curMonth);if(!db.ledger[k])db.ledger[k]={};return db.ledger[k];}
+function ck(code,day,type){return `${code}__${day}__${type}`;}
+
+function getCarryOver(code){
+  const pm=curMonth===1?12:curMonth-1,py=curMonth===1?curYear-1:curYear;
+  const prev=db.ledger[ledgerKey(py,pm)];
+  if(!prev)return 0;
+  const days=daysInMonth(py,pm);
+  let tin=0,tout=0;
+  for(let d=1;d<=days;d++){tin+=parseInt(prev[ck(code,d,'in')])||0;tout+=(parseInt(prev[ck(code,d,'out_dist')])||0)+(parseInt(prev[ck(code,d,'out_mfg')])||0)+(parseInt(prev[ck(code,d,'out')])||0);}
+  return Math.max(0,(parseInt(prev[ck(code,'carry','over')])||0)+tin-tout);
+}
+
+function calcStock(code,carry,days,ledger){
+  let tin=0,tout=0,toutDist=0,toutMfg=0;
+  for(let d=1;d<=days;d++){
+    tin+=parseInt(ledger[ck(code,d,'in')])||0;
+    const dist=parseInt(ledger[ck(code,d,'out_dist')])||0;
+    const mfg=parseInt(ledger[ck(code,d,'out_mfg')])||0;
+    toutDist+=dist; toutMfg+=mfg;
+    // 하위호환: 기존 'out' 키도 합산
+    tout+=dist+mfg+(parseInt(ledger[ck(code,d,'out')])||0);
+  }
+  return {tin,tout,toutDist,toutMfg,stock:carry+tin-tout};
+}
+
+function catBadge(cat){
+  if(!cat)return '<span style="color:#9ca3af;font-size:11px">-</span>';
+  return `<span class="cat-badge cb-${cat}">${cat}</span>`;
+}
+
+function catSelectHtml(code,cat){
+  let opts='<option value="">-</option>';
+  CATS.forEach(c=>opts+=`<option value="${c}" ${c===cat?'selected':''}>${c}</option>`);
+  return `<select class="cat-sel${cat?' c-'+cat:''}" data-code="${code}" onchange="onCatChange(this)">${opts}</select>`;
+}
+
+function setFilter(val,el){
+  curFilter=val;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  buildLedger();
+}
+
+function buildLedger(){
+  const days=daysInMonth(curYear,curMonth),ledger=getLedger();
+
+  let th1='<tr>'
+    +'<th rowspan="2" style="width:36px">NO</th>'
+    +'<th rowspan="2" style="width:76px">구분</th>'
+    +'<th rowspan="2" style="min-width:72px">품목코드</th>'
+    +'<th rowspan="2" style="min-width:120px;text-align:left">품목명</th>'
+    +'<th rowspan="2" style="min-width:100px">기본사양</th>'
+    +'<th rowspan="2" style="min-width:120px">상세사양</th>'
+    +'<th rowspan="2" style="color:#6b7280;background:#f8fafc">전월재고</th>'
+    +'<th rowspan="2" style="color:#1d4ed8;background:#eff6ff">당월재고</th>'
+    +'<th rowspan="2" style="color:#166534;background:#f0fdf4">총입고</th>'
+    +'<th rowspan="2" style="color:#b91c1c;background:#fff7f0">총출고</th>'
+    +'<th rowspan="2" style="color:#7c3aed;background:#f5f3ff">유통</th>'
+    +'<th rowspan="2" style="color:#b45309;background:#fffbeb">제조</th>';
+  for(let d=1;d<=days;d++) th1+=`<th colspan="3" style="min-width:100px">${d}</th>`;
+  th1+='</tr><tr>';
+  for(let d=1;d<=days;d++) th1+='<th style="color:#166534;font-size:11px;font-weight:600;white-space:nowrap">입고</th><th style="color:#7c3aed;font-size:10px;font-weight:600;white-space:nowrap">유통</th><th style="color:#b45309;font-size:10px;font-weight:600;white-space:nowrap">제조</th>';
+  th1+='</tr>';
+  document.getElementById('ledger-head').innerHTML=th1;
+
+  const filtered = curFilter==='전체'
+    ? db.items
+    : db.items.filter(i=>i.cat===curFilter);
+
+  let rows='',no=1;
+  filtered.forEach(item=>{
+    const carry=parseInt(ledger[ck(item.code,'carry','over')])||getCarryOver(item.code);
+    const {tin,tout,toutDist,toutMfg,stock}=calcStock(item.code,carry,days,ledger);
+    let tr=`<tr>`
+      +`<td class="no-col">${no++}</td>`
+      +`<td>${catSelectHtml(item.code,item.cat)}</td>`
+      +`<td>${item.code}</td>`
+      +`<td class="item-name">${item.name}</td>`
+      +`<td style="font-size:11px;color:#374151">${item.spec1||''}</td>`
+      +`<td style="font-size:11px;color:#6b7280">${item.spec2||''}</td>`
+      +`<td class="prev-stock"><input class="qty" type="number" min="0" value="${carry}" data-code="${item.code}" data-day="carry" data-type="over" oninput="onInput(this)" style="width:48px"></td>`
+      +`<td class="total-stock" id="tstock-${item.code}">${stock}</td>`
+      +`<td class="total-in" id="tin-${item.code}">${tin}</td>`
+      +`<td class="total-out" id="tout-${item.code}">${tout}</td>`
+      +`<td class="total-out-dist" id="tdist-${item.code}">${toutDist}</td>`
+      +`<td class="total-out-mfg" id="tmfg-${item.code}">${toutMfg}</td>`;
+    for(let d=1;d<=days;d++){
+      const iv=parseInt(ledger[ck(item.code,d,'in')])||0;
+      const dv=parseInt(ledger[ck(item.code,d,'out_dist')])||0;
+      const mv=parseInt(ledger[ck(item.code,d,'out_mfg')])||0;
+      const memoIn=ledger[ck(item.code,d,'memo_in')]||'';
+      const memoDist=ledger[ck(item.code,d,'memo_dist')]||'';
+      const memoMfg=ledger[ck(item.code,d,'memo_mfg')]||'';
+      tr+=`<td style="position:relative"><div class="qty-wrap">
+        <input class="qty in" type="number" min="0" value="${iv||''}" placeholder="0" data-code="${item.code}" data-day="${d}" data-type="in" oninput="onInput(this)">
+        <button class="memo-btn" onclick="openMemo(event,'${item.code}',${d},'in')" title="비고">✎</button>
+        ${memoIn?'<span class="memo-dot has-memo" title="'+memoIn.replace(/"/g,'&quot;')+'"></span>':'<span class="memo-dot"></span>'}
+      </div></td>`;
+      tr+=`<td style="position:relative"><div class="qty-wrap">
+        <input class="qty out-dist" type="number" min="0" value="${dv||''}" placeholder="0" data-code="${item.code}" data-day="${d}" data-type="out_dist" oninput="onInput(this)">
+        <button class="memo-btn" onclick="openMemo(event,'${item.code}',${d},'out_dist')" title="비고">✎</button>
+        ${memoDist?'<span class="memo-dot has-memo" title="'+memoDist.replace(/"/g,'&quot;')+'"></span>':'<span class="memo-dot"></span>'}
+      </div></td>`;
+      tr+=`<td style="position:relative"><div class="qty-wrap">
+        <input class="qty out-mfg" type="number" min="0" value="${mv||''}" placeholder="0" data-code="${item.code}" data-day="${d}" data-type="out_mfg" oninput="onInput(this)">
+        <button class="memo-btn" onclick="openMemo(event,'${item.code}',${d},'out_mfg')" title="비고">✎</button>
+        ${memoMfg?'<span class="memo-dot has-memo" title="'+memoMfg.replace(/"/g,'&quot;')+'"></span>':'<span class="memo-dot"></span>'}
+      </div></td>`;
+    }
+    tr+='</tr>';
+    rows+=tr;
+  });
+
+  if(!rows) rows=`<tr><td colspan="${12+days*3}" style="padding:24px;color:#9ca3af;text-align:center">해당 구분의 품목이 없습니다</td></tr>`;
+  document.getElementById('ledger-body').innerHTML=rows;
+}
+
+function onCatChange(el){
+  const code=el.dataset.code;
+  const val=el.value;
+  const idx=db.items.findIndex(i=>i.code===code);
+  if(idx===-1)return;
+  const item=db.items.splice(idx,1)[0];
+  item.cat=val;
+  el.className='cat-sel'+(val?' c-'+val:'');
+
+  if(!val){
+    // 구분 없으면 맨 뒤
+    db.items.push(item);
+  } else {
+    // 같은 구분 그룹의 마지막 위치 찾아서 그 뒤에 삽입
+    let lastIdx=-1;
+    for(let i=0;i<db.items.length;i++){
+      if(db.items[i].cat===val) lastIdx=i;
+    }
+    if(lastIdx===-1){
+      // 같은 구분이 아직 없으면 구분 없는 항목들 앞에 삽입
+      const firstEmpty=db.items.findIndex(i=>!i.cat);
+      if(firstEmpty===-1) db.items.push(item);
+      else db.items.splice(firstEmpty,0,item);
+    } else {
+      db.items.splice(lastIdx+1,0,item);
+    }
+  }
+  saveDB();
+  buildLedger();
+}
+
+function onInput(el){
+  const {code,day,type}=el.dataset;
+  const val=parseInt(el.value)||0;
+  const ledger=getLedger();
+  ledger[ck(code,day,type)]=val;
+  const days=daysInMonth(curYear,curMonth);
+  const carryEl=document.querySelector(`[data-code="${code}"][data-day="carry"]`);
+  const carry=carryEl?parseInt(carryEl.value)||0:getCarryOver(code);
+  const {tin,tout,toutDist,toutMfg,stock}=calcStock(code,carry,days,ledger);
+  const ti=document.getElementById(`tin-${code}`);
+  const to=document.getElementById(`tout-${code}`);
+  const ts=document.getElementById(`tstock-${code}`);
+  const td=document.getElementById(`tdist-${code}`);
+  const tm=document.getElementById(`tmfg-${code}`);
+  if(ti)ti.textContent=tin;
+  if(to)to.textContent=tout;
+  if(ts)ts.textContent=stock;
+  if(td)td.textContent=toutDist;
+  if(tm)tm.textContent=toutMfg;
+  if((type==='in'||type==='out_dist'||type==='out_mfg')&&val>0){
+    const today=`${curYear}-${String(curMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const item=db.items.find(i=>i.code===code);
+    const memoKeyMap={in:'memo_in',out_dist:'memo_dist',out_mfg:'memo_mfg'};
+    const existingMemo=ledger[ck(code,day,memoKeyMap[type]||'')]||'';
+    const typeLabel=type==='in'?'입고':type==='out_dist'?'출고(유통)':'출고(제조)';
+    db.history.unshift({date:today,code,cat:item?.cat||'',name:item?.name||code,type:typeLabel,qty:val,note:existingMemo});
+  }
+}
+
+function buildStatus(){
+  const days=daysInMonth(curYear,curMonth),ledger=getLedger();
+  let totalIn=0,totalOut=0,lowCount=0,noStock=0,rows='';
+  db.items.forEach((item,idx)=>{
+    const carry=parseInt(ledger[ck(item.code,'carry','over')])||getCarryOver(item.code);
+    const {tin,tout,stock}=calcStock(item.code,carry,days,ledger);
+    totalIn+=tin;totalOut+=tout;
+    let badge='';
+    if(stock===0){noStock++;badge='<span class="badge badge-danger">재고없음</span>';}
+    else if(stock<=item.safe){lowCount++;badge='<span class="badge badge-warn">부족</span>';}
+    else badge='<span class="badge badge-ok">정상</span>';
+    rows+=`<tr>`
+      +`<td class="no-col">${idx+1}</td>`
+      +`<td>${catBadge(item.cat)}</td>`
+      +`<td>${item.code}</td><td class="item-name">${item.name}</td><td style="font-size:11px">${item.spec1||'-'}</td><td style="font-size:11px;color:#6b7280">${item.spec2||'-'}</td>`
+      +`<td class="prev-stock">${carry}</td><td class="total-stock">${stock}</td>`
+      +`<td class="total-in">${tin}</td><td class="total-out">${tout}</td>`
+      +`<td>${item.safe}</td><td>${badge}</td></tr>`;
+  });
+  document.getElementById('status-body').innerHTML=rows;
+  document.getElementById('stat-grid').innerHTML=`
+    <div class="stat"><div class="stat-label">전체 품목</div><div class="stat-value">${db.items.length}</div></div>
+    <div class="stat"><div class="stat-label">이번달 총입고</div><div class="stat-value" style="color:#166534">${totalIn}</div></div>
+    <div class="stat"><div class="stat-label">이번달 총출고</div><div class="stat-value" style="color:#b91c1c">${totalOut}</div></div>
+    <div class="stat"><div class="stat-label">부족/재고없음</div><div class="stat-value" style="color:#b91c1c">${lowCount+noStock}</div></div>`;
+}
+
+function buildItems(){
+  document.getElementById('items-body').innerHTML=db.items.map((item,idx)=>`<tr>
+    <td class="no-col">${idx+1}</td>
+    <td>${catBadge(item.cat)}</td>
+    <td>${item.code}</td><td class="item-name">${item.name}</td><td style="font-size:11px">${item.spec1||'-'}</td><td style="font-size:11px;color:#6b7280">${item.spec2||'-'}</td><td>${item.safe}</td>
+    <td>
+      <button onclick="openItemModal(${idx})" style="height:26px;padding:0 10px;font-size:12px">✏ 수정</button>
+      <button onclick="deleteItem(${idx})" class="danger" style="height:26px;padding:0 10px;font-size:12px;margin-left:4px">🗑 삭제</button>
+    </td></tr>`).join('');
+}
+
+function buildHistory(){
+  const rows=db.history.slice(0,200);
+  document.getElementById('history-body').innerHTML=rows.length
+    ?rows.map(h=>`<tr>
+      <td>${h.date}</td>
+      <td>${catBadge(h.cat||'')}</td>
+      <td>${h.code}</td><td class="item-name">${h.name}</td>
+      <td><span class="badge ${h.type==='입고'?'badge-ok':'badge-danger'}">${h.type}</span></td>
+      <td>${h.qty}</td><td style="text-align:left;color:#6b7280">${h.note||'-'}</td></tr>`).join('')
+    :'<tr><td colspan="7" style="padding:24px;color:#9ca3af;text-align:center">이력이 없습니다</td></tr>';
+}
+
+function switchTab(id,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sec-'+id).classList.add('active');
+  if(id==='report') refreshReportYears();
+  ({status:buildStatus,items:buildItems,history:buildHistory,ledger:buildLedger,report:buildReport})[id]?.();
+}
+
+function openItemModal(idx=-1){
+  document.getElementById('f-idx').value=idx;
+  if(idx>=0){
+    const i=db.items[idx];
+    document.getElementById('f-cat').value=i.cat||'';
+    document.getElementById('f-code').value=i.code;
+    document.getElementById('f-name').value=i.name;
+    document.getElementById('f-spec1').value=i.spec1||'';
+    document.getElementById('f-spec2').value=i.spec2||'';
+    document.getElementById('f-safe').value=i.safe;
+    document.getElementById('modal-title').textContent='품목 수정';
+  } else {
+    document.getElementById('f-cat').value='';
+    document.getElementById('f-code').value='';
+    document.getElementById('f-name').value='';
+    document.getElementById('f-spec1').value='';
+    document.getElementById('f-spec2').value='';
+    document.getElementById('f-safe').value=5;
+    document.getElementById('modal-title').textContent='품목 추가';
+  }
+  document.getElementById('item-modal').style.display='flex';
+}
+function closeItemModal(){document.getElementById('item-modal').style.display='none';}
+
+function saveItem(){
+  const idx=parseInt(document.getElementById('f-idx').value);
+  const item={
+    cat:document.getElementById('f-cat').value,
+    code:document.getElementById('f-code').value.trim(),
+    name:document.getElementById('f-name').value.trim(),
+    spec1:document.getElementById('f-spec1').value.trim(),
+    spec2:document.getElementById('f-spec2').value.trim(),
+    safe:parseInt(document.getElementById('f-safe').value)||0
+  };
+  if(!item.code||!item.name){alert('코드와 품목명은 필수입니다.');return;}
+  if(idx>=0)db.items[idx]=item;else db.items.push(item);
+  saveDB();closeItemModal();buildItems();showToast('저장되었습니다');
+}
+
+function deleteItem(idx){
+  if(!confirm('삭제할까요?'))return;
+  db.items.splice(idx,1);saveDB();buildItems();showToast('삭제되었습니다');
+}
+
+function saveAll(){
+  const ledger=getLedger();
+  document.querySelectorAll('#ledger-body input.qty').forEach(el=>{
+    const {code,day,type}=el.dataset,val=parseInt(el.value)||0;
+    if(val>0)ledger[ck(code,day,type)]=val;
+  });
+  saveDB();showToast('저장되었습니다');
+}
+
+function exportCSV(){
+  const days=daysInMonth(curYear,curMonth),ledger=getLedger();
+  let csv='NO,구분,품목코드,품목명,단위,전월재고,당월재고,총입고,총출고';
+  for(let d=1;d<=days;d++)csv+=`,${d}일입고,${d}일출고`;
+  csv+='\n';
+  db.items.forEach((item,idx)=>{
+    const carry=parseInt(ledger[ck(item.code,'carry','over')])||getCarryOver(item.code);
+    const {tin,tout,stock}=calcStock(item.code,carry,days,ledger);
+    let row=`${idx+1},${item.cat||'-'},${item.code},${item.name},${item.unit},${carry},${stock},${tin},${tout}`;
+    for(let d=1;d<=days;d++){row+=','+(parseInt(ledger[ck(item.code,d,'in')])||0);row+=','+(parseInt(ledger[ck(item.code,d,'out')])||0);}
+    csv+=row+'\n';
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`재고대장_${curYear}${String(curMonth).padStart(2,'0')}.csv`;a.click();
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function updateLedgerBadge(){
+  const badge=document.getElementById('ledger-title-badge');
+  if(badge) badge.textContent=`${curYear}년 ${curMonth}월 입출고 대장`;
+}
+
+function renderYearSelect(){
+  const sy=document.getElementById('sel-year');
+  if(!sy) return;
+  // db.years 없으면 기본값 생성
+  if(!db.years||!db.years.length){
+    const base=[];
+    for(let y=2020;y<=now.getFullYear();y++) base.push(y);
+    db.years=base;
+  }
+  sy.innerHTML='';
+  db.years.forEach(y=>{
+    sy.innerHTML+=`<option value="${y}" ${y===curYear?'selected':''}>${y}년</option>`;
+  });
+  // 삭제 버튼: 기본 연도(현재 연도 이전) 는 삭제 못하게
+  const btn=document.getElementById('btn-remove-year');
+  if(btn) btn.disabled=db.years.length<=1;
+}
+
+function addYear(){
+  if(!db.years) db.years=[];
+  const maxY=Math.max(...db.years, now.getFullYear());
+  const newY=maxY+1;
+  if(db.years.includes(newY)){showToast(`${newY}년은 이미 있습니다`);return;}
+  db.years.push(newY);
+  db.years.sort((a,b)=>a-b);
+  saveDB();
+  renderYearSelect();
+  // 새 연도로 자동 이동
+  curYear=newY;
+  document.getElementById('sel-year').value=newY;
+  updateLedgerBadge();
+  buildLedger();
+  showToast(`${newY}년이 추가되었습니다`);
+}
+
+function removeYear(){
+  if(!db.years||db.years.length<=1) return;
+  const maxY=Math.max(...db.years);
+  if(!confirm(`${maxY}년을 삭제할까요? 해당 연도에 저장된 데이터도 함께 삭제됩니다.`)) return;
+  db.years=db.years.filter(y=>y!==maxY);
+  // 해당 연도 ledger 데이터도 삭제
+  for(let m=1;m<=12;m++){
+    const k=ledgerKey(maxY,m);
+    delete db.ledger[k];
+  }
+  saveDB();
+  if(curYear===maxY){
+    curYear=Math.max(...db.years);
+    document.getElementById('sel-year').value=curYear;
+  }
+  renderYearSelect();
+  updateLedgerBadge();
+  buildLedger();
+  showToast(`${maxY}년이 삭제되었습니다`);
+}
+
+function initYearMonth(){
+  if(!db.years||!db.years.length){
+    const base=[];
+    for(let y=2020;y<=now.getFullYear();y++) base.push(y);
+    db.years=base;
+  }
+  // curYear가 db.years에 없으면 가장 최근 연도로
+  if(!db.years.includes(curYear)) curYear=db.years[db.years.length-1];
+
+  renderYearSelect();
+  const sy=document.getElementById('sel-year');
+  const sm=document.getElementById('sel-month');
+  for(let m=1;m<=12;m++)sm.innerHTML+=`<option value="${m}" ${m===curMonth?'selected':''}>${m}월</option>`;
+  sy.onchange=()=>{curYear=parseInt(sy.value);updateLedgerBadge();buildLedger();};
+  sm.onchange=()=>{curMonth=parseInt(sm.value);updateLedgerBadge();buildLedger();};
+  updateLedgerBadge();
+}
+
+loadDB();
+initYearMonth();
+initReportControls();
+buildLedger();
+
+
+
+// ── 메모 팝업 ───────────────────────────────────────────
+let memoPopupEl=null;
+
+function openMemo(evt, code, day, type){
+  evt.stopPropagation();
+  closeMemo();
+  const ledger=getLedger();
+  const memoKeyMap2={in:'memo_in',out_dist:'memo_dist',out_mfg:'memo_mfg',out:'memo_out'};
+  const memoKey=ck(code,day,memoKeyMap2[type]||'memo_out');
+  const cur=ledger[memoKey]||'';
+  const item=db.items.find(i=>i.code===code)||{};
+  const labelMap={in:'입고',out_dist:'유통출고',out_mfg:'제조출고',out:'출고'};
+  const label=labelMap[type]||type;
+  const pop=document.createElement('div');
+  pop.className='memo-popup';
+  pop.innerHTML=`
+    <h4>📝 비고 — ${item.name||code} ${curYear}/${String(curMonth).padStart(2,'0')}/${String(day).padStart(2,'0')} ${label}</h4>
+    <textarea id="memo-ta" placeholder="비고 내용을 입력하세요&#10;예) 불량, 긴급발주, 반품 등">${cur}</textarea>
+    <div class="memo-popup-btns">
+      <button onclick="closeMemo()">취소</button>
+      <button class="primary" onclick="saveMemo('${code}',${day},'${type}')">저장</button>
+    </div>`;
+  // 팝업 위치
+  const rect=evt.target.getBoundingClientRect();
+  pop.style.left=Math.min(rect.left, window.innerWidth-280)+'px';
+  pop.style.top=(rect.bottom+4)+'px';
+  document.body.appendChild(pop);
+  memoPopupEl=pop;
+  setTimeout(()=>document.getElementById('memo-ta')?.focus(),50);
+  document.addEventListener('mousedown', closeMemoOutside, {once:true});
+}
+
+function closeMemoOutside(e){
+  if(memoPopupEl&&!memoPopupEl.contains(e.target)) closeMemo();
+}
+
+function closeMemo(){
+  if(memoPopupEl){memoPopupEl.remove();memoPopupEl=null;}
+}
+
+function saveMemo(code,day,type){
+  const val=document.getElementById('memo-ta')?.value||'';
+  const ledger=getLedger();
+  const memoKeyMap2={in:'memo_in',out_dist:'memo_dist',out_mfg:'memo_mfg',out:'memo_out'};
+  const memoKey=ck(code,day,memoKeyMap2[type]||'memo_out');
+  if(val.trim()) ledger[memoKey]=val.trim();
+  else delete ledger[memoKey];
+  saveDB();
+  closeMemo();
+  buildLedger();
+  showToast('비고가 저장되었습니다');
+}
+
+// ── 불량 집계 (보고서용) ─────────────────────────────────
+function buildDefectReport(rptY, rptM){
+  const ym=ledgerKey(rptY,rptM);
+  const ledger=db.ledger[ym]||{};
+  const days=daysInMonth(rptY,rptM);
+
+  // 불량 키워드가 포함된 출고 이력 수집
+  const defectList=[];
+  const defectByCode={};
+
+  db.items.forEach(item=>{
+    for(let d=1;d<=days;d++){
+      const qty=(parseInt(ledger[ck(item.code,d,'out_dist')])||0)+(parseInt(ledger[ck(item.code,d,'out_mfg')])||0)+(parseInt(ledger[ck(item.code,d,'out')])||0);
+      const memo=(ledger[ck(item.code,d,'memo_dist')]||'')+(ledger[ck(item.code,d,'memo_mfg')]||'')+(ledger[ck(item.code,d,'memo_out')]||'');
+      if(qty>0 && memo.includes('불량')){
+        const dateStr=`${rptY}/${String(rptM).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
+        defectList.push({date:dateStr,name:item.name,cat:item.cat||'',qty,memo,code:item.code});
+        defectByCode[item.code]=(defectByCode[item.code]||0)+qty;
+      }
+    }
+  });
+
+  // 이력 테이블
+  const listEl=document.getElementById('rpt-defect-list');
+  if(defectList.length===0){
+    listEl.innerHTML='<tr><td colspan="5" style="padding:16px;color:#9ca3af;text-align:center">불량 출고 내역이 없습니다</td></tr>';
+  } else {
+    listEl.innerHTML=defectList.map(x=>`<tr>
+      <td>${x.date}</td>
+      <td class="item-name">${x.name}</td>
+      <td>${catBadge(x.cat)}</td>
+      <td style="color:#9d174d;font-weight:700">${x.qty}</td>
+      <td style="text-align:left;color:#6b7280">${x.memo}</td>
+    </tr>`).join('');
+  }
+
+  // 품목별 순위
+  const rankList=Object.keys(defectByCode).map(code=>{
+    const item=db.items.find(i=>i.code===code)||{};
+    return {name:item.name||code, cat:item.cat||'', qty:defectByCode[code]};
+  }).sort((a,b)=>b.qty-a.qty);
+  const maxDef=rankList[0]?.qty||1;
+  const rankEl=document.getElementById('rpt-defect-rank');
+  if(rankList.length===0){
+    rankEl.innerHTML='<tr><td colspan="5" style="padding:16px;color:#9ca3af;text-align:center">데이터 없음</td></tr>';
+  } else {
+    rankEl.innerHTML=rankList.map((x,i)=>`<tr>
+      <td class="no-col">${i+1}</td>
+      <td class="item-name">${x.name}</td>
+      <td>${catBadge(x.cat)}</td>
+      <td style="color:#9d174d;font-weight:700">${x.qty}</td>
+      <td><div class="bar-wrap"><div class="bar-bg"><div style="height:100%;background:#f472b6;border-radius:4px;width:${Math.round(x.qty/maxDef*100)}%"></div></div><span style="font-size:11px;color:#6b7280">${Math.round(x.qty/maxDef*100)}%</span></div></td>
+    </tr>`).join('');
+  }
+
+  // 요약 통계
+  const totalDefect=rankList.reduce((s,x)=>s+x.qty,0);
+  const defectItems=rankList.length;
+  // 전체 출고 대비 불량 비율
+  let totalOut=0;
+  db.items.forEach(item=>{
+    for(let d=1;d<=days;d++) totalOut+=(parseInt(ledger[ck(item.code,d,'out_dist')])||0)+(parseInt(ledger[ck(item.code,d,'out_mfg')])||0)+(parseInt(ledger[ck(item.code,d,'out')])||0);
+  });
+  const defectRate=totalOut>0?(totalDefect/totalOut*100).toFixed(1):0;
+  document.getElementById('rpt-defect-stats').innerHTML=`
+    <div class="stat"><div class="stat-label">불량 총수량</div><div class="stat-value" style="color:#9d174d">${totalDefect.toLocaleString()}</div></div>
+    <div class="stat"><div class="stat-label">불량 발생 품목</div><div class="stat-value">${defectItems}</div></div>
+    <div class="stat"><div class="stat-label">전체출고 대비</div><div class="stat-value" style="color:${parseFloat(defectRate)>5?'#b91c1c':'#166534'}">${defectRate}%</div></div>
+    <div class="stat"><div class="stat-label">정상 출고</div><div class="stat-value" style="color:#166534">${(totalOut-totalDefect).toLocaleString()}</div></div>`;
+}
+
+
+
+// ── 공통 페이지네이션 ────────────────────────────────────
+const PAGE_SIZE = 10;
+const pageState = { in: 1, out: 1, dist: 1, safety: 1 };
+
+function renderPager(pagerId, currentPage, totalItems, onChangeFn) {
+  const total = Math.ceil(totalItems / PAGE_SIZE);
+  const el = document.getElementById(pagerId);
+  if (!el) return;
+  if (total <= 1) { el.innerHTML = ''; return; }
+
+  let html = `<button class="pager-btn" onclick="${onChangeFn}(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+
+  // 페이지 번호: 현재 앞뒤 2개씩 + 처음/끝
+  const pages = new Set([1, total]);
+  for (let p = Math.max(1, currentPage-2); p <= Math.min(total, currentPage+2); p++) pages.add(p);
+  let sorted = [...pages].sort((a,b)=>a-b);
+
+  let prev = 0;
+  sorted.forEach(p => {
+    if (p - prev > 1) html += `<span class="pager-info">…</span>`;
+    html += `<button class="pager-btn${p===currentPage?' active':''}" onclick="${onChangeFn}(${p})">${p}</button>`;
+    prev = p;
+  });
+
+  html += `<button class="pager-btn" onclick="${onChangeFn}(${currentPage+1})" ${currentPage===total?'disabled':''}>›</button>`;
+  html += `<span class="pager-info">${totalItems}개 / ${total}페이지</span>`;
+  el.innerHTML = html;
+}
+
+function goPageIn(p)   { pageState.in=p;  buildReport(); }
+function goPageSafety(p){ pageState.safety=p; buildReport(); }
+function goPageOut(p)  { pageState.out=p; buildReport(); }
+function goPageDist(p) { pageState.dist=p; buildReport(); }
+
+// ── 품목별 유통/제조 사용량 ─────────────────────────────
+let distSortKey='total';
+
+function setDistSort(key, el){
+  distSortKey=key;
+  pageState.dist=1;
+  document.querySelectorAll('[id^="dist-sort-"]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  buildReport();
+}
+
+function buildDistMfgTable(rptY, rptM, all){
+  const ym=ledgerKey(rptY,rptM);
+  const listAll=db.items.map(item=>({
+    name:item.name, cat:item.cat||'', spec1:item.spec1||'',
+    dist:all[item.code]?.months[ym]?.outDist||0,
+    mfg:all[item.code]?.months[ym]?.outMfg||0,
+    total:(all[item.code]?.months[ym]?.outDist||0)+(all[item.code]?.months[ym]?.outMfg||0)
+  }));
+  listAll.sort((a,b)=>distSortKey==='dist'?b.dist-a.dist:distSortKey==='mfg'?b.mfg-a.mfg:b.total-a.total);
+
+  const maxDist=Math.max(...listAll.map(x=>x.dist),1);
+  const maxMfg=Math.max(...listAll.map(x=>x.mfg),1);
+  const maxTotal=Math.max(...listAll.map(x=>x.total),1);
+
+  const distPage=pageState.dist;
+  const slice=listAll.slice((distPage-1)*PAGE_SIZE, distPage*PAGE_SIZE);
+
+  const tbody=document.getElementById('rpt-dist-mfg-body');
+  if(!listAll.length){
+    tbody.innerHTML='<tr><td colspan="9" style="padding:16px;color:#9ca3af;text-align:center">데이터 없음</td></tr>';
+    renderPager('pager-dist',1,0,'goPageDist');
+    return;
+  }
+  tbody.innerHTML=slice.map((x,i)=>`<tr>
+    <td class="no-col">${(distPage-1)*PAGE_SIZE+i+1}</td>
+    <td>${catBadge(x.cat)}</td>
+    <td class="item-name">${x.name}</td>
+    <td style="font-size:11px">${x.spec1||'-'}</td>
+    <td style="text-align:right;color:#7c3aed;font-weight:600">${x.dist.toLocaleString()}</td>
+    <td><div class="bar-wrap"><div class="bar-bg"><div style="height:100%;background:#a78bfa;border-radius:4px;transition:width .4s;width:${Math.round(x.dist/maxDist*100)}%"></div></div><span style="font-size:11px;color:#6b7280">${Math.round(x.dist/maxTotal*100)}%</span></div></td>
+    <td style="text-align:right;color:#b45309;font-weight:600">${x.mfg.toLocaleString()}</td>
+    <td><div class="bar-wrap"><div class="bar-bg"><div style="height:100%;background:#fbbf24;border-radius:4px;transition:width .4s;width:${Math.round(x.mfg/maxMfg*100)}%"></div></div><span style="font-size:11px;color:#6b7280">${Math.round(x.mfg/maxTotal*100)}%</span></div></td>
+    <td style="text-align:right;color:#b91c1c;font-weight:700">${x.total.toLocaleString()}</td>
+  </tr>`).join('');
+  renderPager('pager-dist', distPage, listAll.length, 'goPageDist');
+}
+
+// ── 보고서 ──────────────────────────────────────────
+let outSortDir='desc';
+let chartMonthly=null, chartYearly=null;
+
+function setOutSort(dir,el){
+  outSortDir=dir;
+  pageState.out=1;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  buildReport();
+}
+
+// 모든 월의 품목별 총입고/총출고 집계
+function calcAllMonths(){
+  const result={};// code -> {name,cat,unit,safe, months:{ym:{in,out}}}
+  db.items.forEach(item=>{
+    result[item.code]={name:item.name,cat:item.cat||'',spec1:item.spec1||'',safe:item.safe,months:{}};
+  });
+  Object.keys(db.ledger).forEach(ym=>{
+    const [y,m]=ym.split('-').map(Number);
+    const days=daysInMonth(y,m);
+    const ledger=db.ledger[ym];
+    db.items.forEach(item=>{
+      let tin=0,tout=0,toutDist=0,toutMfg=0;
+      for(let d=1;d<=days;d++){
+        tin+=parseInt(ledger[ck(item.code,d,'in')])||0;
+        const dist=parseInt(ledger[ck(item.code,d,'out_dist')])||0;
+        const mfg=parseInt(ledger[ck(item.code,d,'out_mfg')])||0;
+        toutDist+=dist; toutMfg+=mfg;
+        tout+=dist+mfg+(parseInt(ledger[ck(item.code,d,'out')])||0);
+      }
+      if(!result[item.code]) result[item.code]={name:item.name,cat:item.cat||'',spec1:item.spec1||'',safe:item.safe,months:{}};
+      result[item.code].months[ym]={in:tin,out:tout,outDist:toutDist,outMfg:toutMfg};
+    });
+  });
+  return result;
+}
+
+function buildReport(){
+  const rptY=parseInt(document.getElementById('rpt-year').value)||curYear;
+  const rptM=parseInt(document.getElementById('rpt-month').value)||curMonth;
+  const ym=ledgerKey(rptY,rptM);
+  const days=daysInMonth(rptY,rptM);
+  const ledger=db.ledger[ym]||{};
+  const all=calcAllMonths();
+
+  // ── 월간 요약 통계 ──
+  let mTotalIn=0,mTotalOut=0,mTotalDist=0,mTotalMfg=0,mItems=0;
+  db.items.forEach(item=>{
+    const d=all[item.code]?.months[ym];
+    if(d){mTotalIn+=d.in;mTotalOut+=d.out;mTotalDist+=d.outDist||0;mTotalMfg+=d.outMfg||0;}
+    if((d?.in||0)+(d?.out||0)>0) mItems++;
+  });
+  document.getElementById('rpt-monthly-stats').innerHTML=`
+    <div class="stat"><div class="stat-label">${rptY}년 ${rptM}월 총입고</div><div class="stat-value" style="color:#166534">${mTotalIn.toLocaleString()}</div></div>
+    <div class="stat"><div class="stat-label">총출고 (유통+제조)</div><div class="stat-value" style="color:#b91c1c">${mTotalOut.toLocaleString()}</div></div>
+    <div class="stat"><div class="stat-label">유통 출고</div><div class="stat-value" style="color:#7c3aed">${mTotalDist.toLocaleString()}</div></div>
+    <div class="stat"><div class="stat-label">제조 출고</div><div class="stat-value" style="color:#b45309">${mTotalMfg.toLocaleString()}</div></div>`;
+
+  // ── 입고 (페이징) ──
+  const inListAll=db.items.map(item=>({
+    name:item.name,cat:item.cat||'',
+    val:all[item.code]?.months[ym]?.in||0
+  })).sort((a,b)=>b.val-a.val);
+  const maxIn=inListAll[0]?.val||1;
+  const inPage=pageState.in;
+  const inSlice=inListAll.slice((inPage-1)*PAGE_SIZE, inPage*PAGE_SIZE);
+  document.getElementById('rpt-top-in').innerHTML=inSlice.length?inSlice.map((x,i)=>`<tr>
+    <td class="no-col">${(inPage-1)*PAGE_SIZE+i+1}</td>
+    <td class="item-name">${x.name}</td>
+    <td>${catBadge(x.cat)}</td>
+    <td class="total-in">${x.val.toLocaleString()}</td>
+    <td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill-in" style="width:${Math.round(x.val/maxIn*100)}%"></div></div><span style="font-size:11px;color:#6b7280;white-space:nowrap">${Math.round(x.val/maxIn*100)}%</span></div></td>
+  </tr>`).join(''):'<tr><td colspan="5" style="padding:16px;color:#9ca3af;text-align:center">데이터 없음</td></tr>';
+  renderPager('pager-in', inPage, inListAll.length, 'goPageIn');
+
+  // ── 출고 (페이징) ──
+  let outListAll=db.items.map(item=>({
+    name:item.name,cat:item.cat||'',
+    val:all[item.code]?.months[ym]?.out||0,
+    dist:all[item.code]?.months[ym]?.outDist||0,
+    mfg:all[item.code]?.months[ym]?.outMfg||0
+  })).sort((a,b)=>outSortDir==='desc'?b.val-a.val:a.val-b.val);
+  const maxOut=Math.max(...outListAll.map(x=>x.val),1);
+  const outPage=pageState.out;
+  const outSlice=outListAll.slice((outPage-1)*PAGE_SIZE, outPage*PAGE_SIZE);
+  document.getElementById('rpt-top-out').innerHTML=outSlice.length?outSlice.map((x,i)=>`<tr>
+    <td class="no-col">${(outPage-1)*PAGE_SIZE+i+1}</td>
+    <td class="item-name">${x.name}</td>
+    <td>${catBadge(x.cat)}</td>
+    <td class="total-out">${x.val.toLocaleString()}</td>
+    <td><span class="badge-dist">유통 ${x.dist.toLocaleString()}</span> <span class="badge-mfg">제조 ${x.mfg.toLocaleString()}</span></td>
+    <td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill-out" style="width:${Math.round(x.val/maxOut*100)}%"></div></div><span style="font-size:11px;color:#6b7280;white-space:nowrap">${Math.round(x.val/maxOut*100)}%</span></div></td>
+  </tr>`).join(''):'<tr><td colspan="6" style="padding:16px;color:#9ca3af;text-align:center">데이터 없음</td></tr>';
+  renderPager('pager-out', outPage, outListAll.length, 'goPageOut');
+
+  // ── 월간 차트 (당월 일별 전품목 합계) ──
+  const dailyIn=[], dailyOut=[], labels=[];
+  for(let d=1;d<=days;d++){
+    labels.push(d+'일');
+    let di=0,dout=0;
+    db.items.forEach(item=>{di+=parseInt(ledger[ck(item.code,d,'in')])||0;dout+=parseInt(ledger[ck(item.code,d,'out')])||0;});
+    dailyIn.push(di); dailyOut.push(dout);
+  }
+  buildBarChart('chart-monthly',chartMonthly,labels,dailyIn,dailyOut,'일별 입고','일별 사용',c=>{chartMonthly=c});
+
+  // ── 연간 차트 (선택연도 12개월, 유통/제조 분리) ──
+  const yLabels=[],yIn=[],yDist=[],yMfg=[];
+  for(let m2=1;m2<=12;m2++){
+    yLabels.push(m2+'월');
+    const ym2=ledgerKey(rptY,m2);
+    const d2=daysInMonth(rptY,m2);
+    const l2=db.ledger[ym2]||{};
+    let ti=0,tdist=0,tmfg=0;
+    db.items.forEach(item=>{
+      for(let d=1;d<=d2;d++){
+        ti+=parseInt(l2[ck(item.code,d,'in')])||0;
+        tdist+=(parseInt(l2[ck(item.code,d,'out_dist')])||0);
+        tmfg+=(parseInt(l2[ck(item.code,d,'out_mfg')])||0);
+        // 하위호환
+        tdist+=(parseInt(l2[ck(item.code,d,'out')])||0)/2|0;
+      }
+    });
+    yIn.push(ti); yDist.push(tdist); yMfg.push(tmfg);
+  }
+  build3Chart('chart-yearly',chartYearly,yLabels,yIn,yDist,yMfg,c=>{chartYearly=c});
+
+  // ── 안전재고 · 적정재고 분석 ──
+  const LEAD=3, SAFETY_FACTOR=1.5, ORDER_CYCLE=7;
+  const days_cur=daysInMonth(rptY,rptM);
+
+  function recent3MonthAvgOut(code){
+    let total=0,cnt=0;
+    for(let i=0;i<3;i++){
+      let mm=rptM-i, yy=rptY;
+      if(mm<=0){mm+=12;yy--;}
+      const ym_=ledgerKey(yy,mm);
+      const l_=db.ledger[ym_]||{};
+      const d_=daysInMonth(yy,mm);
+      let tout=0;
+      for(let d=1;d<=d_;d++) tout+=(parseInt(l_[ck(code,d,'out_dist')])||0)+(parseInt(l_[ck(code,d,'out_mfg')])||0)+(parseInt(l_[ck(code,d,'out')])||0);
+      if(tout>0||db.ledger[ym_]) {total+=tout;cnt++;}
+    }
+    return cnt>0?total/cnt:0;
+  }
+
+  // 전체 데이터 먼저 생성
+  const safeAllRows = db.items.map((item, idx) => {
+    const avgMonthOut=recent3MonthAvgOut(item.code);
+    const dailyOut2=avgMonthOut/30;
+    const recSafe=Math.ceil(dailyOut2*LEAD*SAFETY_FACTOR);
+    const recOpt=Math.ceil(recSafe+dailyOut2*ORDER_CYCLE);
+    const carry=parseInt((db.ledger[ym]||{})[ck(item.code,'carry','over')])||getCarryOver(item.code);
+    const {stock}=calcStock(item.code,carry,days_cur,db.ledger[ym]||{});
+    const safeEval=item.safe>=recSafe
+      ?'<span class="eval-ok">적정</span>'
+      :'<span class="eval-under">부족 (↑'+recSafe+'권장)</span>';
+    const stockEval=stock>=recOpt
+      ?'<span class="eval-ok">충분</span>'
+      :stock>=recSafe
+        ?'<span class="eval-over">주의</span>'
+        :'<span class="eval-under">부족</span>';
+    return {idx, item, avgMonthOut, dailyOut2, recSafe, recOpt, stock, safeEval, stockEval};
+  });
+
+  // 페이지 슬라이스
+  const safetyPage = pageState.safety;
+  const safeSlice = safeAllRows.slice((safetyPage-1)*PAGE_SIZE, safetyPage*PAGE_SIZE);
+  const safeRows = safeSlice.map(({idx, item, avgMonthOut, dailyOut2, recSafe, recOpt, stock, safeEval, stockEval}) => `<tr>
+      <td class="no-col">${idx+1}</td>
+      <td>${catBadge(item.cat)}</td>
+      <td class="item-name">${item.name}</td>
+      <td style="font-size:11px">${item.spec1||'-'}</td>
+      <td style="text-align:right">${avgMonthOut.toFixed(1)}</td>
+      <td style="text-align:right">${dailyOut2.toFixed(2)}</td>
+      <td style="text-align:right;font-weight:700;color:#1d4ed8">${recSafe}</td>
+      <td style="text-align:right">${item.safe}</td>
+      <td>${safeEval}</td>
+      <td style="text-align:right;font-weight:700;color:#7c3aed">${recOpt}</td>
+      <td style="text-align:right;font-weight:700">${stock}</td>
+      <td>${stockEval}</td>
+    </tr>`).join('');
+  document.getElementById('rpt-safety-body').innerHTML=safeRows||'<tr><td colspan="12" style="padding:16px;color:#9ca3af;text-align:center">품목이 없습니다</td></tr>';
+  renderPager('pager-safety', safetyPage, safeAllRows.length, 'goPageSafety');
+  buildDefectReport(rptY,rptM);
+  buildDistMfgTable(rptY,rptM,all);
+}
+
+function build3Chart(canvasId, existingChart, labels, dataIn, dataDist, dataMfg, setChart){
+  if(existingChart) existingChart.destroy();
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  const chart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'입고',data:dataIn,backgroundColor:'rgba(34,197,94,.7)',borderRadius:3},
+        {label:'유통출고',data:dataDist,backgroundColor:'rgba(124,58,237,.7)',borderRadius:3},
+        {label:'제조출고',data:dataMfg,backgroundColor:'rgba(180,83,9,.7)',borderRadius:3}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}}},
+      scales:{x:{ticks:{font:{size:10}},grid:{display:false}},y:{ticks:{font:{size:10}},beginAtZero:true}}}
+  });
+  setChart(chart);
+}
+
+function buildBarChart(canvasId, existingChart, labels, dataIn, dataOut, labelIn, labelOut, setChart){
+  if(existingChart) existingChart.destroy();
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  const chart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:labelIn,data:dataIn,backgroundColor:'rgba(34,197,94,.7)',borderRadius:3},
+        {label:labelOut,data:dataOut,backgroundColor:'rgba(249,115,22,.7)',borderRadius:3}
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}}},
+      scales:{
+        x:{ticks:{font:{size:10}},grid:{display:false}},
+        y:{ticks:{font:{size:10}},beginAtZero:true}
+      }
+    }
+  });
+  setChart(chart);
+}
+
+function initReportControls(){
+  refreshReportYears();
+  const rm=document.getElementById('rpt-month');
+  for(let m=1;m<=12;m++) rm.innerHTML+=`<option value="${m}" ${m===curMonth?'selected':''}>${m}월</option>`;
+}
+
+function refreshReportYears(){
+  const ry=document.getElementById('rpt-year');
+  if(!ry) return;
+  const cur=parseInt(ry.value)||curYear;
+  ry.innerHTML='';
+  const years=db.years&&db.years.length?db.years:[curYear];
+  years.forEach(y=> ry.innerHTML+=`<option value="${y}" ${y===cur?'selected':''}>${y}년</option>`);
+}
+</script>
+
+<script>
+// ── 초기 데이터 자동 주입 ────────────────────────────────
+(function(){
+  const STORAGE_KEY = 'inv_data_v2';
+  // 이미 데이터가 있으면 덮어쓰지 않음 (사용자 데이터 보호)
+  // 강제로 넣으려면 아래 주석 해제
+  // localStorage.removeItem(STORAGE_KEY);
+  if (!localStorage.getItem(STORAGE_KEY)) {
+    const seedData = {"items": [{"code": "CALI001", "name": "SDI 25R", "spec1": "18650 3000mAh", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI003_RROA30", "name": "SDI 30Q", "spec1": "18650 3000mAh", "spec2": "RROA30Q3JA03", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI003_RROA30_1", "name": "SDI 30Q", "spec1": "18650 3000mAh", "spec2": "RROA30Q1BB03", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI004_GRQB35", "name": "SDI 35E", "spec1": "18650 3400mAh", "spec2": "GRQB35E5LA0A", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI004_GRPA35", "name": "SDI 35E", "spec1": "18650 3400mAh", "spec2": "GRPA35E6SC03A", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI004_GRQB35_1", "name": "SDI 35E", "spec1": "18650 3400mAh", "spec2": "GRQB35E8E2A", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI004", "name": "SDI 35E", "spec1": "18650 3400mAh", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI010_QRNA40", "name": "SDI 40T", "spec1": "21700 4000mAh", "spec2": "QRNA40T8NA03", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI010_QRPA40", "name": "SDI 40T", "spec1": "21700 4000mAh", "spec2": "QRPA40T6WA03", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI011_VRNA48", "name": "SDI 48X (카버대응용)", "spec1": "21700 4800mAh", "spec2": "VRNA48X61C23", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI011_VRMF48", "name": "SDI 48X", "spec1": "21700 4800mAh", "spec2": "VRMF48X5QB0W", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI011_SRQA48", "name": "SDI 48X", "spec1": "21700 4800mAh", "spec2": "SRQA48X5HA33", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI011_VRQA48", "name": "SDI 48X", "spec1": "21700 4800mAh", "spec2": "VRQA48X6UA23", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI013", "name": "SDI 50E", "spec1": "21700 5000mAh", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI013_SRRA50", "name": "SDI 50E", "spec1": "21700 5000mAh", "spec2": "SRRA50E4TA23", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI023_LI0232", "name": "KY 50E", "spec1": "21700 5000mAh", "spec2": "LI0232405015", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI020_VRQA50", "name": "SDI 50GB", "spec1": "21700 5000mAh", "spec2": "VRQA50G99A33", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI020_SRRA50", "name": "SDI 50GB", "spec1": "21700 5000mAh", "spec2": "SRRA50G15A03", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI013_MCCM34", "name": "LG M50", "spec1": "21700 4950mAh", "spec2": "MCCM348014A3", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI013_MCCM34_1", "name": "LG M50", "spec1": "21700 4950mAh", "spec2": "MCCM348014A3", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI006_MCCM13", "name": "LG MJ1", "spec1": "18650 3600mAh", "spec2": "MCCM134010A1", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI009_CALI00", "name": "33J", "spec1": "21700", "spec2": "CALI009B2371", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI017_QRQA50", "name": "50S", "spec1": "21700", "spec2": "QRQA50S5BA23", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI017_QRQA50_1", "name": "50S", "spec1": "21700", "spec2": "QRQA50S9WA23", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI017_2,496E", "name": "50S", "spec1": "21700", "spec2": "2,496EA AAV 대응예정", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI029", "name": "50U", "spec1": "21700", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI029_1", "name": "50U", "spec1": "21700", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI029_2", "name": "50U", "spec1": "21700", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI029_RRRA50", "name": "50U", "spec1": "21700", "spec2": "RRRA50U37R03", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI021_RRQB45", "name": "45T / 25년 10~11월 소진", "spec1": "21700 4500mAh / 25년 10~11월 AAV P'연구소 사용예정", "spec2": "RRQB45T7XQ0A", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI022_RROA55", "name": "58E", "spec1": "21700 5330mAh / 샘플구매건", "spec2": "RROA55E3KQ03", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI025_MCCM35", "name": "M52V", "spec1": "", "spec2": "MCCM350415A1", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI025_FE101D", "name": "M52VT", "spec1": "", "spec2": "FE101D116N1", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI025_FE345L", "name": "M52VT", "spec1": "", "spec2": "FE345L116N1", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI025", "name": "M52VT", "spec1": "", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CALI025_1", "name": "M52VT", "spec1": "", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CAPO007_샘플", "name": "32700", "spec1": "6000mAh", "spec2": "샘플", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "CAPO007", "name": "32700", "spec1": "6000mAh", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "CAPO007_1", "name": "32700", "spec1": "6000mAh", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "CAPO007_APO007", "name": "32700", "spec1": "6000mAh", "spec2": "APO007251231", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "CAPO007_26HSLI", "name": "32700", "spec1": "6000mAh", "spec2": "26HSLI0071110390009", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "CAPO006_APO006", "name": "26650", "spec1": "", "spec2": "APO006250917", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "CAPO014_PO0112", "name": "LF 105", "spec1": "", "spec2": "PO0112403070", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "CAPO014_AC2022", "name": "LF 105", "spec1": "", "spec2": "AC202211170017", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "CAPO014_Q4S202", "name": "LF 105", "spec1": "", "spec2": "Q4S202512140", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "CAPO016_APO016", "name": "IFR C40K", "spec1": "", "spec2": "APO016250410", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "CAPO016_Q4S202", "name": "IFR C40K", "spec1": "", "spec2": "Q4S202511070040", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "CAPO017", "name": "LF100LA", "spec1": "삼성전자 대응", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "CAPO017_18JXM2", "name": "LF100LA", "spec1": "", "spec2": "18JXM202512250371", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "CAPO019", "name": "21700", "spec1": "3000mAh", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "인산철전지"}, {"code": "21700", "name": "21700", "spec1": "", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "더미배터리셀"}, {"code": "CALI027", "name": "H52A", "spec1": "", "spec2": "", "safe": 0, "cat": "전지", "cat_raw": "리튬이온전지"}, {"code": "CBLB053_A003", "name": "1S 회로", "spec1": "4~5A", "spec2": "A003", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB042_A-056", "name": "2S 회로", "spec1": "2S 10A", "spec2": "A-056", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB038", "name": "3S 인증회로", "spec1": "", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB089", "name": "3S 인증회로_Lv", "spec1": "실 스펙 3S 15A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB039", "name": "4S 인증회로", "spec1": "", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB074", "name": "4S 인증회로", "spec1": "리튬이온 4S PCM (구버전)", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB077", "name": "4S 인증회로", "spec1": "리튬이온 4S PCM A급", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB078", "name": "4S 인증회로", "spec1": "리튬이온 4S PCM B급", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB079", "name": "4S 인증회로", "spec1": "리튬이온 4S PCM C급", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB124", "name": "4S 인증회로", "spec1": "수류탄", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB002", "name": "리튬이온 PCM", "spec1": "3S 20A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB003", "name": "리튬이온 PCM", "spec1": "3S 40A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB003_1", "name": "리튬이온 BMS", "spec1": "3S 40A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB001", "name": "리튬이온 BMS", "spec1": "3S 70A (MAX100A)", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB081", "name": "리튬이온 BMS", "spec1": "4S 30A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB059", "name": "리튬이온 BMS", "spec1": "4S 100A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB060", "name": "리튬이온 BMS", "spec1": "4S 200A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB084", "name": "리튬이온 BMS", "spec1": "4S 300A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB093", "name": "리튬이온 BMS", "spec1": "6S 60A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB054", "name": "리튬이온 BMS (K-121)", "spec1": "7S 10A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB055", "name": "리튬이온 PCM", "spec1": "7S 20A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB055_1", "name": "리튬이온 BMS", "spec1": "7S 20A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB056", "name": "리튬이온 PCM (K-122)", "spec1": "7S 30A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB036_CTNS 각", "name": "리튬이온 BMS", "spec1": "(4~) 7S 40A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB031_CTNS 각", "name": "리튬이온 BMS", "spec1": "7S 40A(전용)", "spec2": "CTNS 각인 / 2단", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB028_CTNS 각", "name": "리튬이온 BMS", "spec1": "7S 50A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB006_CTNS 각", "name": "리튬이온 BMS", "spec1": "7S 60A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB087_CTNS 각", "name": "리튬이온 BMS", "spec1": "7S 100A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB032_CTNS 각", "name": "리튬이온 BMS", "spec1": "7S 200A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CZZZ130_CTNS 각", "name": "리튬이온 BMS", "spec1": "7S 300A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB008", "name": "리튬이온 BMS", "spec1": "10S 40A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB009", "name": "리튬이온 BMS", "spec1": "10S 45A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB030_CTNS 각", "name": "리튬이온 BMS", "spec1": "(10~) 13S 15A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB091_CTNS 각", "name": "리튬이온 BMS", "spec1": "13S 100A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB011_CTNS 각", "name": "리튬이온 BMS", "spec1": "13S 150A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB068", "name": "리튬이온 BMS", "spec1": "13S 200A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB070", "name": "리튬이온 BMS", "spec1": "13S 300A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB014_CTNS 각", "name": "리튬이온 BMS", "spec1": "(10~)14S 30A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB086_CTNS 각", "name": "리튬이온 BMS", "spec1": "14S 100A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB075", "name": "리튬이온 BMS", "spec1": "14S 300A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB016_CTNS 각", "name": "리튬이온 BMS", "spec1": "16S 40A (전용)", "spec2": "CTNS 각인 / 2단", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB037_CTNS 각", "name": "리튬이온 BMS", "spec1": "(4~) 17S 40A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB020_CTNS 각", "name": "리튬이온 BMS", "spec1": "(10~) 17S 30A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB021_CTNS 각", "name": "리튬이온 BMS", "spec1": "(10~) 17S 40A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB022", "name": "리튬이온 BMS", "spec1": "(10~) 17S 45A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB035_주행용보밧 ", "name": "리튬이온 BMS", "spec1": "(10~)16S 20A(범용)", "spec2": "주행용보밧 전용", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB023", "name": "리튬이온 BMS", "spec1": "(10~) 20S 45A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB025_범용 (2단", "name": "리튬이온 BMS", "spec1": "(10~) 20S 80A", "spec2": "범용 (2단)", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB025_범용", "name": "리튬이온 BMS", "spec1": "(10~) 20S 80A", "spec2": "범용", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB085_범용 (사이", "name": "리튬이온 BMS", "spec1": "(10~) 20S 80A", "spec2": "범용 (사이즈 큼)", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB061", "name": "리튬이온 BMS", "spec1": "20S 60A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB062", "name": "리튬이온 BMS", "spec1": "20S 100A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB063", "name": "리튬이온 BMS", "spec1": "20S 150A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB065", "name": "리튬이온 BMS", "spec1": "20S 300A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB058", "name": "리튬이온 BMS", "spec1": "22S 100A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLB067", "name": "리튬이온 BMS", "spec1": "28S 100A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLC001_상부버전 (", "name": "리튬이온 통신 BMS", "spec1": "7S", "spec2": "상부버전 (현대로보틱스용)", "safe": 0, "cat": "BMS", "cat_raw": "CTNS-BMS"}, {"code": "CBLC006_측면 부착 ", "name": "리튬이온 통신 BMS", "spec1": "7S", "spec2": "측면 부착 BMS (구버전)", "safe": 0, "cat": "BMS", "cat_raw": "CTNS-BMS"}, {"code": "CBLC007_측면 부착 ", "name": "리튬이온 통신 BMS", "spec1": "7S", "spec2": "측면 부착 BMS (HD_240405)", "safe": 0, "cat": "BMS", "cat_raw": "CTNS-BMS"}, {"code": "리튬이온 통신 _트위니", "name": "리튬이온 통신 BMS", "spec1": "7S", "spec2": "트위니", "safe": 0, "cat": "BMS", "cat_raw": "CTNS-BMS"}, {"code": "CBLC003", "name": "리튬이온 통신 BMS", "spec1": "10S", "spec2": "", "safe": 0, "cat": "BMS", "cat_raw": "CTNS-BMS"}, {"code": "리튬이온 통신 _우아한형제들", "name": "리튬이온 통신 BMS", "spec1": "10S", "spec2": "우아한형제들", "safe": 0, "cat": "BMS", "cat_raw": "CTNS-BMS"}, {"code": "CBLC002", "name": "리튬이온 통신 BMS", "spec1": "13S", "spec2": "", "safe": 0, "cat": "BMS", "cat_raw": "CTNS-BMS"}, {"code": "리튬이온 통신 _인아텍", "name": "리튬이온 통신 BMS", "spec1": "16S", "spec2": "인아텍", "safe": 0, "cat": "BMS", "cat_raw": "CTNS-BMS"}, {"code": "CBPB015", "name": "4S 인증회로", "spec1": "인산철 4S PCM", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBPB003_CTNS 각", "name": "인산철 BMS", "spec1": "4S 40A(MAX 50A)", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBPB001_CTNS 각", "name": "인산철 BMS", "spec1": "4S 100A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBPB002_CTNS 각", "name": "인산철 BMS", "spec1": "4S 200A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBPB012_CTNS 각", "name": "인산철 BMS", "spec1": "8S 50A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBPB006_CTNS 각", "name": "인산철 BMS", "spec1": "8S 100A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBPB005_CTNS 각", "name": "인산철 BMS", "spec1": "8S 200A", "spec2": "CTNS 각인", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBPB014", "name": "인산철 BMS", "spec1": "20S 50A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBMS005", "name": "인산철 BMS", "spec1": "20S 100A", "spec2": "", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CBLC015", "name": "리튬이온 BMS", "spec1": "6S 100A DALY", "spec2": "", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBLB097", "name": "리튬이온 BMS", "spec1": "7S 40A DALY", "spec2": "", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBLB107", "name": "리튬이온 BMS", "spec1": "7S 60A DALY", "spec2": "", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBPB028_폴라리스 쓰", "name": "인산철 BMS", "spec1": "8S 26.4V 40A DALY", "spec2": "폴라리스 쓰리디 대응용", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBPB027_폴라리스용", "name": "리튬이온 BMS", "spec1": "8S 40A DALY", "spec2": "폴라리스용", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBPB031", "name": "인산철 BMS", "spec1": "8S 60A DALY", "spec2": "", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBLB105", "name": "리튬이온 BMS", "spec1": "13S 150A DALY", "spec2": "", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBLB104", "name": "리튬이온 BMS", "spec1": "13S 600A DALY", "spec2": "", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBPB020", "name": "인산철 BMS", "spec1": "16S 48V 250A DALY", "spec2": "", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBPB026", "name": "인산철 BMS", "spec1": "24S 72V 250A DALY", "spec2": "", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBPB037", "name": "인산철 BMS", "spec1": "7S 100A DALY", "spec2": "", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBPB038", "name": "인산철 BMS", "spec1": "20S 200A DALY", "spec2": "", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBPB030_트리즈엔지니", "name": "인산철 BMS", "spec1": "20S 400A DALY", "spec2": "트리즈엔지니어링", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBLC015_라이브워크 ", "name": "리튬이온 BMS", "spec1": "12S 100A CAN DALY", "spec2": "라이브워크 대응용", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBLB120_하다코리아", "name": "리튬이온 BMS", "spec1": "12S 300A DALY", "spec2": "하다코리아", "safe": 0, "cat": "BMS", "cat_raw": "파트너-BMS"}, {"code": "CBLB121_파블로항공 ", "name": "리튬이온 BMS", "spec1": "6S 80A", "spec2": "파블로항공 대응", "safe": 0, "cat": "PCM", "cat_raw": "PCM"}, {"code": "CCNZ001_직사각형", "name": "납짝이 케이스", "spec1": "", "spec2": "직사각형", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCPK001_직사각형", "name": "파워뱅크 케이스", "spec1": "140mm(20Ah)", "spec2": "직사각형", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCPK002_직사각형", "name": "파워뱅크 케이스", "spec1": "180mm(30Ah)", "spec2": "직사각형", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCPK003_직사각형", "name": "파워뱅크 케이스", "spec1": "225mm(40Ah)", "spec2": "직사각형", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCPK004_정사각형", "name": "파워뱅크 케이스", "spec1": "140mm(20Ah)", "spec2": "정사각형", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCPK005_정사각형", "name": "파워뱅크 케이스", "spec1": "180mm(30Ah)", "spec2": "정사각형", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCPK006_정사각형", "name": "파워뱅크 케이스", "spec1": "225mm(40Ah)", "spec2": "정사각형", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCSB001_직사각형", "name": "보밧 케이스", "spec1": "285mm(10S)", "spec2": "직사각형", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCSB002_직사각형", "name": "보밧 케이스", "spec1": "370mm(13S,14S)", "spec2": "직사각형", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCSB003_직사각형", "name": "보밧 케이스", "spec1": "410mm(16S)", "spec2": "직사각형", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCPK008_10S 2P", "name": "케이스", "spec1": "205mm", "spec2": "10S 2P용", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT001_(43mm*", "name": "배터리 케이스 1번 (ES04-04B)", "spec1": "(48mm*48mm*101mm)", "spec2": "(43mm*43mm*87mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT002_(66mm*", "name": "배터리 케이스 2번 (ES04-06) (블랙)", "spec1": "(70mm*47mm*96mm)", "spec2": "(66mm*43mm*88mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT003_(146mm", "name": "배터리 케이스 3번 (ES06-07A)", "spec1": "(151mm*35mm*93mm)", "spec2": "(146mm*30mm*81mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT004_(146mm", "name": "배터리 케이스 4번 (ES06-10)", "spec1": "(151mm*50mm*93mm)", "spec2": "(146mm*45mm*81mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT005_(146mm", "name": "배터리 케이스 5번 (ES12-7D)", "spec1": "(151mm*65mm*94mm)", "spec2": "(146mm*60mm*82mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT006_(146mm", "name": "배터리 케이스 6번 (ES12-10A)", "spec1": "(151mm*99mm*94mm)", "spec2": "(146mm*94mm*84mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT007_(146mm", "name": "배터리 케이스 7번 (ES12-12) (블랙)", "spec1": "(151mm*99mm*99mm)", "spec2": "(146mm*94mm*89mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT008_(176mm", "name": "배터리 케이스 8번 (ES 12-17B)", "spec1": "(181mm*77mm170mm)", "spec2": "(176mm*70mm*140mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT009_(176mm", "name": "배터리 케이스 9번 (ES12-17A)", "spec1": "(181mm*77mm170mm)", "spec2": "(176mm*70mm*139mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT010_(176mm", "name": "배터리 케이스 10번 (ES12-20)", "spec1": "(181mm*77mm*168mm)", "spec2": "(176mm*68mm*130mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT011_(176mm", "name": "배터리케이스 11번 (ES12-20A) (블랙)", "spec1": "(181mm*77mm*170mm)", "spec2": "(176mm*70mm*156mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT012_(168mm", "name": "배터리 케이스 12번 (ES12-22) (블랙)", "spec1": "(174mm*165mm*125mm)", "spec2": "(168mm*161mm*106mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT013_(156mm", "name": "배터리 케이스 13번 (ES12-24)", "spec1": "(165mm*126mm*175mm)", "spec2": "(156mm*117mm*149mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT014_(215mm", "name": "배터리 케이스 14번 (ES12-30B)", "spec1": "(223mm*95mm*175mm)", "spec2": "(215mm*85mm*150mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT015_(260mm", "name": "배터리 케이스 15번 (ES12-32) (블랙)", "spec1": "(267mm*77mm*172mm)", "spec2": "(260mm*72mm*151mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT016_(187mm", "name": "배터리 케이스 16번 (ES12-33A)", "spec1": "(195mm*133mm*171mm)", "spec2": "(187mm*125mm*148mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT017_(187mm", "name": "배터리 케이스 17번 (ES12-33C)", "spec1": "(195mm*130mm*154mm)", "spec2": "(187mm*120mm*141mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT018_(187mm", "name": "배터리 케이스 18번 (ES12-38) (블랙)", "spec1": "(198mm*166mm*170mm)", "spec2": "(187mm*157mm*138mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT019_(217mm", "name": "배터리 케이스 19번 (ES12-55A)", "spec1": "(229*mm*138mm*208mm)", "spec2": "(217mm*126mm*190mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT020_251mm*", "name": "배터리 케이스 20번 (ES12-60)", "spec1": "(257mm*132mm*200mm)", "spec2": "251mm*125mm*160mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT021_(248mm", "name": "배터리 케이스 21번 (ES12-70A)", "spec1": "(260mm*168mm*209mm)", "spec2": "(248mm*157mm*194mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT022_(294mm", "name": "배터리 케이스 22번 (ES12-90A)", "spec1": "(307mm*169mm*208mm)", "spec2": "(294mm*157mm*194mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT023_(326mm", "name": "배터리 케이스 23번 (ES12-105A)", "spec1": "(333mm*176mm*217mm)", "spec2": "(326mm*168mm*191mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT024_(395mm", "name": "배터리 케이스 24번 (ES12-120)", "spec1": "(406mm*173mm*218mm)", "spec2": "(395mm*163mm*180mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT025_(441mm", "name": "배터리 케이스 25번 (ES12-150)", "spec1": "(483mm*170mm*240mm)", "spec2": "(441mm*159mm*207mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT026_(487mm", "name": "배터리 케이스 26번 (ES12-160)", "spec1": "(532mm*207mm*215mm)", "spec2": "(487mm*191mm*193mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT027_(335mm", "name": "배터리 케이스 27번 (ES12-180)", "spec1": "(345mm*190mm*245mm)", "spec2": "(335mm*180mm*215mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT028_(476mm", "name": "배터리 케이스 28번 (ES12-200)", "spec1": "(522mm*240mm*218mm)", "spec2": "(476mm*224mm*194mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT029_(478mm", "name": "배터리 케이스 29번 (ES12-250)", "spec1": "(520mm*269mm*220mm)", "spec2": "(478mm*251mm*196mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT030_(215mm", "name": "배터리 케이스 30번 (ES12-30B)", "spec1": "(223mm*95mm*195mm)", "spec2": "(215mm*85mm*175mm)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT041", "name": "ES12-50", "spec1": "", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT043", "name": "KTX배터리", "spec1": "소", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT044_앵무새 5C", "name": "KTX배터리", "spec1": "대", "spec2": "앵무새 5C-21700 52발", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT051_앵무새 DP", "name": "KTX배터리", "spec1": "13S (Y2K 대응용)", "spec2": "앵무새 DP2170-7 70발 21700", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCSD011_로고 / 갈", "name": "제작케이스", "spec1": "13S 4P", "spec2": "로고 / 갈치케이스", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCSD001_로고 / 갈", "name": "제작케이스", "spec1": "13S (Y2K 대응용)", "spec2": "로고 / 갈치케이스", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCSD024_로고상이", "name": "제작케이스", "spec1": "13S (Y2K 대응용) 20Ah", "spec2": "로고상이", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCSD024", "name": "제작케이스", "spec1": "13S (Y2K 대응용) 20Ah", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCSD002_로고 X /", "name": "제작케이스", "spec1": "13S (Y2K 대응용)", "spec2": "로고 X / 갈치케이스", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCSD003_48V 6P", "name": "제작케이스", "spec1": "13S 7P (21700용)", "spec2": "48V 6PIN", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCSD026_삼각케이스(", "name": "제작케이스", "spec1": "13S 8P (Y2K 대응용) 블랙", "spec2": "삼각케이스(흑)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCSD027_삼각케이스(", "name": "제작케이스", "spec1": "13S 8P (Y2K 대응용) 실버", "spec2": "삼각케이스(실버)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCSD028_삼각케이스(", "name": "제작케이스", "spec1": "13S 8P (Y2K 대응용) 다크그레이", "spec2": "삼각케이스(다크그레이)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT074_케이퓨쳐테크", "name": "제작스틸케이스", "spec1": "7S 8P 가온", "spec2": "케이퓨쳐테크 7S 8P(게이지A 없는것)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCP007_007가방", "name": "케이스", "spec1": "416*358*118", "spec2": "007가방", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT068_코레일", "name": "제작스틸케이스", "spec1": "13S 12P", "spec2": "코레일", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CZZZ175_뉴로메카", "name": "제작스틸케이스", "spec1": "13S 8P", "spec2": "뉴로메카", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT106_뉴로메카", "name": "제작스틸케이스", "spec1": "13S 16P", "spec2": "뉴로메카", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCST014_삼성전자", "name": "제작스틸케이스", "spec1": "4S 1P", "spec2": "삼성전자", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCST048_골프카트(에", "name": "제작스틸케이스", "spec1": "14S 6P", "spec2": "골프카트(에이프로)", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "제작스틸케이스_우아한형제들", "name": "제작스틸케이스", "spec1": "10S 9P", "spec2": "우아한형제들", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCST045_트위니", "name": "제작스틸케이스", "spec1": "7S 12P", "spec2": "트위니", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCST046_인아텍", "name": "제작스틸케이스", "spec1": "16S 2P", "spec2": "인아텍", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCCT061_180 x ", "name": "제작 케이스", "spec1": "하이박스", "spec2": "180 x 180 x 75", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCHI002_소", "name": "제작 케이스", "spec1": "하이박스", "spec2": "소", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CCST047_우아한형제들", "name": "제작스틸케이스", "spec1": "10S 9P", "spec2": "우아한형제들", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "제작스틸케이스", "name": "제작스틸케이스", "spec1": "16S 2P", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "제작스틸케이스_제니온", "name": "제작스틸케이스", "spec1": "7S 12P", "spec2": "제니온", "safe": 0, "cat": "케이스", "cat_raw": "케이스"}, {"code": "CRLR017_2S 8.4", "name": "리튬이온충전기", "spec1": "2S 8.4V 2A", "spec2": "2S 8.4V 2A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR019_2S 8.4", "name": "리튬이온충전기", "spec1": "2S 8.4V 5A", "spec2": "2S 8.4V 5A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR002_3S 12.", "name": "리튬이온충전기", "spec1": "3S 12.6V 2A", "spec2": "3S 12.6V 2A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR003_3S 12.", "name": "리튬이온충전기", "spec1": "3S 12.6V 4A", "spec2": "3S 12.6V 4A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR004_4S 16.", "name": "리튬이온충전기", "spec1": "4S 16.8V 2A", "spec2": "4S 16.8V 2A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR005_4S 16.", "name": "리튬이온충전기", "spec1": "4S 16.8V 3.5A", "spec2": "4S 16.8V 3.5A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR006_7S 29.", "name": "리튬이온충전기", "spec1": "7S 29.4V 2A", "spec2": "7S 29.4V 2A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR051_7S 29.", "name": "리튬이온충전기", "spec1": "7S 29.4V 4A", "spec2": "7S 29.4V 4A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR059_폴라리스 대", "name": "리튬이온충전기", "spec1": "7S 29.4V 4.5A", "spec2": "폴라리스 대응용", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR004_XT90 /", "name": "리튬이온 충전기", "spec1": "7S 29.4V 6A", "spec2": "XT90 / DC 혼입", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR004_폴라리스 대", "name": "리튬이온 충전기", "spec1": "7S 29.4V 6A", "spec2": "폴라리스 대응용", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR041_대응용", "name": "리튬이온 충전기", "spec1": "코가로보틱스 대응용 7S 6A", "spec2": "대응용", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR075", "name": "리튬이온 충전기", "spec1": "7S 29.4V 9A", "spec2": "", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR101_7S 28.", "name": "리튬이온충전기", "spec1": "7S 28.8V 10A", "spec2": "7S 28.8V 10A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR034_7S 29.", "name": "리튬이온충전기", "spec1": "7S 29.4V 10A", "spec2": "7S 29.4V 10A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR022_7S 28.", "name": "리튬이온충전기", "spec1": "7S 28.8V 15A", "spec2": "7S 28.8V 15A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR022_7S 29.", "name": "리튬이온충전기", "spec1": "7S 29.4V 15A", "spec2": "7S 29.4V 15A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CZZZ060_7S 29.", "name": "리튬이온충전기", "spec1": "7S 29.4V 20A", "spec2": "7S 29.4V 20A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR095_7S 29.", "name": "리튬이온충전기", "spec1": "7S 29.4V 30A", "spec2": "7S 29.4V 30A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR008_10S 42", "name": "리튬이온충전기", "spec1": "10S 42V 2A", "spec2": "10S 42V 2A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR009_13S 54", "name": "리튬이온충전기", "spec1": "13S 54.6V 2A", "spec2": "13S 54.6V 2A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR009_13S 54_1", "name": "리튬이온충전기", "spec1": "13S 54.6V 2A", "spec2": "13S 54.6V 2A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR010_13S 54", "name": "리튬이온충전기", "spec1": "13S 54.6V 4A", "spec2": "13S 54.6V 4A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR010_바팡스 충전", "name": "리튬이온충전기", "spec1": "13S 54.6V 4A", "spec2": "바팡스 충전기", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR076_13S 54", "name": "리튬이온충전기", "spec1": "13S 54.6V 5A", "spec2": "13S 54.6V 5A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR071_13S 54", "name": "리튬이온충전기", "spec1": "13S 54.6V 10A", "spec2": "13S 54.6V 10A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR023_13S 54", "name": "리튬이온충전기", "spec1": "13S 54.6V 20A", "spec2": "13S 54.6V 20A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR011_14S 58", "name": "리튬이온충전기", "spec1": "14S 58.8V 2A", "spec2": "14S 58.8V 2A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR036_14S 58", "name": "리튬이온충전기", "spec1": "14S 58.8V 4A", "spec2": "14S 58.8V 4A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR069_14S 58", "name": "리튬이온충전기", "spec1": "14S 58.8V 5A", "spec2": "14S 58.8V 5A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR061_LG CNS", "name": "리튬이온충전기", "spec1": "14S 58.8V 30A", "spec2": "LG CNS 대응용", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR012_16S 67", "name": "리튬이온충전기", "spec1": "16S 67.2V 2A", "spec2": "16S 67.2V 2A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR002_4S 14.", "name": "인산철충전기", "spec1": "4S 14.4V 2A", "spec2": "4S 14.4V 2A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR001_4S 14.", "name": "인산철충전기", "spec1": "4S 14.4V 4A", "spec2": "4S 14.4V 4A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR016_4S 14.", "name": "인산철충전기", "spec1": "4S 14.6V 7A", "spec2": "4S 14.6V 7A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR029_4S 14.", "name": "인산철충전기", "spec1": "4S 14.6V 15A", "spec2": "4S 14.6V 15A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR024_16S 67", "name": "리튬이온충전기", "spec1": "16S 67.2V 20A", "spec2": "16S 67.2V 20A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR030_24S 10", "name": "리튬이온충전기", "spec1": "24S 100V 20A", "spec2": "24S 100V 20A", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR008", "name": "리튬이온충전기", "spec1": "7S 24V 30A", "spec2": "", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR007", "name": "리튬이온충전기", "spec1": "7S 24V 40A", "spec2": "", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR010", "name": "리튬이온 충전기", "spec1": "13S 48V 18A", "spec2": "", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR009", "name": "리튬이온충전기", "spec1": "4S 14.4V 30A", "spec2": "", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR014", "name": "리튬이온충전기", "spec1": "3S 12V 30A", "spec2": "", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR006", "name": "주행 충전기", "spec1": "", "spec2": "", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR074_우아한형제들", "name": "리튬이온 충전기", "spec1": "10S 42V 14A", "spec2": "우아한형제들", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR024_로보스타 대", "name": "리튬이온 충전기", "spec1": "16S 67.2V 20A", "spec2": "로보스타 대응", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CZZZ038_DSV UP", "name": "리튬이온 충전기", "spec1": "7S 60A", "spec2": "DSV UPS 대응용", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR083_우아한형제들", "name": "리튬이온 충전기", "spec1": "10S 42V 20A(KP1200C-45)", "spec2": "우아한형제들 대응용", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR081_서륭기계 대", "name": "리튬이온 충전기", "spec1": "6S 25.2V 60A (KP200K-30)", "spec2": "서륭기계 대응용", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRPR027_인아텍", "name": "리튬인산철 충전기", "spec1": "LFP16S 20A/1200W", "spec2": "인아텍", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR098_아이뷰", "name": "리튬이온 충전기", "spec1": "13S 54.6V 4A", "spec2": "아이뷰", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR099_퍼스텍", "name": "리튬이온 충전기", "spec1": "7S 29.4V 40A", "spec2": "퍼스텍", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR090_도구공간", "name": "리튬이온 충전기", "spec1": "6S 25.2V 20A", "spec2": "도구공간", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CRLR102", "name": "리튬이온 충전기", "spec1": "KP1200C-45, 44.1V 25A KC충전기", "spec2": "", "safe": 0, "cat": "충전기", "cat_raw": "충전기"}, {"code": "CECA073_UL 인증", "name": "전장품류-케이블 (적색)", "spec1": "4AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA072_UL 인증", "name": "전장품류-케이블 (흑색)", "spec1": "4AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA075_UL 인증", "name": "전장품류-케이블 (적색)", "spec1": "6AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA074_UL 인증", "name": "전장품류-케이블 (흑색)", "spec1": "6AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA041_UL 인증", "name": "전장품류-케이블 (적색)", "spec1": "8AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA040_UL 인증", "name": "전장품류-케이블 (흑색)", "spec1": "8AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA043_UL 인증", "name": "전장품류-케이블 (적색)", "spec1": "10AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA042_UL 인증", "name": "전장품류-케이블 (흑색)", "spec1": "10AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA045_UL 인증", "name": "전장품류-케이블 (적색)", "spec1": "12AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA044_UL 인증", "name": "전장품류-케이블 (흑색)", "spec1": "12AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA047_UL 인증", "name": "전장품류-케이블 (적색)", "spec1": "14AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA046_UL 인증", "name": "전장품류-케이블 (흑색)", "spec1": "14AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA049_UL 인증", "name": "전장품류-케이블 (적색)", "spec1": "16AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA048_UL 인증", "name": "전장품류-케이블 (흑색)", "spec1": "16AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA051_UL 인증", "name": "전장품류-케이블 (적색)", "spec1": "18AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA050_UL 인증", "name": "전장품류-케이블 (흑색)", "spec1": "18AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA053_UL 인증", "name": "전장품류-케이블 (적색)", "spec1": "20AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA052_UL 인증", "name": "전장품류-케이블 (흑색)", "spec1": "20AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA055_UL 인증", "name": "전장품류-케이블 (적색)", "spec1": "22AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA054_UL 인증", "name": "전장품류-케이블 (흑색)", "spec1": "22AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA057_UL 인증", "name": "전장품류-케이블 (적색)", "spec1": "24AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CECA056_UL 인증", "name": "전장품류-케이블 (흑색)", "spec1": "24AWG/50cm", "spec2": "UL 인증", "safe": 0, "cat": "케이스", "cat_raw": "케이블"}, {"code": "CNHH009_50CM", "name": "니켈", "spec1": "32700 홀더용 0.2t 4line", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH008_50CM", "name": "니켈", "spec1": "32700 홀더용 0.2t 2line", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH003_50CM", "name": "니켈", "spec1": "32700 홀더용 0.15t 4line", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH002_50CM", "name": "니켈", "spec1": "32700 홀더용 0.15t 2line", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH011_50CM", "name": "니켈", "spec1": "21700 홀더용 0.2t 4line", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH007_50CM", "name": "니켈", "spec1": "21700 홀더용 0.2t 2line", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH005_50CM", "name": "니켈", "spec1": "21700 홀더용 0.15t 4line", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH001_50CM", "name": "니켈", "spec1": "21700 홀더용 0.15t 2line", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHN007_50CM", "name": "니켈", "spec1": "21700 셀용 0.2t 4line", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHN005_50CM", "name": "니켈", "spec1": "21700 셀용 0.2t 2line", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHN003_50CM", "name": "니켈", "spec1": "21700 셀용 0.15t 4line", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHN001_50CM", "name": "니켈", "spec1": "21700 셀용 0.15t 2line", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNNN003_1EA", "name": "니켈", "spec1": "Y자형 0.2T", "spec2": "1EA", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH027_50CM", "name": "순니켈", "spec1": "18650 2line 0.15T", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH028_50CM", "name": "순니켈", "spec1": "18650 4line 0.15T", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH029_50CM", "name": "순니켈", "spec1": "21700 2line 0.15T", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH030_50CM", "name": "순니켈", "spec1": "21700 4line 0.15T", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH031_50CM", "name": "순니켈", "spec1": "32700 2line 0.15T", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH032_50CM", "name": "순니켈", "spec1": "32700 4line 0.15T", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH033_50CM", "name": "순니켈", "spec1": "18650 2line 0.2T", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH034_50CM", "name": "순니켈", "spec1": "18650 4line 0.2T", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH035_50CM", "name": "순니켈", "spec1": "21700 2line 0.2T", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH036_50CM", "name": "순니켈", "spec1": "21700 4line 0.2T", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH037_50CM", "name": "순니켈", "spec1": "32700 2line 0.2T", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CNHH038_50CM", "name": "순니켈", "spec1": "32700 4line 0.2T", "spec2": "50CM", "safe": 0, "cat": "전지", "cat_raw": "니켈"}, {"code": "CEGG016", "name": "커넥터", "spec1": "전장품 류 게이지 적산계 50A TK15", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CEGG018_( 액정큰거", "name": "커넥터", "spec1": "전장품 류 게이지 적산계 350A-2TF03K", "spec2": "( 액정큰거)", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CECN064", "name": "커넥터", "spec1": "전장품 류 커넥터 앤더슨 단자 120A", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CECN031", "name": "커넥터", "spec1": "전장품 류 커넥터 앤더슨 단자 50A", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CECN092", "name": "커넥터", "spec1": "전장품 류 커넥터 Sub 9Pin", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CECN011_노란", "name": "커넥터", "spec1": "XT60-F (보호캡有)", "spec2": "노란", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CECN012_노란", "name": "커넥터", "spec1": "XT60-M (보호캡有)", "spec2": "노란", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CECN121", "name": "커넥터", "spec1": "XT90E-F", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CECN014", "name": "커넥터", "spec1": "XT90E-M", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CZZZ330_인아텍", "name": "커넥터", "spec1": "벤트 VENM12X1.5", "spec2": "인아텍", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CETS069_트위니", "name": "커넥터", "spec1": "Mil 벤트(밀벤트)-M12*1.5-10", "spec2": "트위니", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CECN004", "name": "커넥터", "spec1": "GX16-2P M", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CECN003", "name": "커넥터", "spec1": "GX16-2P F", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CECN006", "name": "커넥터", "spec1": "GX12-3P M", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CECN005", "name": "커넥터", "spec1": "GX12-3P F", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CECN008", "name": "커넥터", "spec1": "GX12-4P-M", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}, {"code": "CECN007", "name": "커넥터", "spec1": "GX12-4P-F", "spec2": "", "safe": 0, "cat": "케이스", "cat_raw": "전장품류"}], "ledger": {"2026-06": {"CALI001__carry__over": 0, "CALI003_RROA30__carry__over": 7, "CALI003_RROA30_1__carry__over": 12, "CALI004_GRQB35__carry__over": 9, "CALI004_GRQB35__1__out_mfg": 2, "CALI004_GRPA35__carry__over": 20, "CALI004_GRPA35__1__out_mfg": 20, "CALI004_GRQB35_1__carry__over": 1387, "CALI004_GRQB35_1__1__out_mfg": 1387, "CALI004__carry__over": 10000, "CALI004__1__out_mfg": 5791, "CALI010_QRNA40__carry__over": 6, "CALI010_QRPA40__carry__over": 3, "CALI011_VRNA48__carry__over": 28, "CALI011_VRMF48__carry__over": 158, "CALI011_SRQA48__carry__over": 22, "CALI011_VRQA48__carry__over": 6110, "CALI013__carry__over": 787, "CALI013__8__out_mfg": 703, "CALI013_SRRA50__carry__over": 0, "CALI013_SRRA50__2__in": 25740, "CALI013_SRRA50__8__out_mfg": 1300, "CALI023_LI0232__carry__over": 63, "CALI020_VRQA50__carry__over": 0, "CALI020_SRRA50__carry__over": 1583, "CALI013_MCCM34__carry__over": 60, "CALI013_MCCM34_1__carry__over": 884, "CALI006_MCCM13__carry__over": 0, "CALI009_CALI00__carry__over": 23, "CALI017_QRQA50__carry__over": 3, "CALI017_QRQA50_1__carry__over": 84, "CALI017_2,496E__carry__over": 3250, "CALI029__carry__over": 0, "CALI029_1__carry__over": 0, "CALI029_2__carry__over": 260, "CALI029_2__8__out_mfg": 60, "CALI029_RRRA50__carry__over": 0, "CALI029_RRRA50__2__in": 260, "CALI021_RRQB45__carry__over": 31, "CALI022_RROA55__carry__over": 260, "CALI025_MCCM35__carry__over": 1984, "CALI025_FE101D__carry__over": 34, "CALI025_FE345L__carry__over": 0, "CALI025__carry__over": 0, "CALI025_1__carry__over": 0, "CAPO007_샘플__carry__over": 300, "CAPO007__carry__over": 33, "CAPO007_1__carry__over": 273, "CAPO007_APO007__carry__over": 68, "CAPO007_26HSLI__carry__over": 3100, "CAPO006_APO006__carry__over": 1, "CAPO014_PO0112__carry__over": 0, "CAPO014_AC2022__carry__over": 18, "CAPO014_Q4S202__carry__over": 250, "CAPO016_APO016__carry__over": 10, "CAPO016_Q4S202__carry__over": 120, "CAPO017__carry__over": 7, "CAPO017_18JXM2__carry__over": 200, "CAPO019__carry__over": 52, "21700__carry__over": 6629, "CALI027__carry__over": 646, "CBLB053_A003__carry__over": 45, "CBLB042_A-056__carry__over": 108, "CBLB038__carry__over": 436, "CBLB038__8__out_mfg": 1, "CBLB089__carry__over": 76, "CBLB039__carry__over": 1, "CBLB074__carry__over": 140, "CBLB077__carry__over": 2013, "CBLB078__carry__over": 2052, "CBLB079__carry__over": 131, "CBLB124__carry__over": 0, "CBLB002__carry__over": 62, "CBLB003__carry__over": 4, "CBLB003_1__carry__over": 29, "CBLB001__carry__over": 48, "CBLB081__carry__over": 33, "CBLB059__carry__over": 32, "CBLB060__carry__over": 51, "CBLB084__carry__over": 4, "CBLB093__carry__over": 10, "CBLB054__carry__over": 56, "CBLB055__carry__over": 4, "CBLB055_1__carry__over": 131, "CBLB056__carry__over": 45, "CBLB036_CTNS 각__carry__over": 25, "CBLB031_CTNS 각__carry__over": 194, "CBLB028_CTNS 각__carry__over": 131, "CBLB006_CTNS 각__carry__over": 66, "CBLB006_CTNS 각__8__out_mfg": 2, "CBLB087_CTNS 각__carry__over": 32, "CBLB032_CTNS 각__carry__over": 39, "CZZZ130_CTNS 각__carry__over": 21, "CBLB008__carry__over": 64, "CBLB009__carry__over": 70, "CBLB030_CTNS 각__carry__over": 316, "CBLB030_CTNS 각__2__out_dist": 5, "CBLB091_CTNS 각__carry__over": 7, "CBLB011_CTNS 각__carry__over": 2, "CBLB068__carry__over": 65, "CBLB070__carry__over": 18, "CBLB014_CTNS 각__carry__over": 6, "CBLB014_CTNS 각__9__in": 150, "CBLB014_CTNS 각__4__out_dist": 5, "CBLB014_CTNS 각__9__out_mfg": 30, "CBLB086_CTNS 각__carry__over": 52, "CBLB075__carry__over": 13, "CBLB016_CTNS 각__carry__over": 30, "CBLB037_CTNS 각__carry__over": 120, "CBLB020_CTNS 각__carry__over": 36, "CBLB020_CTNS 각__2__out_dist": 5, "CBLB020_CTNS 각__4__out_dist": 5, "CBLB021_CTNS 각__carry__over": 142, "CBLB022__carry__over": 28, "CBLB022__2__out_dist": 1, "CBLB035_주행용보밧 __carry__over": 61, "CBLB035_주행용보밧 __4__out_dist": 5, "CBLB023__carry__over": 77, "CBLB023__1__out_mfg": 60, "CBLB025_범용 (2단__carry__over": 93, "CBLB025_범용 (2단__4__out_dist": 2, "CBLB025_범용__carry__over": 12, "CBLB085_범용 (사이__carry__over": 28, "CBLB061__carry__over": 6, "CBLB062__carry__over": 1, "CBLB063__carry__over": 4, "CBLB065__carry__over": 6, "CBLB058__carry__over": 1, "CBLB067__carry__over": 3, "CBLC001_상부버전 (__carry__over": 4, "CBLC006_측면 부착 __carry__over": 23, "CBLC006_측면 부착 __9__out_mfg": 20, "CBLC007_측면 부착 __carry__over": 0, "리튬이온 통신 _트위니__carry__over": 6, "리튬이온 통신 _트위니__9__in": 23, "CBLC003__carry__over": 19, "리튬이온 통신 _우아한형제들__carry__over": 55, "CBLC002__carry__over": 2, "리튬이온 통신 _인아텍__carry__over": 0, "CBPB015__carry__over": 66, "CBPB003_CTNS 각__carry__over": 78, "CBPB001_CTNS 각__carry__over": 28, "CBPB002_CTNS 각__carry__over": 10, "CBPB012_CTNS 각__carry__over": 100, "CBPB006_CTNS 각__carry__over": 33, "CBPB005_CTNS 각__carry__over": 18, "CBPB014__carry__over": 10, "CBMS005__carry__over": 81, "CBLC015__carry__over": 6, "CBLB097__carry__over": 1, "CBLB107__carry__over": 24, "CBPB028_폴라리스 쓰__carry__over": 15, "CBPB027_폴라리스용__carry__over": 4, "CBPB031__carry__over": 46, "CBLB105__carry__over": 22, "CBLB104__carry__over": 4, "CBPB020__carry__over": 4, "CBPB026__carry__over": 4, "CBPB037__carry__over": 4, "CBPB038__carry__over": 1, "CBPB030_트리즈엔지니__carry__over": 1, "CBLC015_라이브워크 __carry__over": 2, "CBLB120_하다코리아__carry__over": 1, "CBLB121_파블로항공 __carry__over": 7, "CBLB121_파블로항공 __8__out_mfg": 5, "CCNZ001_직사각형__carry__over": 64, "CCPK001_직사각형__carry__over": 40, "CCPK002_직사각형__carry__over": 193, "CCPK003_직사각형__carry__over": 75, "CCPK004_정사각형__carry__over": 158, "CCPK005_정사각형__carry__over": 128, "CCPK006_정사각형__carry__over": 153, "CCSB001_직사각형__carry__over": 587, "CCSB002_직사각형__carry__over": 113, "CCSB002_직사각형__8__out_dist": 1, "CCSB003_직사각형__carry__over": 148, "CCPK008_10S 2P__carry__over": 158, "CCCT001_(43mm*__carry__over": 4, "CCCT002_(66mm*__carry__over": 3, "CCCT003_(146mm__carry__over": 2, "CCCT004_(146mm__carry__over": 3, "CCCT005_(146mm__carry__over": 9, "CCCT006_(146mm__carry__over": 4, "CCCT007_(146mm__carry__over": 4, "CCCT008_(176mm__carry__over": 2, "CCCT009_(176mm__carry__over": 2, "CCCT010_(176mm__carry__over": 2, "CCCT011_(176mm__carry__over": 6, "CCCT012_(168mm__carry__over": 2, "CCCT013_(156mm__carry__over": 3, "CCCT014_(215mm__carry__over": 3, "CCCT015_(260mm__carry__over": 3, "CCCT016_(187mm__carry__over": 2, "CCCT017_(187mm__carry__over": 3, "CCCT018_(187mm__carry__over": 3, "CCCT019_(217mm__carry__over": 3, "CCCT020_251mm*__carry__over": 3, "CCCT021_(248mm__carry__over": 6, "CCCT022_(294mm__carry__over": 29, "CCCT023_(326mm__carry__over": 3, "CCCT024_(395mm__carry__over": 8, "CCCT025_(441mm__carry__over": 3, "CCCT026_(487mm__carry__over": 2, "CCCT027_(335mm__carry__over": 3, "CCCT028_(476mm__carry__over": 3, "CCCT029_(478mm__carry__over": 23, "CCCT030_(215mm__carry__over": 9, "CCCT041__carry__over": 27, "CCCT043__carry__over": 96, "CCCT044_앵무새 5C__carry__over": 34, "CCCT051_앵무새 DP__carry__over": 35, "CCSD011_로고 / 갈__carry__over": 2, "CCSD001_로고 / 갈__carry__over": 100, "CCSD001_로고 / 갈__8__out_mfg": 30, "CCSD024_로고상이__carry__over": 50, "CCSD024__carry__over": 0, "CCSD002_로고 X /__carry__over": 41, "CCSD003_48V 6P__carry__over": 5, "CCSD026_삼각케이스(__carry__over": 8, "CCSD027_삼각케이스(__carry__over": 24, "CCSD028_삼각케이스(__carry__over": 19, "CCCT074_케이퓨쳐테크__carry__over": 77, "CCCP007_007가방__carry__over": 19, "CCCT068_코레일__carry__over": 8, "CZZZ175_뉴로메카__carry__over": 2, "CCCT106_뉴로메카__carry__over": 1, "CCST014_삼성전자__carry__over": 97, "CCST048_골프카트(에__carry__over": 6, "제작스틸케이스_우아한형제들__carry__over": 62, "제작스틸케이스_우아한형제들__1__out_mfg": 1, "CCST045_트위니__carry__over": 2, "CCST046_인아텍__carry__over": 0, "CCST046_인아텍__4__in": 1, "CCST046_인아텍__4__out_mfg": 1, "CCCT061_180 x __carry__over": 1, "CCHI002_소__carry__over": 1, "CCST047_우아한형제들__carry__over": 46, "제작스틸케이스__carry__over": 1, "제작스틸케이스_제니온__carry__over": 0, "CRLR017_2S 8.4__carry__over": 12, "CRLR019_2S 8.4__carry__over": 68, "CRLR002_3S 12.__carry__over": 222, "CRLR003_3S 12.__carry__over": 134, "CRLR003_3S 12.__8__out_dist": 10, "CRLR004_4S 16.__carry__over": 53, "CRLR005_4S 16.__carry__over": 1, "CRLR006_7S 29.__carry__over": 122, "CRLR006_7S 29.__8__out_mfg": 1, "CRLR051_7S 29.__carry__over": 93, "CRLR059_폴라리스 대__carry__over": 317, "CRLR059_폴라리스 대__4__out_mfg": 75, "CRPR004_XT90 /__carry__over": 25, "CRPR004_폴라리스 대__carry__over": 100, "CRLR041_대응용__carry__over": 94, "CRLR075__carry__over": 7, "CRLR101_7S 28.__carry__over": 49, "CRLR034_7S 29.__carry__over": 30, "CRLR022_7S 28.__carry__over": 69, "CRLR022_7S 29.__carry__over": 20, "CZZZ060_7S 29.__carry__over": 19, "CRLR095_7S 29.__carry__over": 3, "CRLR008_10S 42__carry__over": 66, "CRLR009_13S 54__carry__over": 65, "CRLR009_13S 54_1__carry__over": 99, "CRLR010_13S 54__carry__over": 75, "CRLR010_바팡스 충전__carry__over": 17, "CRLR076_13S 54__carry__over": 47, "CRLR071_13S 54__carry__over": 12, "CRLR023_13S 54__carry__over": 24, "CRLR011_14S 58__carry__over": 17, "CRLR036_14S 58__carry__over": 38, "CRLR069_14S 58__carry__over": 1, "CRLR061_LG CNS__carry__over": 1, "CRLR012_16S 67__carry__over": 66, "CRPR002_4S 14.__carry__over": 49, "CRPR001_4S 14.__carry__over": 196, "CRPR016_4S 14.__carry__over": 28, "CRPR029_4S 14.__carry__over": 9, "CRPR029_4S 14.__8__out_dist": 2, "CRPR024_16S 67__carry__over": 3, "CRPR030_24S 10__carry__over": 3, "CRPR008__carry__over": 1, "CRPR007__carry__over": 2, "CRPR010__carry__over": 1, "CRPR009__carry__over": 2, "CRPR014__carry__over": 2, "CRPR006__carry__over": 5, "CRLR074_우아한형제들__carry__over": 5, "CRPR024_로보스타 대__carry__over": 4, "CZZZ038_DSV UP__carry__over": 1, "CRLR083_우아한형제들__carry__over": 2, "CRLR081_서륭기계 대__carry__over": 2, "CRPR027_인아텍__carry__over": 2, "CRLR098_아이뷰__carry__over": 5, "CRLR099_퍼스텍__carry__over": 4, "CRLR090_도구공간__carry__over": 8, "CRLR102__carry__over": 0, "CECA073_UL 인증__carry__over": 0, "CECA072_UL 인증__carry__over": 0, "CECA075_UL 인증__carry__over": 0, "CECA074_UL 인증__carry__over": 0, "CECA041_UL 인증__carry__over": 0, "CECA040_UL 인증__carry__over": 0, "CECA043_UL 인증__carry__over": 0, "CECA042_UL 인증__carry__over": 0, "CECA045_UL 인증__carry__over": 0, "CECA044_UL 인증__carry__over": 0, "CECA047_UL 인증__carry__over": 0, "CECA046_UL 인증__carry__over": 0, "CECA049_UL 인증__carry__over": 0, "CECA048_UL 인증__carry__over": 0, "CECA051_UL 인증__carry__over": 0, "CECA050_UL 인증__carry__over": 0, "CECA053_UL 인증__carry__over": 0, "CECA052_UL 인증__carry__over": 0, "CECA055_UL 인증__carry__over": 0, "CECA054_UL 인증__carry__over": 0, "CECA057_UL 인증__carry__over": 0, "CECA056_UL 인증__carry__over": 0, "CNHH009_50CM__carry__over": 0, "CNHH008_50CM__carry__over": 0, "CNHH003_50CM__carry__over": 0, "CNHH002_50CM__carry__over": 0, "CNHH011_50CM__carry__over": 0, "CNHH007_50CM__carry__over": 0, "CNHH005_50CM__carry__over": 0, "CNHH001_50CM__carry__over": 0, "CNHN007_50CM__carry__over": 0, "CNHN005_50CM__carry__over": 0, "CNHN003_50CM__carry__over": 0, "CNHN001_50CM__carry__over": 0, "CNNN003_1EA__carry__over": 0, "CNHH027_50CM__carry__over": 0, "CNHH028_50CM__carry__over": 0, "CNHH029_50CM__carry__over": 0, "CNHH030_50CM__carry__over": 0, "CNHH031_50CM__carry__over": 0, "CNHH032_50CM__carry__over": 0, "CNHH033_50CM__carry__over": 0, "CNHH034_50CM__carry__over": 0, "CNHH035_50CM__carry__over": 0, "CNHH036_50CM__carry__over": 0, "CNHH037_50CM__carry__over": 0, "CNHH038_50CM__carry__over": 0, "CEGG016__carry__over": 0, "CEGG018_( 액정큰거__carry__over": 0, "CECN064__carry__over": 0, "CECN031__carry__over": 0, "CECN092__carry__over": 0, "CECN011_노란__carry__over": 0, "CECN012_노란__carry__over": 0, "CECN121__carry__over": 0, "CECN014__carry__over": 0, "CZZZ330_인아텍__carry__over": 0, "CETS069_트위니__carry__over": 0, "CECN004__carry__over": 0, "CECN003__carry__over": 0, "CECN006__carry__over": 0, "CECN005__carry__over": 0, "CECN008__carry__over": 0, "CECN007__carry__over": 0}}, "history": [], "years": [2026]};
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seedData));
+    console.log('초기 데이터 주입 완료:', seedData.items.length, '품목');
+  }
+})();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</body>
+</html>
