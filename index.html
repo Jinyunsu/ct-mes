@@ -2608,10 +2608,11 @@ function renderCalendar(){
       const raw=p.shippedAt||'';
       const shippedDate=raw?(raw.includes('.')?new Date(raw).toISOString().slice(0,10):raw.slice(0,10)):null;
       const isDoneOnDs = st==='shipped'?(shippedDate===ds):p.completedAt?(p.completedAt===ds):(p.status==='done'&&p.date===ds);
-      const isCarryFailed=p._carry&&!isDoneOnDs;
-      const bg=isDoneOnDs?'rgba(34,197,94,.25)':isCarryFailed?'rgba(239,68,68,.15)':c.bg;
-      const color=isDoneOnDs?'var(--green)':isCarryFailed?'var(--red)':c.text;
-      const border=isCarryFailed?'1px dashed var(--red)':'none';
+      const isCompleted = st==='done'||st==='shipped'; // 완료/출하된 계획
+      const isCarryFailed=p._carry&&!isDoneOnDs&&!isCompleted; // 아직 진행중인 이월만 빨간색
+      const bg=isDoneOnDs?'rgba(34,197,94,.25)':isCompleted?'rgba(34,197,94,.1)':isCarryFailed?'rgba(239,68,68,.15)':c.bg;
+      const color=isDoneOnDs?'var(--green)':isCompleted?'var(--green)':isCarryFailed?'var(--red)':c.text;
+      const border=isCarryFailed?'1px dashed var(--red)':isCompleted&&p._carry?'1px dashed var(--green)':'none';
       const prefix=p._carry?'↩ ':'';
       return `<div class="cal-chip" style="background:${bg};color:${color};border:${border}" title="${p.code}${p.customer?' ('+p.customer+')':''} | ${p.planQty||0}EA">${prefix}${p.code}${p.customer?` (${p.customer})`:''}</div>`;
     }).join('');
