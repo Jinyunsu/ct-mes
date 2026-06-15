@@ -166,6 +166,12 @@ td:hover .memo-btn{display:flex;align-items:center;justify-content:center}
 .memo-popup-btns button{height:28px;padding:0 12px;font-size:12px}
 .memo-tag{font-size:10px;color:#92400e;background:#fef3c7;border-radius:3px;padding:1px 4px;margin-left:3px;vertical-align:middle}
 
+
+/* 품목 전체선택 */
+.items-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#2563eb}
+.sel-count{font-size:12px;color:#6b7280;margin-left:4px}
+
 /* 불량 출고 */
 .badge-defect{background:#fce7f3;color:#9d174d}
 </style>
@@ -233,12 +239,15 @@ td:hover .memo-btn{display:flex;align-items:center;justify-content:center}
 
 <!-- 품목 관리 -->
 <div id="sec-items" class="section">
-  <div style="margin-bottom:10px">
+  <div class="items-toolbar">
     <button class="primary" onclick="openItemModal()">+ 품목 추가</button>
+    <button onclick="toggleSelectAll()" id="btn-sel-all" style="height:32px;padding:0 14px;font-size:13px">☑ 전체선택</button>
+    <button onclick="deleteSelected()" class="danger" id="btn-del-sel" style="display:none">🗑 선택 삭제</button>
+    <span class="sel-count" id="sel-count"></span>
   </div>
   <div class="card">
     <table>
-      <thead><tr><th>NO</th><th>구분</th><th>품목코드</th><th>품목명</th><th>기본사양</th><th>상세사양</th><th>안전재고</th><th>관리</th></tr></thead>
+      <thead><tr><th style="width:36px"><input type="checkbox" id="chk-all" onchange="onChkAll(this)"></th><th>NO</th><th>구분</th><th>품목코드</th><th>품목명</th><th>기본사양</th><th>상세사양</th><th>관리</th></tr></thead>
       <tbody id="items-body"></tbody>
     </table>
   </div>
@@ -354,7 +363,7 @@ td:hover .memo-btn{display:flex;align-items:center;justify-content:center}
   </div>
 <div class="rpt-section-title" style="margin-top:14px">🎯 안전재고 · 적정재고 분석</div>
   <div class="rpt-note">
-    ※ <b>권장 안전재고</b> = 일평균 사용량 × 리드타임(3일) × 안전계수(1.5)&nbsp;&nbsp;|&nbsp;&nbsp;
+    ※ <b>권장 안전재고</b> = 일평균 사용량 × 리드타임(14일) × 안전계수(1.5)&nbsp;&nbsp;|&nbsp;&nbsp;
     <b>권장 적정재고</b> = 안전재고 + 일평균 사용량 × 발주주기(7일)&nbsp;&nbsp;|&nbsp;&nbsp;최근 3개월 출고 기준
   </div>
   <div class="card" style="padding:0">
@@ -413,7 +422,8 @@ function loadDB(){
 }
 function saveDB(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(db));}catch(e){}}
 
-const now=new Date();
+// 한국 시간 기준 (UTC+9)
+const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
 let curYear=now.getFullYear(),curMonth=now.getMonth()+1;
 
 function ledgerKey(y,m){return `${y}-${String(m).padStart(2,'0')}`;}
@@ -490,7 +500,7 @@ function buildLedger(){
 
   let rows='',no=1;
   filtered.forEach(item=>{
-    const carry=parseInt(ledger[ck(item.code,'carry','over')])||getCarryOver(item.code);
+    const carry=ledger[ck(item.code,'carry','over')]!==undefined?parseInt(ledger[ck(item.code,'carry','over')])||0:getCarryOver(item.code);
     const {tin,tout,toutDist,toutMfg,stock}=calcStock(item.code,carry,days,ledger);
     let tr=`<tr>`
       +`<td class="no-col">${no++}</td>`
@@ -533,7 +543,48 @@ function buildLedger(){
   });
 
   if(!rows) rows=`<tr><td colspan="${12+days*3}" style="padding:24px;color:#9ca3af;text-align:center">해당 구분의 품목이 없습니다</td></tr>`;
-  document.getElementById('ledger-body').innerHTML=rows;
+
+  // 합계 행 계산
+  let sumCarry=0, sumStock=0, sumIn=0, sumOut=0, sumDist=0, sumMfg=0;
+  filtered.forEach(item=>{
+    const carry=ledger[ck(item.code,'carry','over')]!==undefined?parseInt(ledger[ck(item.code,'carry','over')])||0:getCarryOver(item.code);
+    const {tin,tout,toutDist,toutMfg,stock}=calcStock(item.code,carry,days,ledger);
+    sumCarry+=carry; sumStock+=stock; sumIn+=tin; sumOut+=tout; sumDist+=toutDist; sumMfg+=toutMfg;
+  });
+
+  const sumRow=`<tr style="background:#1f3864;color:#fff;font-weight:700;position:sticky;bottom:0;z-index:3">
+    <td colspan="4" style="text-align:center;background:#1f3864;color:#fff;font-size:12px;padding:6px">합 계</td>
+    <td style="text-align:center;background:#1f3864;color:#fff"></td>
+    <td id="sum-carry" style="text-align:center;background:#2e4d7b;color:#fff">${sumCarry.toLocaleString()}</td>
+    <td id="sum-stock" style="text-align:center;background:#1d4ed8;color:#fff">${sumStock.toLocaleString()}</td>
+    <td id="sum-in" style="text-align:center;background:#166534;color:#fff">${sumIn.toLocaleString()}</td>
+    <td id="sum-out" style="text-align:center;background:#b91c1c;color:#fff">${sumOut.toLocaleString()}</td>
+    <td id="sum-dist" style="text-align:center;background:#5b21b6;color:#fff">${sumDist.toLocaleString()}</td>
+    <td id="sum-mfg" style="text-align:center;background:#92400e;color:#fff">${sumMfg.toLocaleString()}</td>
+    <td colspan="${days*3}" style="background:#1f3864"></td>
+  </tr>`;
+
+  document.getElementById('ledger-body').innerHTML=rows+sumRow;
+}
+
+function updateSumRow(){
+  const days=daysInMonth(curYear,curMonth);
+  const ledger=getLedger();
+  const filtered=curFilter==='전체'?db.items:db.items.filter(i=>i.cat===curFilter);
+  let sumCarry=0,sumStock=0,sumIn=0,sumOut=0,sumDist=0,sumMfg=0;
+  filtered.forEach(item=>{
+    const carry=ledger[ck(item.code,'carry','over')]!==undefined?parseInt(ledger[ck(item.code,'carry','over')])||0:getCarryOver(item.code);
+    const {tin,tout,toutDist,toutMfg,stock}=calcStock(item.code,carry,days,ledger);
+    sumCarry+=carry;sumStock+=stock;sumIn+=tin;sumOut+=tout;sumDist+=toutDist;sumMfg+=toutMfg;
+  });
+  const cells=[
+    ['sum-carry',sumCarry],['sum-stock',sumStock],['sum-in',sumIn],
+    ['sum-out',sumOut],['sum-dist',sumDist],['sum-mfg',sumMfg]
+  ];
+  cells.forEach(([id,val])=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent=val.toLocaleString();
+  });
 }
 
 function onCatChange(el){
@@ -586,6 +637,7 @@ function onInput(el){
   if(ts)ts.textContent=stock;
   if(td)td.textContent=toutDist;
   if(tm)tm.textContent=toutMfg;
+  updateSumRow();
   if((type==='in'||type==='out_dist'||type==='out_mfg')&&val>0){
     const today=`${curYear}-${String(curMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const item=db.items.find(i=>i.code===code);
@@ -600,7 +652,7 @@ function buildStatus(){
   const days=daysInMonth(curYear,curMonth),ledger=getLedger();
   let totalIn=0,totalOut=0,lowCount=0,noStock=0,rows='';
   db.items.forEach((item,idx)=>{
-    const carry=parseInt(ledger[ck(item.code,'carry','over')])||getCarryOver(item.code);
+    const carry=ledger[ck(item.code,'carry','over')]!==undefined?parseInt(ledger[ck(item.code,'carry','over')])||0:getCarryOver(item.code);
     const {tin,tout,stock}=calcStock(item.code,carry,days,ledger);
     totalIn+=tin;totalOut+=tout;
     let badge='';
@@ -625,13 +677,60 @@ function buildStatus(){
 
 function buildItems(){
   document.getElementById('items-body').innerHTML=db.items.map((item,idx)=>`<tr>
+    <td style="text-align:center"><input type="checkbox" class="item-chk" data-idx="${idx}" onchange="onItemChk()"></td>
     <td class="no-col">${idx+1}</td>
     <td>${catBadge(item.cat)}</td>
-    <td>${item.code}</td><td class="item-name">${item.name}</td><td style="font-size:11px">${item.spec1||'-'}</td><td style="font-size:11px;color:#6b7280">${item.spec2||'-'}</td><td>${item.safe}</td>
+    <td>${item.code}</td><td class="item-name">${item.name}</td>
+    <td style="font-size:11px">${item.spec1||'-'}</td>
+    <td style="font-size:11px;color:#6b7280">${item.spec2||'-'}</td>
     <td>
       <button onclick="openItemModal(${idx})" style="height:26px;padding:0 10px;font-size:12px">✏ 수정</button>
       <button onclick="deleteItem(${idx})" class="danger" style="height:26px;padding:0 10px;font-size:12px;margin-left:4px">🗑 삭제</button>
     </td></tr>`).join('');
+  updateSelUI();
+}
+
+function onChkAll(chk){
+  document.querySelectorAll('.item-chk').forEach(c=>c.checked=chk.checked);
+  updateSelUI();
+}
+
+function onItemChk(){
+  const all=document.querySelectorAll('.item-chk');
+  const checked=document.querySelectorAll('.item-chk:checked');
+  document.getElementById('chk-all').indeterminate = checked.length>0 && checked.length<all.length;
+  document.getElementById('chk-all').checked = checked.length===all.length && all.length>0;
+  updateSelUI();
+}
+
+function updateSelUI(){
+  const checked=document.querySelectorAll('.item-chk:checked');
+  const cnt=checked.length;
+  const delBtn=document.getElementById('btn-del-sel');
+  const cntEl=document.getElementById('sel-count');
+  if(delBtn) delBtn.style.display=cnt>0?'inline-flex':'none';
+  if(cntEl) cntEl.textContent=cnt>0?cnt+'개 선택됨':'';
+}
+
+function toggleSelectAll(){
+  const all=document.querySelectorAll('.item-chk');
+  const checked=document.querySelectorAll('.item-chk:checked');
+  const selectAll=checked.length<all.length;
+  all.forEach(c=>c.checked=selectAll);
+  const chkAll=document.getElementById('chk-all');
+  if(chkAll) chkAll.checked=selectAll;
+  updateSelUI();
+}
+
+async function deleteSelected(){
+  const checked=[...document.querySelectorAll('.item-chk:checked')];
+  if(!checked.length) return;
+  if(!confirm(checked.length+'개 품목을 삭제할까요?')) return;
+  const idxs=new Set(checked.map(c=>parseInt(c.dataset.idx)));
+  db.items=db.items.filter((_,i)=>!idxs.has(i));
+  await saveDB();
+  buildItems();
+  showToast(checked.length+'개 품목이 삭제되었습니다');
 }
 
 function buildHistory(){
@@ -689,7 +788,8 @@ function saveItem(){
     spec2:document.getElementById('f-spec2').value.trim(),
     safe:parseInt(document.getElementById('f-safe').value)||0
   };
-  if(!item.code||!item.name){alert('코드와 품목명은 필수입니다.');return;}
+  // 둘 다 비어있으면 저장 불가
+  if(!item.code && !item.name){alert('품목코드 또는 품목명 중 하나는 입력해주세요.');return;}
   if(idx>=0)db.items[idx]=item;else db.items.push(item);
   saveDB();closeItemModal();buildItems();showToast('저장되었습니다');
 }
@@ -714,7 +814,7 @@ function exportCSV(){
   for(let d=1;d<=days;d++)csv+=`,${d}일입고,${d}일출고`;
   csv+='\n';
   db.items.forEach((item,idx)=>{
-    const carry=parseInt(ledger[ck(item.code,'carry','over')])||getCarryOver(item.code);
+    const carry=ledger[ck(item.code,'carry','over')]!==undefined?parseInt(ledger[ck(item.code,'carry','over')])||0:getCarryOver(item.code);
     const {tin,tout,stock}=calcStock(item.code,carry,days,ledger);
     let row=`${idx+1},${item.cat||'-'},${item.code},${item.name},${item.unit},${carry},${stock},${tin},${tout}`;
     for(let d=1;d<=days;d++){row+=','+(parseInt(ledger[ck(item.code,d,'in')])||0);row+=','+(parseInt(ledger[ck(item.code,d,'out')])||0);}
@@ -1152,7 +1252,7 @@ function buildReport(){
   build3Chart('chart-yearly',chartYearly,yLabels,yIn,yDist,yMfg,c=>{chartYearly=c});
 
   // ── 안전재고 · 적정재고 분석 ──
-  const LEAD=3, SAFETY_FACTOR=1.5, ORDER_CYCLE=7;
+  const LEAD=14, SAFETY_FACTOR=1.5, ORDER_CYCLE=7;
   const days_cur=daysInMonth(rptY,rptM);
 
   function recent3MonthAvgOut(code){
@@ -1176,7 +1276,7 @@ function buildReport(){
     const dailyOut2=avgMonthOut/30;
     const recSafe=Math.ceil(dailyOut2*LEAD*SAFETY_FACTOR);
     const recOpt=Math.ceil(recSafe+dailyOut2*ORDER_CYCLE);
-    const carry=parseInt((db.ledger[ym]||{})[ck(item.code,'carry','over')])||getCarryOver(item.code);
+    const ledgerYm=db.ledger[ym]||{};const carry=ledgerYm[ck(item.code,'carry','over')]!==undefined?parseInt(ledgerYm[ck(item.code,'carry','over')])||0:getCarryOver(item.code);
     const {stock}=calcStock(item.code,carry,days_cur,db.ledger[ym]||{});
     const safeEval=item.safe>=recSafe
       ?'<span class="eval-ok">적정</span>'
@@ -1292,6 +1392,11 @@ async function handleUpload(event){
       const newItems = [];
       const seen = new Set();
 
+      // 헤더에서 전월재고/당월재고 열 위치 찾기
+      const hdrRow = rows[2] || [];
+      const prevCol = hdrRow.findIndex(v=>String(v).includes('전월재고'));
+      const curCol  = hdrRow.findIndex(v=>String(v).includes('당월재고'));
+
       for(let i=3; i<rows.length; i++){
         const r = rows[i];
         const cat   = String(r[0]||'').trim();
@@ -1299,15 +1404,18 @@ async function handleUpload(event){
         const name  = String(r[2]||'').trim();
         const spec1 = String(r[3]||'').trim();
         const spec2 = String(r[4]||'').trim();
-        const safe  = parseInt(r[5])||0;
+        const prevStock = prevCol>=0 && r[prevCol]!==null && r[prevCol]!=='' ? (parseInt(r[prevCol])||0) : null;
 
-        if(!code || !name) continue;
-        if(seen.has(code)) continue;
-        seen.add(code);
+        // 코드도 없고 이름도 없으면 빈 행 스킵
+        if(!code && !name) continue;
+        const uniqueKey = `${code}__${spec1}__${spec2}`;
+        if(seen.has(uniqueKey)) continue;
+        seen.add(uniqueKey);
 
         newItems.push({
-          code, name, spec1, spec2, safe,
-          cat: CAT_MAP[cat]||''
+          code, name, spec1, spec2, safe: 0,
+          cat: CAT_MAP[cat]||'',
+          _prevStock: prevStock
         });
       }
 
@@ -1318,10 +1426,41 @@ async function handleUpload(event){
 
       if(!confirm(newItems.length + '개 품목을 불러옵니다.\n기존 품목 목록이 교체됩니다. 계속할까요?')) return;
 
-      db.items = newItems;
+      // 전월재고 ledger에 반영
+      const ym = ledgerKey(curYear, curMonth);
+      if(!db.ledger[ym]) db.ledger[ym]={};
+      newItems.forEach(item=>{
+        if(item._prevStock !== undefined && item._prevStock !== null){
+          // 0 포함 명시적으로 입력된 값은 그대로 저장 (이월 계산 안 함)
+          db.ledger[ym][ck(item.code,'carry','over')] = item._prevStock;
+        }
+        // _prevStock이 null이면 전월재고 미입력 → 자동 이월 (carry 키 미설정)
+        delete item._prevStock;
+      });
+
+      // 품목 목록: 코드+기본사양+상세사양 모두 같으면 업데이트, 하나라도 다르면 신규 추가
+      let addedCnt=0, updatedCnt=0;
+      newItems.forEach(newItem=>{
+        const existing = db.items.findIndex(i=>
+          i.code===newItem.code &&
+          (i.spec1||'')===(newItem.spec1||'') &&
+          (i.spec2||'')===(newItem.spec2||'')
+        );
+        if(existing>=0){
+          // 완전히 동일한 품목 → 이름/구분만 업데이트
+          db.items[existing].name = newItem.name;
+          db.items[existing].cat  = newItem.cat;
+          updatedCnt++;
+        } else {
+          // 코드 같아도 사양 다르면 별도 품목으로 추가
+          db.items.push(newItem);
+          addedCnt++;
+        }
+      });
+
       await saveDB();
       buildLedger();
-      showToast(newItems.length + '개 품목이 업로드되었습니다 ✓');
+      showToast(`업로드 완료 — 신규 ${addedCnt}개 추가, ${updatedCnt}개 업데이트 ✓`);
     } catch(err){
       alert('파일 읽기 오류: ' + err.message);
     }
