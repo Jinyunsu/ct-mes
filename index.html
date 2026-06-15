@@ -3574,6 +3574,7 @@ function renderCustomers(){
           <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">제품별 작업시간</div>
           <table style="width:100%;border-collapse:collapse;font-size:11px">
             <thead><tr style="color:var(--text3);font-size:10px;border-bottom:1px solid var(--border)">
+              <th style="padding:4px 8px;text-align:left;font-weight:700">수주일자</th>
               <th style="padding:4px 8px;text-align:left;font-weight:700">작업코드</th>
               <th style="padding:4px 8px;text-align:left;font-weight:700">제품코드</th>
               <th style="padding:4px 8px;text-align:left;font-weight:700">제품사양</th>
@@ -3591,6 +3592,7 @@ function renderCustomers(){
                 const stColors={done:'var(--green)',running:'var(--accent)',paused:'var(--amber)',failed:'var(--red)',waiting:'var(--text3)',planned:'var(--text3)',shipped:'var(--green)',deleted:'var(--red)'};
                 const stLabels={done:'완료',running:'작업중',paused:'정지',failed:'미달성',waiting:'대기',planned:'예정',shipped:'출하완료',deleted:'계획취소'};
                 return `<tr style="border-bottom:1px solid var(--border)">
+                  <td style="padding:6px 8px;font-family:var(--mono);font-size:11px;color:var(--text3)">${esc(p.date||'—')}</td>
                   <td style="padding:6px 8px;font-family:var(--mono);font-weight:700;color:var(--accent)">${esc(p.code)}</td>
                   <td style="padding:6px 8px;color:var(--text2)">${esc(p.productCode||'—')}</td>
                   <td style="padding:6px 8px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.spec||'')}">${esc(p.spec||'—')}</td>
