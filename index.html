@@ -1839,8 +1839,8 @@ window.doAction=async function(code,action,qty=0,partialEnd=false){
     await fetch('/api/states',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({worker:currentUser,code})});
     // 3. 계획 실적수량 업데이트
     if(qty>0){
-      const match=Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase()&&getPlanStatus(p)!=='done')
-        || Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase());
+      const match=Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase()&&p.status!=='done'&&p.status!=='shipped'&&p.status!=='deleted'&&p.status!=='discarded')
+        || Object.entries(cachedPlans).find(([,p])=>p.code?.toLowerCase()===code.toLowerCase()&&getPlanStatus(p)!=='done'&&getPlanStatus(p)!=='shipped');
       if(match){
         const[pid,plan]=match;
         const already=Number(plan.actQty)||0;
