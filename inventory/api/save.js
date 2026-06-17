@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   try {
     const body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
     const blob = await put('inventory-db.json', body, {
-      access: 'public',
+      access: 'private',
       contentType: 'application/json',
       addRandomSuffix: false,
     });
