@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- v3 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -41,11 +40,13 @@ button.export-btn:hover{background:#dcfce7}
 .card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:1rem;margin-bottom:12px}
 
 /* 테이블 공통 */
-.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid #e5e7eb}
+.tbl-wrap{overflow:auto;border-radius:10px;border:1px solid #e5e7eb}
+.tbl-scroll-top{overflow-x:auto;border-radius:4px 4px 0 0;height:12px;background:#f9fafb;border:1px solid #e5e7eb;border-bottom:none}
+.tbl-scroll-top div{height:1px}
 table{width:100%;border-collapse:collapse;font-size:12px}
-th{background:#f8fafc;padding:7px 8px;text-align:center;font-weight:600;border-bottom:1px solid #e5e7eb;border-right:1px solid #e5e7eb;color:#374151;position:sticky;top:0;z-index:2;white-space:nowrap}
+th{background:#f8fafc;padding:7px 8px;text-align:center;font-weight:600;border:1px solid #d1d5db;color:#374151;position:sticky;top:0;z-index:2;white-space:nowrap}
 th:last-child{border-right:none}
-td{padding:4px 6px;border-bottom:1px solid #f1f5f9;border-right:1px solid #f1f5f9;text-align:center;vertical-align:middle}
+td{padding:2px 4px;border:1px solid #d1d5db;text-align:center;vertical-align:middle}
 td:last-child{border-right:none}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#fafbff}
@@ -62,15 +63,15 @@ select.cat-sel.c-충전기{background:#dcfce7;border-color:#86efac;color:#166534
 select.cat-sel.c-케이스{background:#fce7f3;border-color:#f9a8d4;color:#9d174d}
 
 /* 입출고 입력 */
-input.qty{width:42px;height:26px;text-align:center;border:1px solid #e5e7eb;border-radius:4px;background:#fff;color:#1a1a1a;font-size:12px;font-family:inherit;padding:0 2px}
+input.qty{width:36px;height:24px;text-align:center;border:1px solid #e5e7eb;border-radius:4px;background:#fff;color:#1a1a1a;font-size:12px;font-family:inherit;padding:0 2px}
 input.qty:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.1)}
-input.qty.in{background:#f0fdf4;border-color:#bbf7d0}
-input.qty.out{background:#fff7f0;border-color:#fed7aa}
+input.qty.in{background:#f9fafb;border-color:#d1d5db}
+input.qty.out{background:#f9fafb;border-color:#d1d5db}
 
 /* 집계 셀 */
-.total-in{color:#166534;font-weight:700;background:#f0fdf4}
-.total-out{color:#b91c1c;font-weight:700;background:#fff7f0}
-.total-stock{font-weight:700;color:#1d4ed8;background:#eff6ff}
+.total-in{color:#166534;font-weight:700}
+.total-out{color:#b91c1c;font-weight:700}
+.total-stock{font-weight:700;color:#1d4ed8}
 .prev-stock{color:#6b7280;font-weight:500}
 
 /* 배지 */
@@ -134,10 +135,10 @@ input.qty.out{background:#fff7f0;border-color:#fed7aa}
 
 
 /* 유통/제조 출고 */
-.total-out-dist{color:#7c3aed;font-weight:700;background:#f5f3ff}
-.total-out-mfg{color:#b45309;font-weight:700;background:#fffbeb}
-input.qty.out-dist{background:#f5f3ff;border-color:#c4b5fd}
-input.qty.out-mfg{background:#fffbeb;border-color:#fcd34d}
+.total-out-dist{color:#7c3aed;font-weight:700}
+.total-out-mfg{color:#b45309;font-weight:700}
+input.qty.out-dist{background:#f9fafb;border-color:#d1d5db}
+input.qty.out-mfg{background:#f9fafb;border-color:#d1d5db}
 .badge-dist{background:#f5f3ff;color:#5b21b6;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
 .badge-mfg{background:#fffbeb;color:#92400e;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
 
@@ -149,6 +150,14 @@ input.qty.out-mfg{background:#fffbeb;border-color:#fcd34d}
 .pager-btn.active{background:#2563eb;color:#fff;border-color:#2563eb;font-weight:600}
 .pager-btn:disabled{opacity:.35;cursor:default;pointer-events:none}
 .pager-info{font-size:11px;color:#9ca3af;margin:0 4px}
+
+
+/* 날짜 범위 선택 */
+.date-range-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 14px}
+.date-range-bar label{font-size:12px;color:#6b7280;font-weight:500}
+.range-btn{height:26px;padding:0 12px;border:1px solid #d1d5db;border-radius:14px;background:#fff;color:#374151;cursor:pointer;font-size:12px;font-family:inherit;transition:all .15s;white-space:nowrap}
+.range-btn:hover,.range-btn.active{background:#2563eb;color:#fff;border-color:#2563eb}
+.range-input{height:28px;padding:0 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;width:52px;text-align:center}
 
 /* 메모 셀 */
 .qty-wrap{position:relative;display:inline-flex;align-items:center}
@@ -173,6 +182,26 @@ td:hover .memo-btn{display:flex;align-items:center;justify-content:center}
 input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#2563eb}
 .sel-count{font-size:12px;color:#6b7280;margin-left:4px}
 
+
+
+/* 공통 검색바 */
+.search-filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.search-input{height:32px;padding:0 10px 0 32px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#1a1a1a;font-size:13px;font-family:inherit;width:200px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:10px center}
+.search-input:focus{outline:none;border-color:#2563eb}
+
+/* BATCH NO 관리 */
+.batch-tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;margin:1px}
+.batch-input{width:100%;height:28px;padding:0 8px;border:1px solid #d1d5db;border-radius:5px;font-size:12px;font-family:inherit}
+.batch-input:focus{outline:none;border-color:#2563eb}
+.work-popup{position:fixed;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:16px;width:320px;z-index:200}
+.work-popup h4{font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:12px}
+.work-popup .form-row{margin-bottom:8px}
+.work-popup label{font-size:11px;color:#6b7280;font-weight:500;display:block;margin-bottom:3px}
+.work-popup input,.work-popup select{width:100%;height:30px;padding:0 8px;border:1px solid #d1d5db;border-radius:5px;font-size:12px;font-family:inherit}
+.work-popup-btns{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.batch-row{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:0.5px solid #f1f5f9}
+.batch-row:last-child{border-bottom:none}
+
 /* 불량 출고 */
 .badge-defect{background:#fce7f3;color:#9d174d}
 </style>
@@ -182,7 +211,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#2563eb}
 
 <div class="toolbar">
   <h1><span class="logo">📦</span> 재고관리대장</h1>
-  <button class="export-btn" onclick="exportCSV()">⬇ CSV 내보내기</button>
+  <button onclick="exportCSV()" style="height:32px;padding:0 14px;font-size:12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;color:#374151">⬇ CSV</button>
   <label style="height:32px;padding:0 14px;border:1px solid #86efac;border-radius:6px;background:#f0fdf4;color:#166534;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap" title="엑셀 템플릿 업로드">
     📂 품목 업로드
     <input type="file" id="upload-input" accept=".xlsx" style="display:none" onchange="handleUpload(event)">
@@ -195,6 +224,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#2563eb}
   <div class="tab" onclick="switchTab('status',this)">📊 재고 현황</div>
   <div class="tab" onclick="switchTab('items',this)">📝 품목 관리</div>
   <div class="tab" onclick="switchTab('history',this)">🕓 입출고 이력</div>
+  <div class="tab" onclick="switchTab('batch',this)">🔢 BATCH NO</div>
   <div class="tab" onclick="switchTab('report',this)">📈 보고서</div>
 </div>
 
@@ -210,24 +240,42 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#2563eb}
     </div>
     <span id="ledger-title-badge" class="ledger-badge"></span>
   </div>
-  <div class="filter-bar">
-    <label>구분 필터:</label>
-    <button class="filter-btn active" onclick="setFilter('전체',this)">전체</button>
-    <button class="filter-btn" onclick="setFilter('전지',this)">전지</button>
+  <div class="date-range-bar">
+    <label>날짜 범위:</label>
+    <button class="range-btn" onclick="setDateRange(1,7,this)">1~7일</button>
+    <button class="range-btn" onclick="setDateRange(8,15,this)">8~15일</button>
+    <button class="range-btn" onclick="setDateRange(16,23,this)">16~23일</button>
+    <button class="range-btn" onclick="setDateRange(24,0,this)">24일~말일</button>
+    <button class="range-btn active" onclick="setDateRange(1,0,this)">전체</button>
+    <span id="range-info" style="font-size:11px;color:#9ca3af;margin-left:4px"></span>
+  </div>
+  <div class="search-filter-bar">
+    <input class="search-input" type="text" id="search-ledger" placeholder="품목명/코드 검색..." oninput="searchLedger=this.value;buildLedger()">
+    <button class="filter-btn active" onclick="setFilter('전지',this)">전지</button>
     <button class="filter-btn" onclick="setFilter('BMS',this)">BMS</button>
     <button class="filter-btn" onclick="setFilter('PCM',this)">PCM</button>
     <button class="filter-btn" onclick="setFilter('충전기',this)">충전기</button>
     <button class="filter-btn" onclick="setFilter('케이스',this)">케이스</button>
   </div>
-  <div class="tbl-wrap">
-    <table><thead id="ledger-head"></thead><tbody id="ledger-body"></tbody></table>
+  <div class="tbl-scroll-top" id="ledger-scroll-top"><div id="ledger-scroll-inner"></div></div>
+  <div class="tbl-wrap" id="ledger-wrap">
+    <table style="min-width:max-content"><thead id="ledger-head"></thead><tbody id="ledger-body"></tbody></table>
   </div>
 </div>
 
 <!-- 재고 현황 -->
 <div id="sec-status" class="section">
   <div class="stat-grid" id="stat-grid"></div>
-  <div class="card">
+  <div class="search-filter-bar">
+    <input class="search-input" type="text" id="search-status" placeholder="품목명/코드 검색..." oninput="pageState.status=1;searchStatus=this.value;buildStatus()">
+    <button class="filter-btn active" onclick="setStatusCat('',this)">전체</button>
+    <button class="filter-btn" onclick="setStatusCat('전지',this)">전지</button>
+    <button class="filter-btn" onclick="setStatusCat('BMS',this)">BMS</button>
+    <button class="filter-btn" onclick="setStatusCat('PCM',this)">PCM</button>
+    <button class="filter-btn" onclick="setStatusCat('충전기',this)">충전기</button>
+    <button class="filter-btn" onclick="setStatusCat('케이스',this)">케이스</button>
+  </div>
+  <div class="card" style="padding:0">
     <table>
       <thead><tr>
         <th>NO</th><th>구분</th><th>품목코드</th><th>품목명</th><th>기본사양</th><th>상세사양</th>
@@ -235,6 +283,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#2563eb}
       </tr></thead>
       <tbody id="status-body"></tbody>
     </table>
+    <div class="pager" id="pager-status"></div>
   </div>
 </div>
 
@@ -246,21 +295,42 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#2563eb}
     <button onclick="deleteSelected()" class="danger" id="btn-del-sel" style="display:none">🗑 선택 삭제</button>
     <span class="sel-count" id="sel-count"></span>
   </div>
-  <div class="card">
+  <div class="search-filter-bar">
+    <input class="search-input" type="text" id="search-items" placeholder="품목명/코드 검색..." oninput="pageState.items=1;searchItems=this.value;buildItems()">
+    <button class="filter-btn active" onclick="setCatItems('',this)">전체</button>
+    <button class="filter-btn" onclick="setCatItems('전지',this)">전지</button>
+    <button class="filter-btn" onclick="setCatItems('BMS',this)">BMS</button>
+    <button class="filter-btn" onclick="setCatItems('PCM',this)">PCM</button>
+    <button class="filter-btn" onclick="setCatItems('충전기',this)">충전기</button>
+    <button class="filter-btn" onclick="setCatItems('케이스',this)">케이스</button>
+  </div>
+  <div class="card" style="padding:0">
     <table>
       <thead><tr><th style="width:36px"><input type="checkbox" id="chk-all" onchange="onChkAll(this)"></th><th>NO</th><th>구분</th><th>품목코드</th><th>품목명</th><th>기본사양</th><th>상세사양</th><th>관리</th></tr></thead>
       <tbody id="items-body"></tbody>
     </table>
+    <div class="pager" id="pager-items"></div>
   </div>
 </div>
 
 <!-- 입출고 이력 -->
 <div id="sec-history" class="section">
-  <div class="card">
+  <div class="search-filter-bar">
+    <input class="search-input" type="text" id="search-history" placeholder="품목명/코드/WORK CODE 검색..." oninput="pageState.history=1;searchHistory=this.value;buildHistory()" style="width:240px">
+    <button class="filter-btn active" onclick="setCatHistory('',this)">전체</button>
+    <button class="filter-btn" onclick="setCatHistory('전지',this)">전지</button>
+    <button class="filter-btn" onclick="setCatHistory('BMS',this)">BMS</button>
+    <button class="filter-btn" onclick="setCatHistory('PCM',this)">PCM</button>
+    <button class="filter-btn" onclick="setCatHistory('충전기',this)">충전기</button>
+    <button class="filter-btn" onclick="setCatHistory('케이스',this)">케이스</button>
+    <button onclick="clearAllHistory()" class="danger" style="height:32px;padding:0 12px;font-size:12px;margin-left:auto">🗑 전체삭제</button>
+  </div>
+  <div class="card" style="padding:0">
     <table>
-      <thead><tr><th>날짜</th><th>구분</th><th>품목코드</th><th>품목명</th><th>입/출</th><th>수량</th><th>비고</th></tr></thead>
+      <thead><tr><th>날짜</th><th>구분</th><th>품목코드</th><th>품목명</th><th>입/출</th><th>수량</th><th>BATCH NO</th><th>WORK CODE</th><th>비고</th></tr></thead>
       <tbody id="history-body"></tbody>
     </table>
+    <div class="pager" id="pager-history"></div>
   </div>
 </div>
 
@@ -313,9 +383,34 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#2563eb}
       <div class="card"><canvas id="chart-monthly" height="180"></canvas></div>
     </div>
     <div>
-      <div class="rpt-sub-title">📆 연간 월별 추이 <span style="font-size:11px;color:#9ca3af">(선택 연도)</span></div>
+      <div class="rpt-sub-title">📆 연간 월별 추이 <span style="font-size:11px;color:#9ca3af">(선택 연도)</span>
+        <select id="rpt-item-sel" onchange="onItemSelChange()" style="margin-left:8px;height:24px;font-size:11px;border:1px solid #d1d5db;border-radius:4px;padding:0 6px">
+          <option value="">전체 합계</option>
+        </select>
+      </div>
       <div class="card"><canvas id="chart-yearly" height="180"></canvas></div>
     </div>
+  </div>
+
+  <!-- 품목별 연간 현황 -->
+  <div class="rpt-section-title" style="margin-top:14px">📋 품목별 연간 입고 · 사용 현황</div>
+  <div class="rpt-note" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    ※ 선택 연도 기준 품목별 월별 누적 + 연간 합계 + 월평균을 보여줍니다.
+    <span style="margin-left:auto;display:flex;gap:6px">
+      <button class="sort-btn active" id="annual-cat-all" onclick="setAnnualCat('',this)">전체</button>
+      <button class="sort-btn" id="annual-cat-전지" onclick="setAnnualCat('전지',this)">전지</button>
+      <button class="sort-btn" id="annual-cat-BMS" onclick="setAnnualCat('BMS',this)">BMS</button>
+      <button class="sort-btn" id="annual-cat-PCM" onclick="setAnnualCat('PCM',this)">PCM</button>
+      <button class="sort-btn" id="annual-cat-충전기" onclick="setAnnualCat('충전기',this)">충전기</button>
+      <button class="sort-btn" id="annual-cat-케이스" onclick="setAnnualCat('케이스',this)">케이스</button>
+    </span>
+  </div>
+  <div class="tbl-wrap" style="margin-bottom:14px">
+    <table id="rpt-annual-table">
+      <thead id="rpt-annual-head"></thead>
+      <tbody id="rpt-annual-body"></tbody>
+    </table>
+    <div class="pager" id="pager-annual"></div>
   </div>
 
   
@@ -383,12 +478,51 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#2563eb}
 </div>
 </div><!-- .app -->
 
+<!-- BATCH NO 관리 -->
+<div id="sec-batch" class="section">
+  <div class="search-filter-bar">
+    <button class="filter-btn active" id="batch-view-all" onclick="setBatchView('all',this)">전체 목록</button>
+    <button class="filter-btn" id="batch-view-item" onclick="setBatchView('item',this)">품목별 조회</button>
+    <div id="batch-item-group" style="display:none;align-items:center;gap:6px">
+      <span class="rpt-ctrl-label">전지 품목</span>
+      <select id="batch-item-sel" onchange="buildBatchSection()" style="min-width:200px;height:32px">
+        <option value="">-- 전지 품목 선택 --</option>
+      </select>
+    </div>
+    <input class="search-input" type="text" id="search-batch" placeholder="BATCH NO 검색..." oninput="pageState.batchList=1;pageState.batchHist=1;searchBatch=this.value;buildBatchSection()" style="margin-left:auto">
+  </div>
+
+  <!-- BATCH NO 목록 -->
+  <div class="rpt-section-title">📦 BATCH NO 현황</div>
+  <div class="card" style="padding:0;margin-bottom:14px">
+    <table>
+      <thead><tr>
+        <th>BATCH NO</th><th>품목명</th><th>입고일자</th><th>입고수량</th><th>사용수량</th><th>잔여수량</th><th>상태</th><th>관리</th>
+      </tr></thead>
+      <tbody id="batch-list-body"></tbody>
+    </table>
+    <div class="pager" id="pager-batch-list"></div>
+  </div>
+
+  <!-- BATCH 사용 이력 -->
+  <div class="rpt-section-title">📋 BATCH 사용 이력</div>
+  <div class="card" style="padding:0">
+    <table>
+      <thead><tr>
+        <th>날짜</th><th>BATCH NO</th><th>품목명</th><th>구분</th><th>WORK CODE</th><th>사용수량</th><th>비고</th>
+      </tr></thead>
+      <tbody id="batch-history-body"></tbody>
+    </table>
+    <div class="pager" id="pager-batch-hist"></div>
+  </div>
+</div>
+
 <!-- 품목 추가/수정 모달 -->
-<div id="item-modal" style="display:none" class="modal-bg" onclick="if(event.target===this)closeItemModal()">
+<div id="item-modal" style="display:none" class="modal-bg">
   <div class="modal">
     <h3 id="modal-title">품목 추가</h3>
     <div class="form-row"><label>구분</label>
-      <select id="f-cat">
+      <select id="f-cat" onchange="onCatModalChange(this)">
         <option value="">-- 선택 --</option>
         <option>전지</option><option>BMS</option><option>PCM</option><option>충전기</option><option>케이스</option>
       </select>
@@ -398,10 +532,95 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#2563eb}
     <div class="form-row"><label>기본사양</label><input id="f-spec1" type="text" placeholder="예) 18650, 21700"></div>
     <div class="form-row"><label>상세사양</label><input id="f-spec2" type="text" placeholder="예) 3.7V 2500mAh"></div>
     <div class="form-row"><label>안전재고</label><input id="f-safe" type="number" value="5" min="0"></div>
+    <div class="form-row" id="f-batchno-row" style="display:none"><label>BATCH NO <span style="font-size:10px;color:#9ca3af">(쉼표로 구분)</span></label><input id="f-batchno" type="text" placeholder="예) BATCH-001, BATCH-002"></div>
+    <div class="form-row"><label>입고일자 <span style="font-size:10px;color:#9ca3af">(선택)</span></label><input id="f-batchdate" type="date" style="width:100%;height:34px"></div>
+    <div class="form-row"><label>입고수량 <span style="font-size:10px;color:#9ca3af">(선택)</span></label><input id="f-batchqty" type="number" min="0" placeholder="0" style="width:100%;height:34px"></div>
     <input type="hidden" id="f-idx" value="-1">
     <div class="modal-btns">
       <button onclick="closeItemModal()">취소</button>
       <button class="primary" onclick="saveItem()">저장</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- BATCH 입고 등록 모달 -->
+<div id="batch-add-modal" style="display:none" class="modal-bg">
+  <div class="modal" style="width:400px">
+    <h3>📦 BATCH 입고 등록</h3>
+    <div class="form-row"><label>전지 품목</label>
+      <select id="bm-item" style="width:100%;height:34px">
+        <option value="">-- 선택 --</option>
+      </select>
+    </div>
+    <div class="form-row"><label>BATCH NO</label><input id="bm-batchno" type="text" placeholder="예) BATCH-2026-001" style="width:100%;height:34px"></div>
+    <div class="form-row"><label>입고일자</label><input id="bm-date" type="date" style="width:100%;height:34px"></div>
+    <div class="form-row"><label>입고수량</label><input id="bm-qty" type="number" min="1" placeholder="0" style="width:100%;height:34px"></div>
+    <div class="form-row"><label>비고</label><input id="bm-note" type="text" placeholder="비고" style="width:100%;height:34px"></div>
+    <div class="modal-btns">
+      <button onclick="closeBatchModal()">취소</button>
+      <button class="primary" onclick="saveBatchIn()">등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- BATCH 출고 내역 팝업 -->
+<div id="batch-out-modal" style="display:none" class="modal-bg">
+  <div class="modal" style="width:480px;max-height:80vh;overflow-y:auto">
+    <h3>⚡ BATCH 출고 내역 <span id="bom-title" style="font-size:12px;color:#6b7280;font-weight:400"></span></h3>
+    
+    <!-- 기존 출고 내역 목록 -->
+    <div id="bom-list" style="margin-bottom:14px;max-height:200px;overflow-y:auto"></div>
+    
+    <!-- 새 출고 추가 -->
+    <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:12px">
+      <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:8px">+ 출고 추가</div>
+      <div class="form-row"><label>날짜</label><input id="bom-date" type="date" style="width:100%;height:30px"></div>
+      <div class="form-row"><label>구분</label>
+        <select id="bom-type" onchange="onBomTypeChange(this)" style="width:100%;height:30px;font-size:12px">
+          <option value="in">입고</option>
+          <option value="out_dist">유통 출고</option>
+          <option value="out_mfg">제조 출고</option>
+        </select>
+      </div>
+      <div class="form-row" id="bom-batch-row"><label>BATCH NO</label>
+        <select id="bom-batch" style="width:100%;height:30px;font-size:12px"></select>
+      </div>
+      <div class="form-row" id="bom-workcode-row"><label>WORK CODE</label>
+        <input id="bom-workcode" type="text" placeholder="예) WO-2026-001" style="width:100%;height:30px">
+      </div>
+      <div class="form-row"><label>수량</label>
+        <input id="bom-qty" type="number" min="1" placeholder="0" style="width:100%;height:30px">
+      </div>
+      <div class="form-row"><label>비고</label>
+        <input id="bom-note" type="text" placeholder="비고 (선택)" style="width:100%;height:30px">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button onclick="addBomEntry()"><span style="font-size:13px">+ 추가</span></button>
+      </div>
+    </div>
+    
+    <div class="modal-btns" style="margin-top:12px">
+      <button onclick="closeBatchOutModal()">닫기</button>
+      <button class="primary" onclick="saveBomAll()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- BATCH 수정 모달 -->
+<div id="batch-edit-modal" style="display:none" class="modal-bg">
+  <div class="modal" style="width:400px">
+    <h3>✏ BATCH 수정</h3>
+    <div class="form-row"><label>BATCH NO</label><input id="bem-batchno" type="text" style="width:100%;height:34px"></div>
+    <div class="form-row"><label>입고일자</label><input id="bem-date" type="date" style="width:100%;height:34px"></div>
+    <div class="form-row"><label>입고수량</label><input id="bem-qty" type="number" min="0" style="width:100%;height:34px"></div>
+    <div class="form-row"><label>비고</label><input id="bem-note" type="text" style="width:100%;height:34px"></div>
+    <input type="hidden" id="bem-itemcode">
+    <input type="hidden" id="bem-originalbatchno">
+    <div class="modal-btns">
+      <button onclick="closeBatchEditModal()">취소</button>
+      <button class="primary" onclick="saveBatchEdit()">저장</button>
     </div>
   </div>
 </div>
@@ -414,17 +633,61 @@ const CATS=['전지','BMS','PCM','충전기','케이스'];
 
 const DEFAULT_ITEMS=[];
 
-let db={items:[],ledger:{},history:[]};
-let curFilter='전체';
-
-function loadDB(){
-  try{const r=localStorage.getItem(STORAGE_KEY);if(r)db=JSON.parse(r);else db={items:JSON.parse(JSON.stringify(DEFAULT_ITEMS)),ledger:{},history:[]};}
-  catch(e){db={items:JSON.parse(JSON.stringify(DEFAULT_ITEMS)),ledger:{},history:[]};}
+let db={items:[],ledger:{},history:[],batches:{},years:[]};
+async function loadDB(){
+  try{
+    const res = await fetch('/api/load');
+    const json = await res.json();
+    if(json.data){
+      db = json.data;
+      if(!db.items)   db.items=[];
+      if(!db.ledger)  db.ledger={};
+      if(!db.history) db.history=[];
+      if(!db.batches) db.batches={};
+      if(!db.years)   db.years=[new Date().getFullYear()];
+    } else {
+      // Blob에 데이터 없으면 localStorage 확인
+      try{const r=localStorage.getItem(STORAGE_KEY);if(r){db=JSON.parse(r);await saveDB();}}catch(e2){}
+    }
+  } catch(e){
+    // API 실패 시 localStorage 폴백
+    try{const r=localStorage.getItem(STORAGE_KEY);if(r)db=JSON.parse(r);}catch(e2){}
+  }
 }
-function saveDB(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(db));}catch(e){}}
+async function saveDB(){
+  try{
+    await fetch('/api/save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(db)
+    });
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(db));
+  } catch(e){
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(db));
+  }
+}
+
+// ── 전역 상태 변수 ───────────────────────────────────────
+const pageState = { in:1, out:1, dist:1, safety:1, annual:1, status:1, items:1, batchList:1, batchHist:1, history:1 };
+let dateRangeStart=1, dateRangeEnd=0;
+let searchLedger='', curFilter='전지';
+let searchStatus='', catStatus='';
+let searchItems='',  catItems='';
+let searchHistory='',catHistory='';
+let searchBatch='',  catBatch='';
+let batchViewMode='all';
+let distSortKey='total', annualCatFilter='';
+let outSortDir='desc';
+let statusCatFilter='';
 
 // 한국 시간 기준 (UTC+9)
 const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+
+// 한국 시간 기준 오늘 날짜 문자열 반환 (YYYY-MM-DD)
+function getKstToday(){
+  const d=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 let curYear=now.getFullYear(),curMonth=now.getMonth()+1;
 
 function ledgerKey(y,m){return `${y}-${String(m).padStart(2,'0')}`;}
@@ -461,9 +724,7 @@ function catBadge(cat){
 }
 
 function catSelectHtml(code,cat){
-  let opts='<option value="">-</option>';
-  CATS.forEach(c=>opts+=`<option value="${c}" ${c===cat?'selected':''}>${c}</option>`);
-  return `<select class="cat-sel${cat?' c-'+cat:''}" data-code="${code}" onchange="onCatChange(this)">${opts}</select>`;
+  return catBadge(cat);
 }
 
 function setFilter(val,el){
@@ -475,75 +736,111 @@ function setFilter(val,el){
 
 function buildLedger(){
   const days=daysInMonth(curYear,curMonth),ledger=getLedger();
+  const startDay = Math.max(1, dateRangeStart||1);
+  const endDay   = Math.min(days, dateRangeEnd||days);
+  const rangeInfo = document.getElementById('range-info');
+  if(rangeInfo) rangeInfo.textContent = `(${startDay}일 ~ ${endDay}일, ${endDay-startDay+1}일 표시)`;
 
   let th1='<tr>'
-    +'<th rowspan="2" style="width:36px">NO</th>'
-    +'<th rowspan="2" style="width:76px">구분</th>'
-    +'<th rowspan="2" style="min-width:72px">품목코드</th>'
-    +'<th rowspan="2" style="min-width:120px;text-align:left">품목명</th>'
-    +'<th rowspan="2" style="min-width:100px">기본사양</th>'
-    +'<th rowspan="2" style="min-width:120px">상세사양</th>'
-    +'<th rowspan="2" style="color:#6b7280;background:#f8fafc">전월재고</th>'
-    +'<th rowspan="2" style="color:#1d4ed8;background:#eff6ff">당월재고</th>'
-    +'<th rowspan="2" style="color:#166534;background:#f0fdf4">총입고</th>'
-    +'<th rowspan="2" style="color:#b91c1c;background:#fff7f0">총출고</th>'
-    +'<th rowspan="2" style="color:#7c3aed;background:#f5f3ff">유통</th>'
-    +'<th rowspan="2" style="color:#b45309;background:#fffbeb">제조</th>';
-  for(let d=1;d<=days;d++) th1+=`<th colspan="3" style="min-width:100px">${d}</th>`;
+    +'<th rowspan="2" style="width:40px;position:sticky;left:0px;z-index:2;background:inherit;">NO</th>'
+    +'<th rowspan="2" style="width:56px;position:sticky;left:40px;z-index:2;background:inherit;">구분</th>'
+    +'<th rowspan="2" style="min-width:80px;position:sticky;left:96px;z-index:2;background:inherit;">품목코드</th>'
+    +'<th rowspan="2" style="min-width:110px;text-align:center;position:sticky;left:176px;z-index:2;background:inherit;">품목명</th>'
+    +'<th rowspan="2" style="min-width:90px;position:sticky;left:286px;z-index:2;background:inherit;">기본사양</th>'
+    +'<th rowspan="2" style="min-width:110px;position:sticky;left:376px;z-index:2;background:inherit;">상세사양</th>'
+    +'<th rowspan="2" style="min-width:80px;color:#1d4ed8;position:sticky;left:486px;z-index:2;background:inherit;">BATCH NO</th>'
+    +'<th rowspan="2" style="min-width:64px;color:#6b7280;position:sticky;left:566px;z-index:2;background:inherit;">전월재고</th>'
+    +'<th rowspan="2" style="min-width:64px;color:#1d4ed8;position:sticky;left:630px;z-index:2;background:inherit;">당월재고</th>'
+    +'<th rowspan="2" style="min-width:56px;color:#166534;position:sticky;left:694px;z-index:2;background:inherit;">총입고</th>'
+    +'<th rowspan="2" style="min-width:56px;color:#b91c1c;position:sticky;left:750px;z-index:2;background:inherit;">총출고</th>'
+    +'<th rowspan="2" style="min-width:52px;color:#7c3aed;position:sticky;left:806px;z-index:2;background:inherit;">유통</th>'
+    +'<th rowspan="2" style="min-width:52px;color:#b45309;border-right:2px solid #94a3b8;position:sticky;left:858px;z-index:2;background:inherit;">제조</th>';
+  for(let d=startDay;d<=endDay;d++) th1+=`<th colspan="3" style="min-width:84px">${d}</th>`;
   th1+='</tr><tr>';
-  for(let d=1;d<=days;d++) th1+='<th style="color:#166534;font-size:11px;font-weight:600;white-space:nowrap">입고</th><th style="color:#7c3aed;font-size:10px;font-weight:600;white-space:nowrap">유통</th><th style="color:#b45309;font-size:10px;font-weight:600;white-space:nowrap">제조</th>';
+  for(let d=startDay;d<=endDay;d++) th1+='<th style="color:#166534;font-size:11px;font-weight:600;white-space:nowrap">입고</th><th style="color:#7c3aed;font-size:10px;font-weight:600;white-space:nowrap">유통</th><th style="color:#b45309;font-size:10px;font-weight:600;white-space:nowrap">제조</th>';
   th1+='</tr>';
   document.getElementById('ledger-head').innerHTML=th1;
 
-  const filtered = curFilter==='전체'
-    ? db.items
-    : db.items.filter(i=>i.cat===curFilter);
+  const slq = searchLedger.toLowerCase();
+  const filtered = db.items.filter(i=>{
+    const catOk  = curFilter==='전체' || i.cat===curFilter;
+    const srchOk = !slq || (i.name||'').toLowerCase().includes(slq) || (i.code||'').toLowerCase().includes(slq) || (i.spec1||'').toLowerCase().includes(slq);
+    return catOk && srchOk;
+  });
 
   let rows='',no=1;
   filtered.forEach(item=>{
     const carry=ledger[ck(item.code,'carry','over')]!==undefined?parseInt(ledger[ck(item.code,'carry','over')])||0:getCarryOver(item.code);
     const {tin,tout,toutDist,toutMfg,stock}=calcStock(item.code,carry,days,ledger);
-    let tr=`<tr>`
-      +`<td class="no-col">${no++}</td>`
-      +`<td>${catSelectHtml(item.code,item.cat)}</td>`
-      +`<td>${item.code}</td>`
-      +`<td class="item-name">${item.name}</td>`
-      +`<td style="font-size:11px;color:#374151">${item.spec1||''}</td>`
-      +`<td style="font-size:11px;color:#6b7280">${item.spec2||''}</td>`
-      +`<td class="prev-stock"><input class="qty" type="number" min="0" value="${carry}" data-code="${item.code}" data-day="carry" data-type="over" oninput="onInput(this)" style="width:48px"></td>`
-      +`<td class="total-stock" id="tstock-${item.code}">${stock}</td>`
-      +`<td class="total-in" id="tin-${item.code}">${tin}</td>`
-      +`<td class="total-out" id="tout-${item.code}">${tout}</td>`
-      +`<td class="total-out-dist" id="tdist-${item.code}">${toutDist}</td>`
-      +`<td class="total-out-mfg" id="tmfg-${item.code}">${toutMfg}</td>`;
-    for(let d=1;d<=days;d++){
+    const rowBg = no%2===0 ? '#f8fafc' : '#fff';
+    let tr=`<tr style="background:${rowBg}">`
+      +`<td class="no-col" style="position:sticky;left:0px;z-index:2;background:inherit;">${no++}</td>`
+      +`<td style="position:sticky;left:40px;z-index:2;background:inherit;">${catBadge(item.cat)}</td>`
+      +`<td style="position:sticky;left:96px;z-index:2;background:inherit;">${item.code}</td>`
+      +`<td style="text-align:center;font-weight:500;position:sticky;left:176px;z-index:2;background:inherit;">${item.name}</td>`
+      +`<td style="font-size:11px;color:#374151;position:sticky;left:286px;z-index:2;background:inherit;">${item.spec1||''}</td>`
+      +`<td style="font-size:11px;color:#6b7280;position:sticky;left:376px;z-index:2;background:inherit;">${item.spec2||''}</td>`
+      +`<td style="font-size:11px;cursor:${item.cat==='전지'?'pointer':''};min-width:90px;position:sticky;left:486px;z-index:2;background:inherit;"
+          ${item.cat==='전지'?`onclick="openBatchOutModal('${item.code}',event)"`:''} >
+          ${item.cat==='전지'
+            ?`<div title="클릭하여 출고 내역 보기">${getBatchTagsHtml(item.code)||'<span style="color:#9ca3af">-</span>'}</div>`
+            :''}
+        </td>`
+      +`<td class="prev-stock" style="text-align:center;font-weight:600;color:#374151;position:sticky;left:566px;z-index:2;background:inherit;">${carry.toLocaleString()}</td>`
+      +`<td class="total-stock" id="tstock-${item.code}" style="position:sticky;left:630px;z-index:2;background:inherit;">${stock}</td>`
+      +`<td class="total-in" id="tin-${item.code}" style="position:sticky;left:694px;z-index:2;background:inherit;">${tin}</td>`
+      +`<td class="total-out" id="tout-${item.code}" style="position:sticky;left:750px;z-index:2;background:inherit;">${tout}</td>`
+      +`<td class="total-out-dist" id="tdist-${item.code}" style="position:sticky;left:806px;z-index:2;background:inherit;">${toutDist}</td>`
+      +`<td class="total-out-mfg" id="tmfg-${item.code}" style="position:sticky;left:858px;z-index:2;background:inherit;border-right:2px solid #94a3b8;">${toutMfg}</td>`;
+    for(let d=startDay;d<=endDay;d++){
       const iv=parseInt(ledger[ck(item.code,d,'in')])||0;
       const dv=parseInt(ledger[ck(item.code,d,'out_dist')])||0;
       const mv=parseInt(ledger[ck(item.code,d,'out_mfg')])||0;
       const memoIn=ledger[ck(item.code,d,'memo_in')]||'';
       const memoDist=ledger[ck(item.code,d,'memo_dist')]||'';
       const memoMfg=ledger[ck(item.code,d,'memo_mfg')]||'';
-      tr+=`<td style="position:relative"><div class="qty-wrap">
-        <input class="qty in" type="number" min="0" value="${iv||''}" placeholder="0" data-code="${item.code}" data-day="${d}" data-type="in" oninput="onInput(this)">
-        <button class="memo-btn" onclick="openMemo(event,'${item.code}',${d},'in')" title="비고">✎</button>
-        ${memoIn?'<span class="memo-dot has-memo" title="'+memoIn.replace(/"/g,'&quot;')+'"></span>':'<span class="memo-dot"></span>'}
-      </div></td>`;
-      tr+=`<td style="position:relative"><div class="qty-wrap">
-        <input class="qty out-dist" type="number" min="0" value="${dv||''}" placeholder="0" data-code="${item.code}" data-day="${d}" data-type="out_dist" oninput="onInput(this)">
-        <button class="memo-btn" onclick="openMemo(event,'${item.code}',${d},'out_dist')" title="비고">✎</button>
-        ${memoDist?'<span class="memo-dot has-memo" title="'+memoDist.replace(/"/g,'&quot;')+'"></span>':'<span class="memo-dot"></span>'}
-      </div></td>`;
-      tr+=`<td style="position:relative"><div class="qty-wrap">
-        <input class="qty out-mfg" type="number" min="0" value="${mv||''}" placeholder="0" data-code="${item.code}" data-day="${d}" data-type="out_mfg" oninput="onInput(this)">
-        <button class="memo-btn" onclick="openMemo(event,'${item.code}',${d},'out_mfg')" title="비고">✎</button>
-        ${memoMfg?'<span class="memo-dot has-memo" title="'+memoMfg.replace(/"/g,'&quot;')+'"></span>':'<span class="memo-dot"></span>'}
-      </div></td>`;
+      const isBattery = item.cat==='전지';
+
+      // 전지: 수량 읽기 전용 (BATCH 모달에서만 입력), 비고 버튼만 활성
+      if(isBattery){
+        tr+=`<td style="position:relative;background:#f9fafb"><div class="qty-wrap">
+          <input class="qty in" type="number" value="${iv||''}" readonly disabled style="background:#f3f4f6;border-color:#d1d5db;cursor:not-allowed;color:#374151;font-weight:600;width:36px;height:24px" title="BATCH NO 클릭으로 입력">
+          <button class="memo-btn" onclick="openMemo(event,'${item.code}',${d},'in')" title="비고">✎</button>
+          ${memoIn?'<span class="memo-dot has-memo" title="'+memoIn.replace(/"/g,'&quot;')+'"></span>':'<span class="memo-dot"></span>'}
+        </div></td>`;
+        tr+=`<td style="position:relative;background:#f9fafb"><div class="qty-wrap">
+          <input class="qty out-dist" type="number" value="${dv||''}" readonly disabled style="background:#f3f4f6;border-color:#d1d5db;cursor:not-allowed;color:#374151;font-weight:600;width:36px;height:24px" title="BATCH NO 클릭으로 입력">
+          <button class="memo-btn" onclick="openMemo(event,'${item.code}',${d},'out_dist')" title="비고">✎</button>
+          ${memoDist?'<span class="memo-dot has-memo" title="'+memoDist.replace(/"/g,'&quot;')+'"></span>':'<span class="memo-dot"></span>'}
+        </div></td>`;
+        tr+=`<td style="position:relative;background:#f9fafb"><div class="qty-wrap">
+          <input class="qty out-mfg" type="number" value="${mv||''}" readonly disabled style="background:#f3f4f6;border-color:#d1d5db;cursor:not-allowed;color:#374151;font-weight:600;width:36px;height:24px" title="BATCH NO 클릭으로 입력">
+          <button class="memo-btn" onclick="openMemo(event,'${item.code}',${d},'out_mfg')" title="비고">✎</button>
+          ${memoMfg?'<span class="memo-dot has-memo" title="'+memoMfg.replace(/"/g,'&quot;')+'"></span>':'<span class="memo-dot"></span>'}
+        </div></td>`;
+      } else {
+        tr+=`<td style="position:relative"><div class="qty-wrap">
+          <input class="qty in" type="number" min="0" value="${iv||''}" placeholder="0" data-code="${item.code}" data-day="${d}" data-type="in" oninput="onInput(this)">
+          <button class="memo-btn" onclick="openMemo(event,'${item.code}',${d},'in')" title="비고">✎</button>
+          ${memoIn?'<span class="memo-dot has-memo" title="'+memoIn.replace(/"/g,'&quot;')+'"></span>':'<span class="memo-dot"></span>'}
+        </div></td>`;
+        tr+=`<td style="position:relative"><div class="qty-wrap">
+          <input class="qty out-dist" type="number" min="0" value="${dv||''}" placeholder="0" data-code="${item.code}" data-day="${d}" data-type="out_dist" oninput="onInput(this)">
+          <button class="memo-btn" onclick="openMemo(event,'${item.code}',${d},'out_dist')" title="비고">✎</button>
+          ${memoDist?'<span class="memo-dot has-memo" title="'+memoDist.replace(/"/g,'&quot;')+'"></span>':'<span class="memo-dot"></span>'}
+        </div></td>`;
+        tr+=`<td style="position:relative"><div class="qty-wrap">
+          <input class="qty out-mfg" type="number" min="0" value="${mv||''}" placeholder="0" data-code="${item.code}" data-day="${d}" data-type="out_mfg" oninput="onInput(this)">
+          <button class="memo-btn" onclick="openMemo(event,'${item.code}',${d},'out_mfg')" title="비고">✎</button>
+          ${memoMfg?'<span class="memo-dot has-memo" title="'+memoMfg.replace(/"/g,'&quot;')+'"></span>':'<span class="memo-dot"></span>'}
+        </div></td>`;
+      }
     }
     tr+='</tr>';
     rows+=tr;
   });
 
-  if(!rows) rows=`<tr><td colspan="${12+days*3}" style="padding:24px;color:#9ca3af;text-align:center">해당 구분의 품목이 없습니다</td></tr>`;
+  if(!rows) rows=`<tr><td colspan="${13+(endDay-startDay+1)*3}" style="padding:24px;color:#9ca3af;text-align:center">해당 구분의 품목이 없습니다</td></tr>`;
 
   // 합계 행 계산
   let sumCarry=0, sumStock=0, sumIn=0, sumOut=0, sumDist=0, sumMfg=0;
@@ -553,23 +850,34 @@ function buildLedger(){
     sumCarry+=carry; sumStock+=stock; sumIn+=tin; sumOut+=tout; sumDist+=toutDist; sumMfg+=toutMfg;
   });
 
-  const sumRow=`<tr style="background:#1f3864;color:#fff;font-weight:700;position:sticky;bottom:0;z-index:3">
-    <td colspan="4" style="text-align:center;background:#1f3864;color:#fff;font-size:12px;padding:6px">합 계</td>
-    <td style="text-align:center;background:#1f3864;color:#fff"></td>
-    <td id="sum-carry" style="text-align:center;background:#2e4d7b;color:#fff">${sumCarry.toLocaleString()}</td>
-    <td id="sum-stock" style="text-align:center;background:#1d4ed8;color:#fff">${sumStock.toLocaleString()}</td>
-    <td id="sum-in" style="text-align:center;background:#166534;color:#fff">${sumIn.toLocaleString()}</td>
-    <td id="sum-out" style="text-align:center;background:#b91c1c;color:#fff">${sumOut.toLocaleString()}</td>
-    <td id="sum-dist" style="text-align:center;background:#5b21b6;color:#fff">${sumDist.toLocaleString()}</td>
-    <td id="sum-mfg" style="text-align:center;background:#92400e;color:#fff">${sumMfg.toLocaleString()}</td>
-    <td colspan="${days*3}" style="background:#1f3864"></td>
+  const sumRow=`<tr style="background:#f8fafc;font-weight:700;border-top:2px solid #e5e7eb">
+    <td colspan="7" style="text-align:center;font-size:12px;color:#374151;padding:6px;border-right:1px solid #e5e7eb">합 계</td>
+    <td id="sum-carry" style="text-align:center;color:#374151;padding:6px;border-right:1px solid #e5e7eb">${sumCarry.toLocaleString()}</td>
+    <td id="sum-stock" style="text-align:center;color:#1d4ed8;padding:6px;border-right:1px solid #e5e7eb">${sumStock.toLocaleString()}</td>
+    <td id="sum-in" style="text-align:center;color:#166534;padding:6px;border-right:1px solid #e5e7eb">${sumIn.toLocaleString()}</td>
+    <td id="sum-out" style="text-align:center;color:#b91c1c;padding:6px;border-right:1px solid #e5e7eb">${sumOut.toLocaleString()}</td>
+    <td id="sum-dist" style="text-align:center;color:#7c3aed;padding:6px;border-right:1px solid #e5e7eb">${sumDist.toLocaleString()}</td>
+    <td id="sum-mfg" style="text-align:center;color:#b45309;padding:6px;border-right:1px solid #e5e7eb">${sumMfg.toLocaleString()}</td>
+    <td colspan="${(endDay-startDay+1)*3}" style="background:#f8fafc"></td>
   </tr>`;
 
   document.getElementById('ledger-body').innerHTML=rows+sumRow;
+  // 상단 스크롤바 너비 동기화
+  const wrap = document.getElementById('ledger-wrap');
+  const inner = document.getElementById('ledger-scroll-inner');
+  const top = document.getElementById('ledger-scroll-top');
+  if(wrap && inner && top){
+    const tableW = wrap.querySelector('table')?.scrollWidth || 0;
+    inner.style.width = tableW + 'px';
+    // 스크롤 동기화
+    top.onscroll = ()=>{ wrap.scrollLeft = top.scrollLeft; };
+    wrap.onscroll = ()=>{ top.scrollLeft = wrap.scrollLeft; };
+  }
 }
 
 function updateSumRow(){
   const days=daysInMonth(curYear,curMonth);
+  // 합계는 항상 전체 월 기준
   const ledger=getLedger();
   const filtered=curFilter==='전체'?db.items:db.items.filter(i=>i.cat===curFilter);
   let sumCarry=0,sumStock=0,sumIn=0,sumOut=0,sumDist=0,sumMfg=0;
@@ -640,8 +948,13 @@ function onInput(el){
   if(tm)tm.textContent=toutMfg;
   updateSumRow();
   if((type==='in'||type==='out_dist'||type==='out_mfg')&&val>0){
-    const today=`${curYear}-${String(curMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const item=db.items.find(i=>i.code===code);
+    // 전지 출고 시 WORK CODE 팝업 (el 이벤트 재활용)
+    if(item?.cat==='전지' && (type==='out_dist'||type==='out_mfg')){
+      // 팝업은 셀 클릭 이벤트로 따로 처리 — 여기선 이력만
+      return; // saveWorkPopup에서 이력 저장
+    }
+    const today=`${curYear}-${String(curMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const memoKeyMap={in:'memo_in',out_dist:'memo_dist',out_mfg:'memo_mfg'};
     const existingMemo=ledger[ck(code,day,memoKeyMap[type]||'')]||'';
     const typeLabel=type==='in'?'입고':type==='out_dist'?'출고(유통)':'출고(제조)';
@@ -649,37 +962,87 @@ function onInput(el){
   }
 }
 
+
+// ── 검색/필터 상태 ────────────────────────────────────────
+
+
+function setStatusCat(cat, el){
+  catStatus = cat;
+  pageState.status = 1;
+  document.querySelectorAll('#sec-status .filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  buildStatus();
+}
+
 function buildStatus(){
   const days=daysInMonth(curYear,curMonth),ledger=getLedger();
-  let totalIn=0,totalOut=0,lowCount=0,noStock=0,rows='';
-  db.items.forEach((item,idx)=>{
+  let totalIn=0,totalOut=0,lowCount=0,noStock=0;
+
+  // 전체 데이터 계산 (통계는 항상 전체 기준)
+  const allStatusRows = db.items.map((item,idx)=>{
     const carry=ledger[ck(item.code,'carry','over')]!==undefined?parseInt(ledger[ck(item.code,'carry','over')])||0:getCarryOver(item.code);
     const {tin,tout,stock}=calcStock(item.code,carry,days,ledger);
-    totalIn+=tin;totalOut+=tout;
+    totalIn+=tin; totalOut+=tout;
     let badge='';
     if(stock===0){noStock++;badge='<span class="badge badge-danger">재고없음</span>';}
     else if(stock<=item.safe){lowCount++;badge='<span class="badge badge-warn">부족</span>';}
     else badge='<span class="badge badge-ok">정상</span>';
-    rows+=`<tr>`
-      +`<td class="no-col">${idx+1}</td>`
-      +`<td>${catBadge(item.cat)}</td>`
-      +`<td>${item.code}</td><td class="item-name">${item.name}</td><td style="font-size:11px">${item.spec1||'-'}</td><td style="font-size:11px;color:#6b7280">${item.spec2||'-'}</td>`
-      +`<td class="prev-stock">${carry}</td><td class="total-stock">${stock}</td>`
-      +`<td class="total-in">${tin}</td><td class="total-out">${tout}</td>`
-      +`<td>${item.safe}</td><td>${badge}</td></tr>`;
+    return {item, carry, tin, tout, stock, badge};
   });
-  document.getElementById('status-body').innerHTML=rows;
+
   document.getElementById('stat-grid').innerHTML=`
     <div class="stat"><div class="stat-label">전체 품목</div><div class="stat-value">${db.items.length}</div></div>
     <div class="stat"><div class="stat-label">이번달 총입고</div><div class="stat-value" style="color:#166534">${totalIn}</div></div>
     <div class="stat"><div class="stat-label">이번달 총출고</div><div class="stat-value" style="color:#b91c1c">${totalOut}</div></div>
     <div class="stat"><div class="stat-label">부족/재고없음</div><div class="stat-value" style="color:#b91c1c">${lowCount+noStock}</div></div>`;
+
+  // 구분 + 검색 필터
+  const sq = searchStatus.toLowerCase();
+  const filtered = allStatusRows.filter(r=>{
+    const catOk = !catStatus || r.item.cat===catStatus;
+    const srchOk = !sq || r.item.name.toLowerCase().includes(sq) || (r.item.code||'').toLowerCase().includes(sq) || (r.item.spec1||'').toLowerCase().includes(sq);
+    return catOk && srchOk;
+  });
+
+  // 페이징
+  const statusPage = pageState.status;
+  const slice = filtered.slice((statusPage-1)*PAGE_SIZE, statusPage*PAGE_SIZE);
+  const rows = slice.map((r,i)=>{
+    const {item,carry,tin,tout,stock,badge} = r;
+    const globalIdx = (statusPage-1)*PAGE_SIZE + i + 1;
+    return `<tr>`
+      +`<td class="no-col">${globalIdx}</td>`
+      +`<td>${catBadge(item.cat)}</td>`
+      +`<td>${item.code}</td><td class="item-name">${item.name}</td><td style="font-size:11px">${item.spec1||'-'}</td><td style="font-size:11px;color:#6b7280">${item.spec2||'-'}</td>`
+      +`<td class="prev-stock">${carry}</td><td class="total-stock">${stock}</td>`
+      +`<td class="total-in">${tin}</td><td class="total-out">${tout}</td>`
+      +`<td>${item.safe}</td><td>${badge}</td></tr>`;
+  }).join('');
+
+  document.getElementById('status-body').innerHTML = rows || '<tr><td colspan="12" style="padding:16px;color:#9ca3af;text-align:center">데이터 없음</td></tr>';
+  renderPager('pager-status', statusPage, filtered.length, 'goPageStatus');
+}
+
+function setCatItems(cat, el){
+  catItems = cat;
+  pageState.items = 1;
+  document.querySelectorAll('#sec-items .filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  buildItems();
 }
 
 function buildItems(){
-  document.getElementById('items-body').innerHTML=db.items.map((item,idx)=>`<tr>
+  const sq = searchItems.toLowerCase();
+  const filtered = db.items.map((item,idx)=>({item,idx})).filter(({item})=>{
+    const catOk  = !catItems || item.cat===catItems;
+    const srchOk = !sq || item.name.toLowerCase().includes(sq) || (item.code||'').toLowerCase().includes(sq) || (item.spec1||'').toLowerCase().includes(sq);
+    return catOk && srchOk;
+  });
+  const itemsPage = pageState.items;
+  const slice = filtered.slice((itemsPage-1)*PAGE_SIZE, itemsPage*PAGE_SIZE);
+  document.getElementById('items-body').innerHTML=slice.map(({item,idx},i)=>`<tr>
     <td style="text-align:center"><input type="checkbox" class="item-chk" data-idx="${idx}" onchange="onItemChk()"></td>
-    <td class="no-col">${idx+1}</td>
+    <td class="no-col">${(itemsPage-1)*PAGE_SIZE+i+1}</td>
     <td>${catBadge(item.cat)}</td>
     <td>${item.code}</td><td class="item-name">${item.name}</td>
     <td style="font-size:11px">${item.spec1||'-'}</td>
@@ -688,6 +1051,7 @@ function buildItems(){
       <button onclick="openItemModal(${idx})" style="height:26px;padding:0 10px;font-size:12px">✏ 수정</button>
       <button onclick="deleteItem(${idx})" class="danger" style="height:26px;padding:0 10px;font-size:12px;margin-left:4px">🗑 삭제</button>
     </td></tr>`).join('');
+  renderPager('pager-items', itemsPage, filtered.length, 'goPageItems');
   updateSelUI();
 }
 
@@ -734,16 +1098,45 @@ async function deleteSelected(){
   showToast(checked.length+'개 품목이 삭제되었습니다');
 }
 
+async function clearAllHistory(){
+  if(!confirm('입출고 이력을 전체 삭제할까요?\n이 작업은 되돌릴 수 없습니다.')) return;
+  db.history = [];
+  await saveDB();
+  buildHistory();
+  showToast('이력이 삭제되었습니다');
+}
+
+function setCatHistory(cat, el){
+  catHistory = cat;
+  pageState.history = 1;
+  document.querySelectorAll('#sec-history .filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  buildHistory();
+}
+
 function buildHistory(){
-  const rows=db.history.slice(0,200);
-  document.getElementById('history-body').innerHTML=rows.length
-    ?rows.map(h=>`<tr>
+  const sq = searchHistory.toLowerCase();
+  const filtered = db.history.filter(h=>{
+    const catOk  = !catHistory || h.cat===catHistory;
+    const srchOk = !sq || (h.name||'').toLowerCase().includes(sq) || (h.code||'').toLowerCase().includes(sq) || (h.workCode||'').toLowerCase().includes(sq) || (h.batchNo||'').toLowerCase().includes(sq);
+    return catOk && srchOk;
+  });
+  const histPage = pageState.history;
+  const slice = filtered.slice((histPage-1)*PAGE_SIZE, histPage*PAGE_SIZE);
+  document.getElementById('history-body').innerHTML=slice.length
+    ?slice.map(h=>`<tr>
       <td>${h.date}</td>
       <td>${catBadge(h.cat||'')}</td>
-      <td>${h.code}</td><td class="item-name">${h.name}</td>
+      <td>${h.code}</td>
+      <td style="text-align:center;font-weight:500">${h.name}</td>
       <td><span class="badge ${h.type==='입고'?'badge-ok':'badge-danger'}">${h.type}</span></td>
-      <td>${h.qty}</td><td style="text-align:left;color:#6b7280">${h.note||'-'}</td></tr>`).join('')
-    :'<tr><td colspan="7" style="padding:24px;color:#9ca3af;text-align:center">이력이 없습니다</td></tr>';
+      <td style="text-align:right;font-weight:600">${h.qty}</td>
+      <td>${h.batchNo?`<span class="batch-tag">${h.batchNo}</span>`:'-'}</td>
+      <td style="color:#2563eb;font-weight:600">${h.workCode||'-'}</td>
+      <td style="text-align:left;color:#6b7280">${h.note||'-'}</td>
+    </tr>`).join('')
+    :'<tr><td colspan="9" style="padding:24px;color:#9ca3af;text-align:center">이력이 없습니다</td></tr>';
+  renderPager('pager-history', histPage, filtered.length, 'goPageHistory');
 }
 
 function switchTab(id,el){
@@ -752,7 +1145,8 @@ function switchTab(id,el){
   el.classList.add('active');
   document.getElementById('sec-'+id).classList.add('active');
   if(id==='report') refreshReportYears();
-  ({status:buildStatus,items:buildItems,history:buildHistory,ledger:buildLedger,report:buildReport})[id]?.();
+  if(id==='batch') initBatchSection();
+  ({status:buildStatus,items:buildItems,history:buildHistory,ledger:buildLedger,report:buildReport,batch:buildBatchSection})[id]?.();
 }
 
 function openItemModal(idx=-1){
@@ -766,6 +1160,17 @@ function openItemModal(idx=-1){
     document.getElementById('f-spec2').value=i.spec2||'';
     document.getElementById('f-safe').value=i.safe;
     document.getElementById('modal-title').textContent='품목 수정';
+    const isBattery = i.cat==='전지';
+    const batchRow=document.getElementById('f-batchno-row');
+    if(batchRow) batchRow.style.display=isBattery?'flex':'none';
+    if(isBattery){
+      const batches=getBatches(i.code);
+      document.getElementById('f-batchno').value=batches.map(b=>b.batchNo).join(', ');
+    } else {
+      document.getElementById('f-batchno').value='';
+    }
+    document.getElementById('f-batchdate').value=getKstToday();
+    document.getElementById('f-batchqty').value='';
   } else {
     document.getElementById('f-cat').value='';
     document.getElementById('f-code').value='';
@@ -773,13 +1178,18 @@ function openItemModal(idx=-1){
     document.getElementById('f-spec1').value='';
     document.getElementById('f-spec2').value='';
     document.getElementById('f-safe').value=5;
+    document.getElementById('f-batchno').value='';
+    document.getElementById('f-batchdate').value=getKstToday();
+    document.getElementById('f-batchqty').value='';
+    const batchRowNew=document.getElementById('f-batchno-row');
+    if(batchRowNew) batchRowNew.style.display='none';
     document.getElementById('modal-title').textContent='품목 추가';
   }
   document.getElementById('item-modal').style.display='flex';
 }
 function closeItemModal(){document.getElementById('item-modal').style.display='none';}
 
-function saveItem(){
+async function saveItem(){
   const idx=parseInt(document.getElementById('f-idx').value);
   const item={
     cat:document.getElementById('f-cat').value,
@@ -789,10 +1199,71 @@ function saveItem(){
     spec2:document.getElementById('f-spec2').value.trim(),
     safe:parseInt(document.getElementById('f-safe').value)||0
   };
-  // 둘 다 비어있으면 저장 불가
   if(!item.code && !item.name){alert('품목코드 또는 품목명 중 하나는 입력해주세요.');return;}
+
+  // 전지인 경우 BATCH NO + 입고수량 등록
+  if(item.cat==='전지'){
+    const batchInput = document.getElementById('f-batchno').value.trim();
+    const batchDate  = document.getElementById('f-batchdate').value;
+    const batchQty   = parseInt(document.getElementById('f-batchqty').value)||0;
+    if(batchInput){
+      const batchNos = batchInput.split(',').map(b=>b.trim()).filter(Boolean);
+      if(!db.batches) db.batches={};
+      if(!db.batches[item.code]) db.batches[item.code]=[];
+      const today = getKstToday();
+      batchNos.forEach(bno=>{
+        const exists = db.batches[item.code].find(b=>b.batchNo===bno);
+        if(exists){
+          if(batchQty>0){
+            exists.qty=(exists.qty||0)+batchQty;
+            exists.history=exists.history||[];
+            exists.history.push({date:batchDate||today, qty:batchQty, note:'품목 수정 시 추가', type:'입고'});
+          }
+        } else {
+          db.batches[item.code].push({
+            batchNo:bno, date:batchDate||today, qty:batchQty,
+            note:'품목 등록 시 추가', usage:[],
+            history:[{date:batchDate||today, qty:batchQty, note:'품목 등록', type:'입고'}]
+          });
+        }
+      });
+
+      // 입고수량을 ledger에 반영
+      if(batchQty>0 && batchDate){
+        const [y,m,d] = batchDate.split('-').map(Number);
+        const ym = ledgerKey(y,m);
+        if(!db.ledger[ym]) db.ledger[ym]={};
+        const inKey = ck(item.code, d, 'in');
+        db.ledger[ym][inKey] = (parseInt(db.ledger[ym][inKey])||0) + batchQty;
+        db.history.unshift({
+          date:batchDate, code:item.code, cat:item.cat||'',
+          name:item.name, type:'입고', qty:batchQty,
+          batchNo:batchNos.join(', '), workCode:'', note:'품목 등록 입고'
+        });
+      }
+    }
+  }
+
+  // 전지 외 품목 입고수량 반영
+  if(item.cat!=='전지'){
+    const batchDate = document.getElementById('f-batchdate').value;
+    const batchQty  = parseInt(document.getElementById('f-batchqty').value)||0;
+    if(batchQty>0 && batchDate){
+      const [y,m,d] = batchDate.split('-').map(Number);
+      const ym = ledgerKey(y,m);
+      if(!db.ledger[ym]) db.ledger[ym]={};
+      const inKey = ck(item.code, d, 'in');
+      db.ledger[ym][inKey] = (parseInt(db.ledger[ym][inKey])||0) + batchQty;
+      db.history.unshift({
+        date:batchDate, code:item.code, cat:item.cat||'',
+        name:item.name, type:'입고', qty:batchQty,
+        batchNo:'', workCode:'', note:'품목 등록 입고'
+      });
+    }
+  }
+
   if(idx>=0)db.items[idx]=item;else db.items.push(item);
-  saveDB();closeItemModal();buildItems();showToast('저장되었습니다');
+  await saveDB();closeItemModal();buildItems();buildLedger();showToast('저장되었습니다');
 }
 
 function deleteItem(idx){
@@ -818,7 +1289,7 @@ function exportCSV(){
     const carry=ledger[ck(item.code,'carry','over')]!==undefined?parseInt(ledger[ck(item.code,'carry','over')])||0:getCarryOver(item.code);
     const {tin,tout,stock}=calcStock(item.code,carry,days,ledger);
     let row=`${idx+1},${item.cat||'-'},${item.code},${item.name},${item.unit},${carry},${stock},${tin},${tout}`;
-    for(let d=1;d<=days;d++){row+=','+(parseInt(ledger[ck(item.code,d,'in')])||0);row+=','+(parseInt(ledger[ck(item.code,d,'out')])||0);}
+    for(let d=startDay;d<=endDay;d++){row+=','+(parseInt(ledger[ck(item.code,d,'in')])||0);row+=','+(parseInt(ledger[ck(item.code,d,'out')])||0);}
     csv+=row+'\n';
   });
   const a=document.createElement('a');
@@ -910,10 +1381,12 @@ function initYearMonth(){
   updateLedgerBadge();
 }
 
-loadDB();
-initYearMonth();
-initReportControls();
-buildLedger();
+(async()=>{
+  await loadDB();
+  initYearMonth();
+  initReportControls();
+  buildLedger();
+})();
 
 
 
@@ -981,7 +1454,7 @@ function buildDefectReport(rptY, rptM){
   const defectByCode={};
 
   db.items.forEach(item=>{
-    for(let d=1;d<=days;d++){
+    for(let d=startDay;d<=endDay;d++){
       const qty=(parseInt(ledger[ck(item.code,d,'out_dist')])||0)+(parseInt(ledger[ck(item.code,d,'out_mfg')])||0)+(parseInt(ledger[ck(item.code,d,'out')])||0);
       const memo=(ledger[ck(item.code,d,'memo_dist')]||'')+(ledger[ck(item.code,d,'memo_mfg')]||'')+(ledger[ck(item.code,d,'memo_out')]||'');
       if(qty>0 && memo.includes('불량')){
@@ -1043,9 +1516,543 @@ function buildDefectReport(rptY, rptM){
 
 
 
+
+// ── BATCH NO 관리 ─────────────────────────────────────────
+let workPopupMeta = null;
+let bomMeta = null;
+let bomEntries = [];
+
+function getBatches(itemCode){
+  if(!db.batches) db.batches={};
+  if(!db.batches[itemCode]) db.batches[itemCode]=[];
+  return db.batches[itemCode];
+}
+
+function getBatchTagsHtml(itemCode){
+  const batches = getBatches(itemCode);
+  if(!batches.length) return '<span style="color:#9ca3af;font-size:11px">-</span>';
+  return batches.map(b=>`<span class="batch-tag" title="입고:${b.qty} 잔여:${calcBatchRemain(b)}">${b.batchNo}</span>`).join('');
+}
+
+function calcBatchRemain(batch){
+  const used = (batch.usage||[]).reduce((s,u)=>s+u.qty,0);
+  return (batch.qty||0) - used;
+}
+
+function getBatchOptions(itemCode){
+  const batches = getBatches(itemCode);
+  if(!batches.length) return '<option value="">BATCH 없음</option>';
+  return batches.map(b=>`<option value="${b.batchNo}">${b.batchNo} (잔여: ${calcBatchRemain(b)})</option>`).join('');
+}
+
+function onCatModalChange(sel){
+  const isBattery = sel.value==='전지';
+  const el=document.getElementById('f-batchno-row');
+  if(el) el.style.display=isBattery?'flex':'none';
+}
+
+function openAddBatchModal(){
+  const el = document.getElementById('bm-item');
+  el.innerHTML = '<option value="">-- 선택 --</option>';
+  db.items.filter(i=>i.cat==='전지').forEach(i=>{
+    el.innerHTML += `<option value="${i.code}">${i.name} (${i.spec1||''})</option>`;
+  });
+  // 현재 선택된 품목 자동 선택
+  const sel = document.getElementById('batch-item-sel');
+  if(sel && sel.value) el.value = sel.value;
+  // 오늘 날짜
+  document.getElementById('bm-date').value = getKstToday();
+  document.getElementById('bm-batchno').value = '';
+  document.getElementById('bm-qty').value = '';
+  document.getElementById('bm-note').value = '';
+  document.getElementById('batch-add-modal').style.display = 'flex';
+}
+
+function closeBatchModal(){
+  document.getElementById('batch-add-modal').style.display = 'none';
+}
+
+async function saveBatchIn(){
+  const itemCode = document.getElementById('bm-item').value;
+  const batchNo  = document.getElementById('bm-batchno').value.trim();
+  const date     = document.getElementById('bm-date').value;
+  const qty      = parseInt(document.getElementById('bm-qty').value)||0;
+  const note     = document.getElementById('bm-note').value.trim();
+
+  if(!itemCode || !batchNo || !date || !qty){
+    alert('품목, BATCH NO, 입고일자, 입고수량은 필수입니다.');return;
+  }
+
+  const batches = getBatches(itemCode);
+  const exists = batches.find(b=>b.batchNo===batchNo);
+  if(exists){
+    if(!confirm(`${batchNo}는 이미 등록되어 있습니다. 수량을 추가할까요?`)) return;
+    exists.qty = (exists.qty||0) + qty;
+    exists.history = exists.history||[];
+    exists.history.push({date, qty, note, type:'입고'});
+  } else {
+    batches.push({batchNo, date, qty, note, usage:[], history:[{date,qty,note,type:'입고'}]});
+  }
+
+  await saveDB();
+  closeBatchModal();
+  buildBatchSection();
+  buildLedger();
+  showToast(`BATCH ${batchNo} 입고 등록 완료`);
+}
+
+// ── BATCH NO 관리 ─────────────────────────────────────────
+
+function setBatchView(mode, el){
+  batchViewMode = mode;
+  document.querySelectorAll('[id^="batch-view-"]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const group = document.getElementById('batch-item-group');
+  if(group) group.style.display = mode==='item' ? 'flex' : 'none';
+  buildBatchSection();
+}
+
+function initBatchSection(){
+  const sel = document.getElementById('batch-item-sel');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">-- 전지 품목 선택 --</option>';
+  db.items.filter(i=>i.cat==='전지').forEach(i=>{
+    sel.innerHTML += `<option value="${i.code}" ${i.code===cur?'selected':''}>${i.name} (${i.spec1||''})</option>`;
+  });
+  buildBatchSection();
+}
+
+function buildBatchSection(){
+  const listBody = document.getElementById('batch-list-body');
+  const histBody = document.getElementById('batch-history-body');
+  if(!listBody) return;
+
+  if(batchViewMode === 'all'){
+    // 전체 목록
+    const allBatches = [];
+    const allUsage = [];
+    if(!db.batches) db.batches={};
+    db.items.filter(i=>i.cat==='전지').forEach(item=>{
+      (db.batches[item.code]||[]).forEach(b=>{
+        allBatches.push({...b, itemCode:item.code, itemName:item.name});
+        (b.usage||[]).forEach(u=>{
+          allUsage.push({...u, batchNo:b.batchNo, itemName:item.name});
+        });
+      });
+    });
+
+    if(!allBatches.length){
+      listBody.innerHTML='<tr><td colspan="8" style="padding:16px;color:#9ca3af;text-align:center">등록된 BATCH가 없습니다</td></tr>';
+      histBody.innerHTML='<tr><td colspan="7" style="padding:16px;color:#9ca3af;text-align:center">사용 이력이 없습니다</td></tr>';
+      return;
+    }
+
+    // 검색 필터
+    const sq2 = searchBatch.toLowerCase();
+    const filteredBatches = sq2 ? allBatches.filter(b=>b.batchNo.toLowerCase().includes(sq2)||b.itemName.toLowerCase().includes(sq2)) : allBatches;
+    const bListPage = pageState.batchList;
+    const bListSlice = filteredBatches.slice((bListPage-1)*PAGE_SIZE, bListPage*PAGE_SIZE);
+    listBody.innerHTML = bListSlice.map(b=>{
+      const used=(b.usage||[]).reduce((s,u)=>s+u.qty,0);
+      const remain=(b.qty||0)-used;
+      const status=remain<=0?'<span class="badge badge-danger">소진</span>':remain<(b.qty||0)*0.2?'<span class="badge badge-warn">부족</span>':'<span class="badge badge-ok">사용중</span>';
+      return `<tr>
+        <td><span class="batch-tag">${b.batchNo}</span></td>
+        <td style="text-align:center;font-weight:500">${b.itemName}</td>
+        <td>${b.date||'-'}</td>
+        <td style="text-align:right;color:#166534;font-weight:600">${(b.qty||0).toLocaleString()}</td>
+        <td style="text-align:right;color:#b91c1c;font-weight:600">${used.toLocaleString()}</td>
+        <td style="text-align:right;color:#1d4ed8;font-weight:700">${remain.toLocaleString()}</td>
+        <td>${status}</td>
+        <td></td>
+      </tr>`;
+    }).join('');
+    renderPager('pager-batch-list', bListPage, filteredBatches.length, 'goPageBatchList');
+
+    allUsage.sort((a,b)=>b.date>a.date?1:-1);
+    const bHistPage = pageState.batchHist;
+    const bHistSlice = allUsage.slice((bHistPage-1)*PAGE_SIZE, bHistPage*PAGE_SIZE);
+    histBody.innerHTML = bHistSlice.length
+      ? bHistSlice.map(u=>`<tr>
+          <td>${u.date}</td>
+          <td><span class="batch-tag">${u.batchNo}</span></td>
+          <td style="text-align:center;font-weight:500">${u.itemName}</td>
+          <td><span class="badge ${u.type==='출고(유통)'?'badge-ok':'badge-danger'}">${u.type}</span></td>
+          <td style="font-weight:600;color:#2563eb">${u.workCode||'-'}</td>
+          <td style="text-align:right;font-weight:600">${u.qty.toLocaleString()}</td>
+          <td style="color:#6b7280">${u.note||'-'}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="7" style="padding:16px;color:#9ca3af;text-align:center">사용 이력이 없습니다</td></tr>';
+    renderPager('pager-batch-hist', bHistPage, allUsage.length, 'goPageBatchHist');
+
+  } else {
+    // 품목별 조회
+    const itemCode = document.getElementById('batch-item-sel')?.value;
+    if(!itemCode){
+      listBody.innerHTML='<tr><td colspan="8" style="padding:16px;color:#9ca3af;text-align:center">전지 품목을 선택해주세요</td></tr>';
+      histBody.innerHTML='';
+      return;
+    }
+    const item = db.items.find(i=>i.code===itemCode);
+    const batches = getBatches(itemCode);
+    if(!batches.length){
+      listBody.innerHTML='<tr><td colspan="8" style="padding:16px;color:#9ca3af;text-align:center">등록된 BATCH가 없습니다</td></tr>';
+      histBody.innerHTML='<tr><td colspan="7" style="padding:16px;color:#9ca3af;text-align:center">사용 이력이 없습니다</td></tr>';
+      return;
+    }
+
+    const sq3 = searchBatch.toLowerCase();
+    const filteredB = sq3 ? batches.filter(b=>b.batchNo.toLowerCase().includes(sq3)) : batches;
+    const bListPage2 = pageState.batchList;
+    const bSlice2 = filteredB.slice((bListPage2-1)*PAGE_SIZE, bListPage2*PAGE_SIZE);
+    listBody.innerHTML = bSlice2.map(b=>{
+      const used=(b.usage||[]).reduce((s,u)=>s+u.qty,0);
+      const remain=(b.qty||0)-used;
+      const status=remain<=0?'<span class="badge badge-danger">소진</span>':remain<(b.qty||0)*0.2?'<span class="badge badge-warn">부족</span>':'<span class="badge badge-ok">사용중</span>';
+      return `<tr>
+        <td><span class="batch-tag">${b.batchNo}</span></td>
+        <td style="text-align:center;font-weight:500">${item?.name||itemCode}</td>
+        <td>${b.date||'-'}</td>
+        <td style="text-align:right;color:#166534;font-weight:600">${(b.qty||0).toLocaleString()}</td>
+        <td style="text-align:right;color:#b91c1c;font-weight:600">${used.toLocaleString()}</td>
+        <td style="text-align:right;color:#1d4ed8;font-weight:700">${remain.toLocaleString()}</td>
+        <td>${status}</td>
+        <td></td>
+      </tr>`;
+    }).join('');
+
+    const allUsage=[];
+    batches.forEach(b=>{
+      (b.usage||[]).forEach(u=>allUsage.push({...u,batchNo:b.batchNo,itemName:item?.name||itemCode}));
+    });
+    allUsage.sort((a,b)=>b.date>a.date?1:-1);
+    allUsage.sort((a,b)=>b.date>a.date?1:-1);
+    const bHistPage2 = pageState.batchHist;
+    const bHSlice2 = allUsage.slice((bHistPage2-1)*PAGE_SIZE, bHistPage2*PAGE_SIZE);
+    histBody.innerHTML = bHSlice2.length
+      ? bHSlice2.map(u=>`<tr>
+          <td>${u.date}</td>
+          <td><span class="batch-tag">${u.batchNo}</span></td>
+          <td style="text-align:center;font-weight:500">${u.itemName}</td>
+          <td><span class="badge ${u.type==='출고(유통)'?'badge-ok':'badge-danger'}">${u.type}</span></td>
+          <td style="font-weight:600;color:#2563eb">${u.workCode||'-'}</td>
+          <td style="text-align:right;font-weight:600">${u.qty.toLocaleString()}</td>
+          <td style="color:#6b7280">${u.note||'-'}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="7" style="padding:16px;color:#9ca3af;text-align:center">사용 이력이 없습니다</td></tr>';
+    renderPager('pager-batch-hist', bHistPage2, allUsage.length, 'goPageBatchHist');
+  }
+}
+
+async function deleteBatch(itemCode, batchNo){
+  if(!confirm(`${batchNo}를 삭제할까요?`)) return;
+  const batches = getBatches(itemCode);
+  db.batches[itemCode] = batches.filter(b=>b.batchNo!==batchNo);
+  await saveDB();
+  buildBatchSection();
+  showToast('삭제되었습니다');
+}
+
+// ── WORK CODE 팝업 (전지 출고 시) ─────────────────────────
+
+
+// ── BATCH 수정 ────────────────────────────────────────────
+function openEditBatchModal(itemCode, batchNo){
+  const batches = getBatches(itemCode);
+  const batch = batches.find(b=>b.batchNo===batchNo);
+  if(!batch) return;
+  document.getElementById('bem-itemcode').value        = itemCode;
+  document.getElementById('bem-originalbatchno').value = batchNo;
+  document.getElementById('bem-batchno').value         = batchNo;
+  document.getElementById('bem-date').value            = batch.date||'';
+  document.getElementById('bem-qty').value             = batch.qty||0;
+  document.getElementById('bem-note').value            = batch.note||'';
+  document.getElementById('batch-edit-modal').style.display = 'flex';
+}
+
+function closeBatchEditModal(){
+  document.getElementById('batch-edit-modal').style.display = 'none';
+}
+
+async function saveBatchEdit(){
+  const itemCode      = document.getElementById('bem-itemcode').value;
+  const originalBatchNo = document.getElementById('bem-originalbatchno').value;
+  const newBatchNo    = document.getElementById('bem-batchno').value.trim();
+  const date          = document.getElementById('bem-date').value;
+  const qty           = parseInt(document.getElementById('bem-qty').value)||0;
+  const note          = document.getElementById('bem-note').value.trim();
+
+  if(!newBatchNo){ alert('BATCH NO는 필수입니다.'); return; }
+
+  const batches = getBatches(itemCode);
+  const idx = batches.findIndex(b=>b.batchNo===originalBatchNo);
+  if(idx<0){ alert('BATCH를 찾을 수 없습니다.'); return; }
+
+  // BATCH NO가 변경된 경우 usage/history의 batchNo도 업데이트
+  if(newBatchNo !== originalBatchNo){
+    batches[idx].batchNo = newBatchNo;
+    // 입출고 이력도 업데이트
+    db.history.forEach(h=>{ if(h.batchNo===originalBatchNo && h.code===itemCode) h.batchNo=newBatchNo; });
+  }
+  batches[idx].date = date;
+  batches[idx].qty  = qty;
+  batches[idx].note = note;
+
+  await saveDB();
+  closeBatchEditModal();
+  buildBatchSection();
+  buildLedger();
+  showToast('수정되었습니다');
+}
+
+// ── BATCH 출고 내역 팝업 ─────────────────────────────────
+function onBomTypeChange(sel){
+  const isIn = sel.value==='in';
+  const batchRow = document.getElementById('bom-batch-row');
+  const wcRow = document.getElementById('bom-workcode-row');
+  // 입고일 때 BATCH는 직접 입력(텍스트), 출고일 때 드롭다운
+  if(batchRow) batchRow.style.display = 'flex';
+  if(wcRow) wcRow.style.display = isIn ? 'none' : 'flex';
+  const batchSel = document.getElementById('bom-batch');
+  if(batchSel) batchSel.disabled = false;
+}
+
+function openBatchOutModal(code, evt){
+  if(evt) evt.stopPropagation();
+  bomMeta = {code};
+  bomEntries = [];
+
+  const item = db.items.find(i=>i.code===code);
+  document.getElementById('bom-title').textContent = item?.name||code;
+
+  // BATCH 선택 옵션
+  document.getElementById('bom-batch').innerHTML = '<option value="">선택 안함</option>' + getBatchOptions(code);
+
+  // 오늘 날짜
+  document.getElementById('bom-date').value = getKstToday();
+  document.getElementById('bom-workcode').value = '';
+  document.getElementById('bom-qty').value = '';
+  document.getElementById('bom-note').value = '';
+
+  renderBomList();
+  document.getElementById('batch-out-modal').style.display = 'flex';
+}
+
+function closeBatchOutModal(){
+  document.getElementById('batch-out-modal').style.display = 'none';
+  bomMeta = null; bomEntries = [];
+}
+
+function renderBomList(){
+  const el = document.getElementById('bom-list');
+  if(!bomEntries.length){
+    el.innerHTML = '<div style="color:#9ca3af;font-size:12px;padding:8px 0">추가된 출고 내역이 없습니다</div>';
+    return;
+  }
+  el.innerHTML = `<table style="width:100%;font-size:12px;border-collapse:collapse">
+    <thead><tr style="background:#f1f5f9">
+      <th style="padding:4px 6px;text-align:left">날짜</th>
+      <th style="padding:4px 6px">구분</th>
+      <th style="padding:4px 6px">BATCH</th>
+      <th style="padding:4px 6px">WORK CODE</th>
+      <th style="padding:4px 6px;text-align:right">수량</th>
+      <th style="padding:4px 6px"></th>
+    </tr></thead>
+    <tbody>${bomEntries.map((e,i)=>`<tr style="border-bottom:0.5px solid #f1f5f9">
+      <td style="padding:4px 6px">${e.date}</td>
+      <td style="padding:4px 6px;text-align:center"><span class="badge ${e.type==='in'?'badge-ok':e.type==='out_dist'?'badge-warn':'badge-danger'}">${e.typeLabel||e.type}</span></td>
+      <td style="padding:4px 6px">${e.batchNo?`<span class="batch-tag">${e.batchNo}</span>`:'-'}</td>
+      <td style="padding:4px 6px;color:#2563eb;font-weight:600">${e.workCode||'-'}</td>
+      <td style="padding:4px 6px;text-align:right;font-weight:700">${e.qty}</td>
+      <td style="padding:4px 6px"><button onclick="removeBomEntry(${i})" style="height:20px;padding:0 6px;font-size:11px;color:#b91c1c;background:#fee2e2;border:1px solid #fca5a5;border-radius:4px;cursor:pointer">✕</button></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function addBomEntry(){
+  const date     = document.getElementById('bom-date').value;
+  const type     = document.getElementById('bom-type').value;
+  const batchNo  = document.getElementById('bom-batch').value;
+  const workCode = document.getElementById('bom-workcode').value.trim();
+  const qty      = parseInt(document.getElementById('bom-qty').value)||0;
+  const note     = document.getElementById('bom-note').value.trim();
+
+  if(!date || !qty){ alert('날짜와 수량은 필수입니다.'); return; }
+
+  const typeLabel = type==='in'?'입고':type==='out_dist'?'유통 출고':'제조 출고';
+  bomEntries.push({date, type, batchNo, workCode, qty, note, typeLabel});
+  renderBomList();
+
+  // 입력 초기화
+  document.getElementById('bom-workcode').value = '';
+  document.getElementById('bom-qty').value = '';
+  document.getElementById('bom-note').value = '';
+  document.getElementById('bom-qty').focus();
+}
+
+function removeBomEntry(idx){
+  bomEntries.splice(idx,1);
+  renderBomList();
+}
+
+async function saveBomAll(){
+  if(!bomEntries.length){ closeBatchOutModal(); return; }
+  if(!bomMeta) return;
+  const {code} = bomMeta;
+  const ledger = getLedger();
+
+  // 날짜별로 그룹핑해서 ledger에 합산
+  const dayTotals = {}; // {day: {in:0, dist:0, mfg:0}}
+  bomEntries.forEach(e=>{
+    const entryDate = e.date;
+    const [ey,em,ed] = entryDate.split('-').map(Number);
+    const entryYm = ledgerKey(ey,em);
+    if(!db.ledger[entryYm]) db.ledger[entryYm]={};
+    const entryLedger = db.ledger[entryYm];
+    const day = ed;
+
+    if(e.type==='in'){
+      const key = ck(code,day,'in');
+      entryLedger[key] = (parseInt(entryLedger[key])||0) + e.qty;
+      // BATCH 입고 이력
+      if(e.batchNo){
+        const batches = getBatches(code);
+        const batch = batches.find(b=>b.batchNo===e.batchNo);
+        if(batch){
+          batch.qty = (batch.qty||0) + e.qty;
+          batch.history = batch.history||[];
+          batch.history.push({date:entryDate, qty:e.qty, note:e.note, type:'입고'});
+        }
+      }
+    } else {
+      const distKey = ck(code,day,'out_dist');
+      const mfgKey  = ck(code,day,'out_mfg');
+      if(e.type==='out_dist') entryLedger[distKey]=(parseInt(entryLedger[distKey])||0)+e.qty;
+      else                    entryLedger[mfgKey] =(parseInt(entryLedger[mfgKey])||0)+e.qty;
+      // BATCH 사용 이력
+      if(e.batchNo){
+        const batches = getBatches(code);
+        const batch = batches.find(b=>b.batchNo===e.batchNo);
+        if(batch){
+          if(!batch.usage) batch.usage=[];
+          const tl = e.type==='out_dist'?'출고(유통)':'출고(제조)';
+          batch.usage.push({date:entryDate, qty:e.qty, workCode:e.workCode, note:e.note, type:tl});
+        }
+      }
+    }
+
+    // 입출고 이력
+    const item = db.items.find(i=>i.code===code);
+    const tl2 = e.type==='in'?'입고':e.type==='out_dist'?'출고(유통)':'출고(제조)';
+    db.history.unshift({
+      date:entryDate, code, cat:item?.cat||'', name:item?.name||code,
+      type:tl2, qty:e.qty, batchNo:e.batchNo, workCode:e.workCode||'', note:e.note
+    });
+  });
+
+  await saveDB();
+  closeBatchOutModal();
+  buildLedger();
+  showToast(`${bomEntries.length}건 출고 저장 완료`);
+}
+
+function openWorkPopup(evt, code, day, type, qty){
+  closeWorkPopup();
+  const item = db.items.find(i=>i.code===code);
+  workPopupMeta = {code, day, type, qty};
+
+  const pop = document.getElementById('work-popup');
+  document.getElementById('wp-title').textContent = `${item?.name||code} ${curYear}/${String(curMonth).padStart(2,'0')}/${String(day).padStart(2,'0')}`;
+  document.getElementById('wp-workcode').value = '';
+  document.getElementById('wp-note').value = '';
+
+  // BATCH 선택
+  document.getElementById('wp-batch').innerHTML = '<option value="">BATCH 선택 안함</option>' + getBatchOptions(code);
+
+  const rect = evt.target.getBoundingClientRect();
+  pop.style.left = Math.min(rect.left, window.innerWidth-340)+'px';
+  pop.style.top  = (rect.bottom+4)+'px';
+  pop.style.display = 'block';
+  setTimeout(()=>document.getElementById('wp-workcode')?.focus(),50);
+  document.addEventListener('mousedown', closeWorkPopupOutside, {once:true});
+}
+
+function closeWorkPopupOutside(e){
+  const pop = document.getElementById('work-popup');
+  if(pop && !pop.contains(e.target)) closeWorkPopup();
+}
+
+function closeWorkPopup(){
+  const pop = document.getElementById('work-popup');
+  if(pop) pop.style.display='none';
+  workPopupMeta = null;
+}
+
+async function saveWorkPopup(){
+  const workCode = document.getElementById('wp-workcode').value.trim();
+  const note     = document.getElementById('wp-note').value.trim();
+  const batchNo  = document.getElementById('wp-batch').value;
+  if(!workPopupMeta) return;
+
+  const {code, day, type, qty} = workPopupMeta;
+  const ledger = getLedger();
+  // workcode를 메모에 저장
+  const memoKey = type==='out_dist'?ck(code,day,'memo_dist'):ck(code,day,'memo_mfg');
+  const memoVal = [workCode?`WC:${workCode}`:'', batchNo?`BATCH:${batchNo}`:'', note].filter(Boolean).join(' | ');
+  if(memoVal) ledger[memoKey] = memoVal;
+
+  // BATCH 사용 이력 기록
+  if(batchNo){
+    const batches = getBatches(code);
+    const batch = batches.find(b=>b.batchNo===batchNo);
+    if(batch){
+      if(!batch.usage) batch.usage=[];
+      const today=`${curYear}-${String(curMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const typeLabel = type==='out_dist'?'출고(유통)':'출고(제조)';
+      batch.usage.push({date:today, qty, workCode, note, type:typeLabel});
+    }
+  }
+
+  // 이력에도 추가
+  const today=`${curYear}-${String(curMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  const item = db.items.find(i=>i.code===code);
+  const typeLabel = type==='out_dist'?'출고(유통)':'출고(제조)';
+  db.history.unshift({
+    date:today, code, cat:item?.cat||'', name:item?.name||code,
+    type:typeLabel, qty, note:memoVal, batchNo, workCode
+  });
+
+  await saveDB();
+  closeWorkPopup();
+  buildLedger();
+  showToast('출고 정보가 저장되었습니다');
+}
+
+
+// ── 날짜 범위 ─────────────────────────────────────────────
+
+function setDateRange(start, end, el){
+  dateRangeStart = start;
+  dateRangeEnd   = end;
+  document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('range-start').value = start;
+  document.getElementById('range-end').value   = end || '';
+  buildLedger();
+}
+
+function setDateRangeCustom(){
+  const s = parseInt(document.getElementById('range-start').value)||1;
+  const e = parseInt(document.getElementById('range-end').value)||0;
+  dateRangeStart = Math.max(1, Math.min(s, 31));
+  dateRangeEnd   = e ? Math.max(1, Math.min(e, 31)) : 0;
+  document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active'));
+  buildLedger();
+}
+
 // ── 공통 페이지네이션 ────────────────────────────────────
 const PAGE_SIZE = 10;
-const pageState = { in: 1, out: 1, dist: 1, safety: 1 };
 
 function renderPager(pagerId, currentPage, totalItems, onChangeFn) {
   const total = Math.ceil(totalItems / PAGE_SIZE);
@@ -1076,9 +2083,109 @@ function goPageIn(p)   { pageState.in=p;  buildReport(); }
 function goPageSafety(p){ pageState.safety=p; buildReport(); }
 function goPageOut(p)  { pageState.out=p; buildReport(); }
 function goPageDist(p) { pageState.dist=p; buildReport(); }
+function goPageAnnual(p){ pageState.annual=p; buildReport(); }
+function goPageStatus(p)  { pageState.status=p;    buildStatus(); }
+function goPageItems(p)   { pageState.items=p;     buildItems(); }
+function goPageBatchList(p){ pageState.batchList=p; buildBatchSection(); }
+function goPageBatchHist(p){ pageState.batchHist=p; buildBatchSection(); }
+function goPageHistory(p) { pageState.history=p;   buildHistory(); }
 
 // ── 품목별 유통/제조 사용량 ─────────────────────────────
-let distSortKey='total';
+
+function onItemSelChange(){
+  const rptY = parseInt(document.getElementById('rpt-year').value)||curYear;
+  const all = calcAllMonths();
+  updateYearlyChart(rptY, all);
+}
+
+function setAnnualCat(cat, el){
+  annualCatFilter = cat;
+  pageState.annual = 1;
+  document.querySelectorAll('[id^="annual-cat-"]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  // 차트 드롭다운도 카테고리에 맞게 첫 품목으로 변경
+  const rptY = parseInt(document.getElementById('rpt-year').value)||curYear;
+  const all = calcAllMonths();
+  updateYearlyChart(rptY, all);
+  buildAnnualTable(rptY, all);
+}
+
+
+function buildAnnualTable(rptY, all){
+  const headEl = document.getElementById('rpt-annual-head');
+  const bodyEl = document.getElementById('rpt-annual-body');
+  if(!headEl || !bodyEl) return;
+
+  // 헤더: 구분 | 품목명 | 기본사양 | 1월~12월(입/사) | 연간합계(입/사) | 월평균(입/사) | 발주권장
+  let th = '<tr>'
+    +'<th>구분</th><th style="min-width:120px">품목명</th><th>기본사양</th>';
+  for(let m=1;m<=12;m++) th += `<th colspan="2" style="min-width:80px">${m}월</th>`;
+  th += '<th colspan="2" style="background:#eff6ff;color:#1d4ed8">연간합계</th>'
+      + '<th colspan="2" style="background:#f0fdf4;color:#166534">월평균</th>'
+      + '<th style="background:#fef9c3;color:#854d0e;min-width:80px">발주권장</th>'
+      + '</tr><tr>'
+      + '<th></th><th></th><th></th>';
+  for(let m=1;m<=12;m++) th += '<th style="color:#166534;font-size:10px">입</th><th style="color:#b91c1c;font-size:10px">사</th>';
+  th += '<th style="color:#166534;font-size:10px">입고</th><th style="color:#b91c1c;font-size:10px">사용</th>'
+      + '<th style="color:#166534;font-size:10px">입고</th><th style="color:#b91c1c;font-size:10px">사용</th>'
+      + '<th style="font-size:10px">수량</th></tr>';
+  headEl.innerHTML = th;
+
+  const filtered = annualCatFilter
+    ? db.items.filter(i=>i.cat===annualCatFilter)
+    : db.items;
+
+  if(!filtered.length){
+    bodyEl.innerHTML=`<tr><td colspan="${3+12*2+5}" style="padding:16px;color:#9ca3af;text-align:center">데이터 없음</td></tr>`;
+    return;
+  }
+
+  // 데이터가 있는 월 수 계산
+  const monthsWithData = new Set();
+  Object.keys(db.ledger).forEach(ym=>{
+    const [y] = ym.split('-').map(Number);
+    if(y===rptY) monthsWithData.add(parseInt(ym.split('-')[1]));
+  });
+  const activeMonths = Math.max(monthsWithData.size, 1);
+
+  // 전체 데이터 먼저 계산
+  const allRows = filtered.map((item,idx)=>{
+    const d = all[item.code];
+    let yearIn=0, yearOut=0;
+    let cells = '';
+    for(let m=1;m<=12;m++){
+      const ym = ledgerKey(rptY,m);
+      const md = d?.months[ym];
+      const mIn  = md?.in||0;
+      const mOut = md?.out||0;
+      yearIn  += mIn;
+      yearOut += mOut;
+      cells += `<td style="text-align:right;font-size:11px;color:#166534">${mIn||''}</td>`
+             + `<td style="text-align:right;font-size:11px;color:#b91c1c">${mOut||''}</td>`;
+    }
+    const avgIn  = Math.round(yearIn/activeMonths);
+    const avgOut = Math.round(yearOut/activeMonths);
+    const recOrder = Math.ceil(avgOut * 1.2);
+    const bg = idx%2===0 ? '' : 'background:#f8fafc';
+    return `<tr style="${bg}">
+      <td>${catBadge(item.cat)}</td>
+      <td style="text-align:center;font-weight:500">${item.name}</td>
+      <td style="font-size:11px;color:#374151">${item.spec1||'-'}</td>
+      ${cells}
+      <td style="text-align:right;font-weight:700;color:#1d4ed8;background:#eff6ff">${yearIn.toLocaleString()}</td>
+      <td style="text-align:right;font-weight:700;color:#b91c1c;background:#eff6ff">${yearOut.toLocaleString()}</td>
+      <td style="text-align:right;font-weight:600;color:#166534;background:#f0fdf4">${avgIn.toLocaleString()}</td>
+      <td style="text-align:right;font-weight:600;color:#b91c1c;background:#f0fdf4">${avgOut.toLocaleString()}</td>
+      <td style="text-align:right;font-weight:700;color:#854d0e;background:#fef9c3">${recOrder.toLocaleString()}</td>
+    </tr>`;
+  });
+
+  // 페이징
+  const annualPage = pageState.annual;
+  const slice = allRows.slice((annualPage-1)*PAGE_SIZE, annualPage*PAGE_SIZE);
+  bodyEl.innerHTML = slice.join('') || `<tr><td colspan="${3+12*2+5}" style="padding:16px;color:#9ca3af;text-align:center">데이터 없음</td></tr>`;
+  renderPager('pager-annual', annualPage, allRows.length, 'goPageAnnual');
+}
 
 function setDistSort(key, el){
   distSortKey=key;
@@ -1126,7 +2233,6 @@ function buildDistMfgTable(rptY, rptM, all){
 }
 
 // ── 보고서 ──────────────────────────────────────────
-let outSortDir='desc';
 let chartMonthly=null, chartYearly=null;
 
 function setOutSort(dir,el){
@@ -1149,7 +2255,7 @@ function calcAllMonths(){
     const ledger=db.ledger[ym];
     db.items.forEach(item=>{
       let tin=0,tout=0,toutDist=0,toutMfg=0;
-      for(let d=1;d<=days;d++){
+      for(let d=startDay;d<=endDay;d++){
         tin+=parseInt(ledger[ck(item.code,d,'in')])||0;
         const dist=parseInt(ledger[ck(item.code,d,'out_dist')])||0;
         const mfg=parseInt(ledger[ck(item.code,d,'out_mfg')])||0;
@@ -1231,26 +2337,20 @@ function buildReport(){
   }
   buildBarChart('chart-monthly',chartMonthly,labels,dailyIn,dailyOut,'일별 입고','일별 사용',c=>{chartMonthly=c});
 
-  // ── 연간 차트 (선택연도 12개월, 유통/제조 분리) ──
-  const yLabels=[],yIn=[],yDist=[],yMfg=[];
-  for(let m2=1;m2<=12;m2++){
-    yLabels.push(m2+'월');
-    const ym2=ledgerKey(rptY,m2);
-    const d2=daysInMonth(rptY,m2);
-    const l2=db.ledger[ym2]||{};
-    let ti=0,tdist=0,tmfg=0;
-    db.items.forEach(item=>{
-      for(let d=1;d<=d2;d++){
-        ti+=parseInt(l2[ck(item.code,d,'in')])||0;
-        tdist+=(parseInt(l2[ck(item.code,d,'out_dist')])||0);
-        tmfg+=(parseInt(l2[ck(item.code,d,'out_mfg')])||0);
-        // 하위호환
-        tdist+=(parseInt(l2[ck(item.code,d,'out')])||0)/2|0;
-      }
+  // ── 연간 차트 드롭다운 업데이트 ──
+  const itemSelEl = document.getElementById('rpt-item-sel');
+  if(itemSelEl){
+    const curSel = itemSelEl.value;
+    // 카테고리 필터에 맞는 품목만
+    const catItems = annualCatFilter ? db.items.filter(i=>i.cat===annualCatFilter) : db.items;
+    itemSelEl.innerHTML = '<option value="">전체 합계</option>';
+    catItems.forEach(item=>{
+      itemSelEl.innerHTML += `<option value="${item.code}" ${item.code===curSel?'selected':''}>${item.name}</option>`;
     });
-    yIn.push(ti); yDist.push(tdist); yMfg.push(tmfg);
+    // 현재 선택된 품목이 필터에 없으면 초기화
+    if(curSel && !catItems.find(i=>i.code===curSel)) itemSelEl.value='';
   }
-  build3Chart('chart-yearly',chartYearly,yLabels,yIn,yDist,yMfg,c=>{chartYearly=c});
+  updateYearlyChart(rptY, all);
 
   // ── 안전재고 · 적정재고 분석 ──
   const LEAD=14, SAFETY_FACTOR=1.5, ORDER_CYCLE=7;
@@ -1311,11 +2411,53 @@ function buildReport(){
   renderPager('pager-safety', safetyPage, safeAllRows.length, 'goPageSafety');
   buildDefectReport(rptY,rptM);
   buildDistMfgTable(rptY,rptM,all);
+  buildAnnualTable(rptY,all);
+}
+
+
+function updateYearlyChart(rptY, all){
+  const itemSelEl = document.getElementById('rpt-item-sel');
+  const selItemCode = itemSelEl?.value||'';
+  const catItems = annualCatFilter ? db.items.filter(i=>i.cat===annualCatFilter) : db.items;
+  const targetItems = selItemCode ? db.items.filter(i=>i.code===selItemCode) : catItems;
+
+  const yLabels=[],yIn=[],yDist=[],yMfg=[],itemBreakdown=[];
+  for(let m2=1;m2<=12;m2++){
+    yLabels.push(m2+'월');
+    const ym2=ledgerKey(rptY,m2);
+    const d2=daysInMonth(rptY,m2);
+    const l2=db.ledger[ym2]||{};
+    let ti=0,tdist=0,tmfg=0;
+    const monthDetail=[];
+    targetItems.forEach(item=>{
+      let mi=0,mdist=0,mmfg=0;
+      for(let d=1;d<=d2;d++){
+        mi+=parseInt(l2[ck(item.code,d,'in')])||0;
+        mdist+=(parseInt(l2[ck(item.code,d,'out_dist')])||0);
+        mmfg+=(parseInt(l2[ck(item.code,d,'out_mfg')])||0);
+      }
+      ti+=mi; tdist+=mdist; tmfg+=mmfg;
+      if(mi>0||mdist>0||mmfg>0) monthDetail.push({name:item.name,in:mi,dist:mdist,mfg:mmfg});
+    });
+    yIn.push(ti); yDist.push(tdist); yMfg.push(tmfg);
+    itemBreakdown.push(monthDetail.sort((a,b)=>(b.in+b.dist+b.mfg)-(a.in+a.dist+a.mfg)));
+  }
+
+  const titleLabel = selItemCode
+    ? db.items.find(i=>i.code===selItemCode)?.name||selItemCode
+    : annualCatFilter ? annualCatFilter+' 전체' : '전체 합계';
+
+  build3ChartWithTooltip('chart-yearly',chartYearly,yLabels,yIn,yDist,yMfg,titleLabel,c=>{chartYearly=c},itemBreakdown);
 }
 
 function build3Chart(canvasId, existingChart, labels, dataIn, dataDist, dataMfg, setChart){
+  build3ChartWithTooltip(canvasId, existingChart, labels, dataIn, dataDist, dataMfg, '', setChart);
+}
+
+function build3ChartWithTooltip(canvasId, existingChart, labels, dataIn, dataDist, dataMfg, titleLabel, setChart, itemBreakdown){
   if(existingChart) existingChart.destroy();
-  const ctx=document.getElementById(canvasId).getContext('2d');
+  const ctx=document.getElementById(canvasId)?.getContext('2d');
+  if(!ctx) return;
   const chart=new Chart(ctx,{
     type:'bar',
     data:{
@@ -1326,8 +2468,39 @@ function build3Chart(canvasId, existingChart, labels, dataIn, dataDist, dataMfg,
         {label:'제조출고',data:dataMfg,backgroundColor:'rgba(180,83,9,.7)',borderRadius:3}
       ]
     },
-    options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}}},
-      scales:{x:{ticks:{font:{size:10}},grid:{display:false}},y:{ticks:{font:{size:10}},beginAtZero:true}}}
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'top',labels:{font:{size:11},boxWidth:12}},
+        title:{display:!!titleLabel,text:titleLabel,font:{size:12},color:'#374151'},
+        tooltip:{
+          mode:'index',
+          intersect:false,
+          callbacks:{
+            title:(items)=>`${items[0].label}${titleLabel?' ['+titleLabel+']':''}`,
+            afterBody:(items)=>{
+              if(!itemBreakdown) return [];
+              const monthIdx = items[0]?.dataIndex;
+              if(monthIdx===undefined) return [];
+              const breakdown = itemBreakdown[monthIdx];
+              if(!breakdown||!breakdown.length) return [];
+              const lines = ['─────────────────','품목별 상세:'];
+              breakdown.forEach(b=>{
+                if(b.in>0||b.dist>0||b.mfg>0){
+                  lines.push(`${b.name}: 입고 ${b.in.toLocaleString()} / 사용 ${(b.dist+b.mfg).toLocaleString()}`);
+                }
+              });
+              return lines;
+            },
+            label:(item)=>`${item.dataset.label}: ${item.raw.toLocaleString()}`
+          }
+        }
+      },
+      scales:{
+        x:{ticks:{font:{size:10}},grid:{display:false}},
+        y:{ticks:{font:{size:10},callback:v=>v.toLocaleString()},beginAtZero:true}
+      }
+    }
   });
   setChart(chart);
 }
@@ -1391,12 +2564,12 @@ async function handleUpload(event){
       // 3행이 헤더 (0-indexed: row 2), 4행부터 데이터
       const CAT_MAP = {'전지':'전지','BMS':'BMS','PCM':'PCM','충전기':'충전기','케이스':'케이스'};
       const newItems = [];
-      const seen = new Set();
 
-      // 헤더에서 전월재고/당월재고 열 위치 찾기
+      // 헤더에서 전월재고/당월재고/BATCH NO 열 위치 찾기
       const hdrRow = rows[2] || [];
-      const prevCol = hdrRow.findIndex(v=>String(v).includes('전월재고'));
-      const curCol  = hdrRow.findIndex(v=>String(v).includes('당월재고'));
+      const prevCol    = hdrRow.findIndex(v=>String(v).includes('전월재고'));
+      const curCol     = hdrRow.findIndex(v=>String(v).includes('당월재고'));
+      const batchNoCol = hdrRow.findIndex(v=>String(v).toUpperCase().includes('BATCH'));
 
       for(let i=3; i<rows.length; i++){
         const r = rows[i];
@@ -1405,18 +2578,17 @@ async function handleUpload(event){
         const name  = String(r[2]||'').trim();
         const spec1 = String(r[3]||'').trim();
         const spec2 = String(r[4]||'').trim();
-        const prevStock = prevCol>=0 && r[prevCol]!==null && r[prevCol]!=='' ? (parseInt(r[prevCol])||0) : null;
+        const prevStock  = prevCol>=0 && r[prevCol]!==null && r[prevCol]!=='' ? (parseInt(r[prevCol])||0) : null;
+        const batchNoVal = batchNoCol>=0 ? String(r[batchNoCol]||'').trim() : '';
 
         // 코드도 없고 이름도 없으면 빈 행 스킵
         if(!code && !name) continue;
-        const uniqueKey = `${code}__${spec1}__${spec2}`;
-        if(seen.has(uniqueKey)) continue;
-        seen.add(uniqueKey);
 
         newItems.push({
           code, name, spec1, spec2, safe: 0,
           cat: CAT_MAP[cat]||'',
-          _prevStock: prevStock
+          _prevStock: prevStock,
+          _batchNo: batchNoVal
         });
       }
 
@@ -1437,6 +2609,23 @@ async function handleUpload(event){
         }
         // _prevStock이 null이면 전월재고 미입력 → 자동 이월 (carry 키 미설정)
         delete item._prevStock;
+
+        // BATCH NO 등록 (전지이고 BATCH NO가 있으면)
+        if(item.cat==='전지' && item._batchNo){
+          const batchNos = item._batchNo.split(',').map(b=>b.trim()).filter(Boolean);
+          if(!db.batches) db.batches={};
+          if(!db.batches[item.code]) db.batches[item.code]=[];
+          batchNos.forEach(bno=>{
+            const exists = db.batches[item.code].find(b=>b.batchNo===bno);
+            if(!exists){
+              db.batches[item.code].push({
+                batchNo:bno, date:getKstToday(), qty:0,
+                note:'템플릿 업로드', usage:[], history:[]
+              });
+            }
+          });
+        }
+        delete item._batchNo;
       });
 
       // 품목 목록: 코드+기본사양+상세사양 모두 같으면 업데이트, 하나라도 다르면 신규 추가
